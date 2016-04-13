@@ -15,7 +15,7 @@ plot_climate_data(x, series = NULL, start = 1880, end = NULL, ma = NULL,
 
 \item{series}{A vector containing the column names of the climate series to be plotted. If \code{NULL}, all the series in \code{x} are plotted.}
 
-\item{start}{and \code{end} are integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{x} is used instead.}
+\item{start, end}{Integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{x} is used instead.}
 
 \item{ma}{The size of the \code{ma}-month moving average for smoothing the climate series.}
 

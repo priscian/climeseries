@@ -36,7 +36,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       groupLength <- 22
       skip <- 7L # Skip over notes at start of data.
       ## Must read only a specific number of rows before the trailing notes:
-      numRows <- nearest_below(yearGroups, currentYear) * groupLength - (nearest_above(yearGroups, currentYear, TRUE) - currentYear) - skip
+      numRows <- nearest_below(yearGroups, current_year) * groupLength - (nearest_above(yearGroups, current_year, TRUE) - current_year) - skip
       gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
 
       ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
@@ -509,8 +509,22 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' }
 #'
 #' @export
-get_climate_data <- function(download, data_dir=climeseries::dataDir, filename_base=climeseries::filenameBase, urls=climeseries::instrumentalUrls, baseline=1981:2010, verbose=TRUE)
+get_climate_data <- function(download, data_dir, filename_base, urls=climeseries:::instrumentalUrls, baseline=1981:2010, verbose=TRUE)
 {
+  if (missing(data_dir)) {
+    if (!is.null(getOption("climeseries_data_dir")))
+      data_dir <- getOption("climeseries_data_dir")
+    else
+      data_dir <- dataDir
+  }
+
+  if (missing(filename_base)) {
+    if (!is.null(getOption("climeseries_filename_base")))
+      filename_base <- getOption("climeseries_filename_base")
+    else
+      filename_base <- filenameBase
+  }
+
   d <- NULL
 
   if (download)

@@ -4,9 +4,8 @@
 \alias{get_climate_data}
 \title{Get Monthly Climatological Data from a Local Data Set or from the Internet}
 \usage{
-get_climate_data(download, data_dir = climeseries::dataDir,
-  filename_base = climeseries::filenameBase,
-  urls = climeseries::instrumentalUrls, baseline = 1981:2010,
+get_climate_data(download, data_dir, filename_base,
+  urls = climeseries:::instrumentalUrls, baseline = 1981:2010,
   verbose = TRUE)
 }
 \arguments{

@@ -1,24 +1,48 @@
+#' Concatenate Strings Easily
+#'
+#' Allows quick chaining together of character strings.
+#'
+#' @param a R object to be converted to a character vector.
+#' @param b R object to be converted to a character vector.
+#' @param sep A character string to separate the terms; passed to \code{\link[base]{paste}()}.
+#'
+#' @return The concatenation of \code{a} and \code{b}.
+#'
+#' @seealso \code{\link[base]{paste}}
+#'
+#' @examples
+#' who <- "world"
+#' "Hello " %_% who %_% "!"
+#'
 #' @export
 `%_%` <- function(a, b, sep='') paste(a, b, sep=sep)
 
+#' Package Constants
+#'
+#' @name constants
+#' @format Various.
+NULL
 
 ## http://rrubyperlundich.blogspot.com/2011/07/r-generate-vector-with-names-of-months.html
+#' @rdname constants
 #' @export
 MOS <- format(ISOdatetime(2000, 1:12, 1, 0, 0, 0), "%b")
+
+#' @rdname constants
 #' @export
 MONTHS <- month.name
 
+#' @rdname constants
 #' @export
-currentMonth <- as.integer(format(Sys.Date(), "%m"))
-#' @export
-currentYear <- as.integer(format(Sys.Date(), "%Y"))
+current_month <- as.integer(format(Sys.Date(), "%m"))
 
+#' @rdname constants
 #' @export
+current_year <- as.integer(format(Sys.Date(), "%Y"))
+
 dataDir <- "./data"
-#' @export
 filenameBase <- "climate-series_"
 
-#' @export
 defaultBaseline <- 1981:2010
 
 ## Some climatological time-series base URLs.
@@ -27,7 +51,6 @@ hadcrutBase <- "http://www.cru.uea.ac.uk/cru/data/temperature/"
 rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
 esrlBase <- "http://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&lon1=-180&lon2=180&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&var=@@VAR@@"
 
-#' @export
 instrumentalUrls <- list( # Last updated 24 Feb. 2016.
   GISTEMP = gistempBase %_% "GLB.Ts+dSST.txt",
   `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.txt",
@@ -54,5 +77,4 @@ instrumentalUrls <- list( # Last updated 24 Feb. 2016.
   Keeling = list(path="http://scrippsco2.ucsd.edu/sites/default/files/data/in_situ_co2/monthly_mlo.csv", type="CO2") # Mauna Loa CO2 series.
 )
 
-#' @export
 commonColumns <- c("year", "met_year", "yr_part", "month")

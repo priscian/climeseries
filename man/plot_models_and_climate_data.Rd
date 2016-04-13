@@ -25,9 +25,9 @@ plot_models_and_climate_data(instrumental, models, series = NULL,
 
 \item{scenario}{A character vector corresponding to specific radiative-forcing pathways represented in subsets of the modeled temperature data. If \code{NULL}, all pathways are included. The options for CMIP3+ data are any subset of \code{c("20C3M", "SRES B1", "SRES A1B", "SRES A2")}; options for CMIP5 include any subset of \code{c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")}.}
 
-\item{start}{and \code{end} are integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{models} is used instead.}
+\item{start, end}{Integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{models} is used instead.}
 
-\item{ma}{and \code{ma_i} are the sizes in months of the moving averages for smoothing the modeled and instrumental temperature series, respectively. If \code{ma_i} is not given, its value is the same as \code{ma}. A value of \code{NULL} means that no moving-average smoothing is done.}
+\item{ma, ma_i}{The sizes in months of the moving averages for smoothing the modeled and instrumental temperature series, respectively. If \code{ma_i} is not given, its value is the same as \code{ma}. A value of \code{NULL} means that no moving-average smoothing is done.}
 
 \item{baseline}{An integer year or, more typically, range of years on which the temperature anomalies will be centered. If \code{NULL}, no baseline centering is done, and the "baseline" attribute of \code{models} (if it exists) is used instead.}
 

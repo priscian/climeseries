@@ -4,7 +4,7 @@
 #'
 #' @param x A data set (down)loaded by function \code{\link{get_climate_data}}.
 #' @param series A vector containing the column names of the climate series to be plotted. If \code{NULL}, all the series in \code{x} are plotted.
-#' @param start and \code{end} are integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{x} is used instead.
+#' @param start,end Integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{x} is used instead.
 #' @param ma The size of the \code{ma}-month moving average for smoothing the climate series.
 #' @param baseline An integer year or, more typically, range of years on which the climate-series anomalies will be centered. If \code{NULL}, no baseline centering is done, and the "baseline" attribute of \code{x} (if it exists) is used instead.
 #' @param plot_type Passed to \code{\link[stats]{plot.ts}}.
@@ -226,7 +226,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 {
   d <- get_climate_data(download=FALSE, baseline=baseline)
   if (!is.null(start)) d <- d[d$year >= start, ]
-  if (!use_current_year) d <- d[d$year < currentYear, ] # If 'use_current_year=FALSE', the current, possibly incomplete year is excluded.
+  if (!use_current_year) d <- d[d$year < current_year, ] # If 'use_current_year=FALSE', the current, possibly incomplete year is excluded.
   series <- series[1L]
   means <- unclass(by(d[[series]], d$year, mean, na.rm=TRUE))
   yearNames <- names(means)
@@ -338,8 +338,8 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #' @param models A modeled-temperature dataset loaded by function \code{\link{get_models_data}}.
 #' @param series A vector containing the column names of the instrumental temperature series to be plotted. If \code{NULL}, all the series in \code{instrumental} are plotted; if \code{NA}, plotting of the instrumental temperature series is suppressed.
 #' @param scenario A character vector corresponding to specific radiative-forcing pathways represented in subsets of the modeled temperature data. If \code{NULL}, all pathways are included. The options for CMIP3+ data are any subset of \code{c("20C3M", "SRES B1", "SRES A1B", "SRES A2")}; options for CMIP5 include any subset of \code{c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")}.
-#' @param start and \code{end} are integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{models} is used instead.
-#' @param ma and \code{ma_i} are the sizes in months of the moving averages for smoothing the modeled and instrumental temperature series, respectively. If \code{ma_i} is not given, its value is the same as \code{ma}. A value of \code{NULL} means that no moving-average smoothing is done.
+#' @param start,end Integer values of the starting and ending years of the plot, respectively; if either is given as \code{NULL}, the minimum or maximum date in \code{models} is used instead.
+#' @param ma,ma_i The sizes in months of the moving averages for smoothing the modeled and instrumental temperature series, respectively. If \code{ma_i} is not given, its value is the same as \code{ma}. A value of \code{NULL} means that no moving-average smoothing is done.
 #' @param baseline An integer year or, more typically, range of years on which the temperature anomalies will be centered. If \code{NULL}, no baseline centering is done, and the "baseline" attribute of \code{models} (if it exists) is used instead.
 #' @param ylim The y limits of the plot, i.e. the plot range of the temperature anomalies.
 #' @param center_fun The function used to calculate the central tendency of the model runs at each time point; the default of \code{"mean"} is usually sufficient.

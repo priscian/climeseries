@@ -55,6 +55,12 @@ cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=TRUE, subdir
 cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="1 member per model")
 cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=TRUE, subdir="all members")
 cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="all members")
+
+## Create "meta" files to match up model runs with emissions scenarios. In each model-set directory, double-click on file "cmip(3|5).RData" and run the following code:
+x <- "cmip3" # Or:
+x <- "cmip5"
+write.csv(eval(substitute(data.frame(model=names(attr(cmip, "scenario")), scenario=attr(cmip, "scenario")),
+  list(cmip=as.symbol(x)))), file=paste(x, "_meta.csv", sep=""), row.names=FALSE)
 }
 
 }

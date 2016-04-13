@@ -39,13 +39,21 @@
 #' cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="1 member per model")
 #' cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=TRUE, subdir="all members")
 #' cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="all members")
+#'
+#' ## Create "meta" files to match up model runs with emissions scenarios. In each model-set directory, double-click on file "cmip(3|5).RData" and run the following code:
+#' x <- "cmip3" # Or:
+#' x <- "cmip5"
+#' write.csv(eval(substitute(data.frame(model=names(attr(cmip, "scenario")), scenario=attr(cmip, "scenario")),
+#'   list(cmip=as.symbol(x)))), file=paste(x, "_meta.csv", sep=""), row.names=FALSE)
 #' }
 #'
 #' @export
 get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=NULL, data_dir, subdir=NULL, cmip3_raw=FALSE, center_fun="mean")
 {
-  if (missing(data_dir)){
-    if (is.null(save) || save == FALSE)
+  if (missing(data_dir)) {
+    if (!is.null(getOption("climeseries_models_dir")))
+      data_dir <- getOption("climeseries_models_dir")
+    else if (is.null(save) || save == FALSE)
       data_dir <- system.file("extdata", package="climeseries")
     else
       data_dir <- dataDir
