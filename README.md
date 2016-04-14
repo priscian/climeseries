@@ -74,3 +74,5 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", sta
 library(help=climeseries)
 ```
 from the R command line.
+
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Recent "climeseries" data sets](inst/extdata/latest).
