@@ -58,7 +58,7 @@ plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ########################################
 
 series <- c("Cowtan & Way Hybrid", "HadCRUT4")
-plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf.int=TRUE)
+plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 
 ########################################
 ## Plot instrumental series and trend line. (N.B. I should build this into 'plot_climate_data()'.)

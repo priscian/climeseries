@@ -40,7 +40,7 @@ current_month <- as.integer(format(Sys.Date(), "%m"))
 #' @export
 current_year <- as.integer(format(Sys.Date(), "%Y"))
 
-dataDir <- "./data"
+dataDir <- "."
 filenameBase <- "climate-series_"
 
 defaultBaseline <- 1981:2010
