@@ -496,9 +496,9 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' series <- setdiff(names(inst), c(commonColumns, c("Keeling")))
 #' yearType <- "year" # "year" or "met_year" = meteorological year.
 #' annual <- sapply(series, function(s) { rv = tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv = rv[!is.nan(rv)]; rv })
-#' lastYear <- as.integer(format(Sys.Date(), "%Y")) - 1
 #'
 #' ## How many months for 'lastYear' have data?
+#' lastYear <- as.integer(format(Sys.Date(), "%Y")) - 1
 #' sapply(inst[inst[[yearType]] %in% lastYear, series], function(s) sum(!is.na(s)))
 #' mapply(function(x, y) x[y][1L], annual, sapply(annual, function(s) { order(s, decreasing=TRUE) }))
 #'

@@ -4,7 +4,7 @@
 #'
 #' @param ensemble One of "cmip3" or "cmip5" coresponding to the appropriate IPCC model ensemble.
 #' @param baseline An integer year or, more typically, range of years on which the temperature anomalies will be centered. If \code{NULL}, no baseline centering is done, and the string "raw_" will be appended to the \code{ensemble} string before the model data is saved or loaded.
-#' @param save If \code{NULL}, retrieve model data without saving it; if \code{TRUE}, retrieve model data and save it as a combined R data set; if \code{FALSE}, load model data from a combined R data set.
+#' @param save If \code{NULL}, retrieve model data without saving it; if \code{TRUE}, retrieve model data and save it as a combined R data set; if \code{FALSE}, load model data from a combined R data set. The default is \code{FALSE}.
 #' @param subdir Corresponds to a subdirectory containing a specific set of model runs, with the CMIP3+ default "all members" almost always being preferred; likewise the CMIP5 default "all models".
 #' @param cmip3_raw Logical. The CMIP3+ "all models" data contains SRES A2 and SRES B1 scenario runs that typically begin in Jan. 2001, so they need to be centered differently from SRES B1; also, the 20C3M scenario runs typically end in Dec. 2000, which needs to be accounted for. If the \code{ensemble = "cmip3"} and \code{cmip3_raw = FALSE}, then these issues are handled automatically in the returned (NOT saved) data set.
 #' @param center_fun The function used to calculate the central tendency of the model runs at each time point; the default of \code{mean} is usually sufficient. It is used here specifically to line up some CMIP3+ scenario runs on a common baseline if \code{ensemble = "cmip3"} and \code{cmip3_raw = FALSE}, and should match the argument given to the parameter of the same name in a call to \code{\link{plot_models_and_climate_data}}, if plotting is done.
@@ -48,7 +48,7 @@
 #' }
 #'
 #' @export
-get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=NULL, data_dir, subdir=NULL, cmip3_raw=FALSE, center_fun="mean")
+get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FALSE, data_dir, subdir=NULL, cmip3_raw=FALSE, center_fun="mean")
 {
   if (missing(data_dir)) {
     if (!is.null(getOption("climeseries_models_dir")))
