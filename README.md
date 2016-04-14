@@ -8,6 +8,9 @@ install.packages("devtools") # If necessary.
 library(devtools)
 install_github("priscian/climeseries")
 library(climeseries)
+
+## Once the package has been installed as described above, all you need to use it is:
+library(climeseries)
 ```
 
 ## Using *climeseries*
