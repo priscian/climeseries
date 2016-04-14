@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## Preliminaries
-The *climeseries* R package is fairly to set up. In an R session:
+The *climeseries* R package is fairly easy to set up. In an R session:
 ```
 install.packages("devtools") # If necessary.
 library(devtools)
