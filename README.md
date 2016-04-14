@@ -44,6 +44,7 @@ plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ## Plot global instrumental temperature series with 95% confidence intervals.
 ########################################
 
+inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("Cowtan & Way Hybrid", "HadCRUT4")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 
@@ -51,6 +52,8 @@ plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 ## Plot all CMIP5 scenario realizations, no instrumental temperature series.
 ########################################
 
+inst <- get_climate_data(download=FALSE, baseline=TRUE)
+cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=FALSE)
 plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, end=2100, ma=12, baseline=NULL,
   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
 
@@ -58,6 +61,7 @@ plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, 
 ## CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.
 ########################################
 
+inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("GISTEMP")
 plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12,
   ma_i=12, baseline=1951:1980, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles",

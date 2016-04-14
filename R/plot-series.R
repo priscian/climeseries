@@ -370,11 +370,11 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #' plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, end=2100, ma=12, baseline=NULL,
 #'   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
 #'
-#' ## CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series, both with 95% confidence intervals.
+#' ## CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.
 #' series <- c("GISTEMP")
 #' plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12, ma_i=12,
 #'   baseline=1951:1980, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles", envelope_text="quantiles",
-#'   ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=NULL)
+#'   ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
 #'
 #' ## Same plot, different baseline:
 #' plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12, ma_i=12,
