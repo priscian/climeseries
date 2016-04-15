@@ -44,7 +44,7 @@ series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA",
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
 
-![Some major monthly global average temperature time series.](https://github.com/priscian/climeseries/blob/master/inst/images/monthly-temp-series_1880.1-2016.3_ma12_baseline1981-2010.png)
+![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-2016.3_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -56,7 +56,7 @@ series <- c("Cowtan & Way Hybrid", "HadCRUT4")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 ```
 
-![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](https://github.com/priscian/climeseries/blob/master/inst/images/CW14.ci-HadCRUT4_1880.1-2016.3_ma12_baseline1981-2010.png)
+![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4_1880.1-2016.3_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -69,7 +69,7 @@ plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, 
   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
 ```
 
-![CMIP5 scenario realizations.](https://github.com/priscian/climeseries/blob/master/inst/images/cmip5-realizations_1950-2100_ma12_baseline1981-2010.png)
+![CMIP5 scenario realizations.](inst/images/cmip5-realizations_1950-2100_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -84,7 +84,7 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", sta
   envelope_text="quantiles", ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
 ```
 
-![CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.](https://github.com/priscian/climeseries/blob/master/inst/images/cmip5-rcp45-realizations%2BGISTEMP_1880-2020_ma12_mai12_baseline1951-1980.png)
+![CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.](inst/images/cmip5-rcp45-realizations%2BGISTEMP_1880-2020_ma12_mai12_baseline1951-1980.png)
 
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
