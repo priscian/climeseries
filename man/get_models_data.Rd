@@ -5,7 +5,7 @@
 \title{Get CMIP Phase 3 or 5 Data from Stored Data}
 \usage{
 get_models_data(ensemble = c("cmip3", "cmip5"), baseline = NULL,
-  save = NULL, data_dir, subdir = NULL, cmip3_raw = FALSE,
+  save = FALSE, data_dir, subdir = NULL, cmip3_raw = FALSE,
   center_fun = "mean")
 }
 \arguments{
@@ -13,7 +13,7 @@ get_models_data(ensemble = c("cmip3", "cmip5"), baseline = NULL,
 
 \item{baseline}{An integer year or, more typically, range of years on which the temperature anomalies will be centered. If \code{NULL}, no baseline centering is done, and the string "raw_" will be appended to the \code{ensemble} string before the model data is saved or loaded.}
 
-\item{save}{If \code{NULL}, retrieve model data without saving it; if \code{TRUE}, retrieve model data and save it as a combined R data set; if \code{FALSE}, load model data from a combined R data set.}
+\item{save}{If \code{NULL}, retrieve model data without saving it; if \code{TRUE}, retrieve model data and save it as a combined R data set; if \code{FALSE}, load model data from a combined R data set. The default is \code{FALSE}.}
 
 \item{subdir}{Corresponds to a subdirectory containing a specific set of model runs, with the CMIP3+ default "all members" almost always being preferred; likewise the CMIP5 default "all models".}
 
