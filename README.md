@@ -84,7 +84,7 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", sta
   envelope_text="quantiles", ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
 ```
 
-![CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.](inst/images/cmip5-rcp45-realizations+GISTEMP_1880-2020_ma12_mai12_baseline1951-1980.png)
+![CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.](inst/images/cmip5-rcp45-realizations~GISTEMP_1880-2020_ma12_mai12_baseline1951-1980.png)
 
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
