@@ -64,8 +64,8 @@ plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
-cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=FALSE)
-plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, end=2100, ma=12, baseline=NULL,
+cmip5 <- get_models_data(ensemble="cmip5")
+plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, end=2100, ma=12, baseline=1981:2010,
   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
 ```
 
@@ -77,7 +77,7 @@ plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, 
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
-cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=FALSE)
+cmip5 <- get_models_data(ensemble="cmip5")
 series <- c("GISTEMP")
 plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12,
   ma_i=12, baseline=1951:1980, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles",

@@ -100,6 +100,7 @@ moving_average <- function(x, n, sides=1L, ...) { if (is.null(n)) return (x); r 
 MA <- moving_average
 
 
+#' @export
 interpNA <- function (x, method=c("linear", "before", "after"), ...)
 {
   if (!inherits(x, "matrix") && !inherits(x, "timeSeries"))
