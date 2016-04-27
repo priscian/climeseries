@@ -97,4 +97,4 @@ library(help=climeseries)
 from the R command line.
 
 ### Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Recent "climeseries" data sets](inst/extdata/latest/latest.zip?raw=true).
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Recent "climeseries" data sets](inst/extdata/latest/latest.zip?raw=true). Older data sets are [here](inst/extdata/latest), too.
