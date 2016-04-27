@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about your stupid program&mdash;where's the latest data?!
-Geez, okay, [here](raw/master/inst/extdata/latest/latest.zip).
+Geez, okay, [here](inst/extdata/latest/latest.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -97,4 +97,4 @@ library(help=climeseries)
 from the R command line.
 
 ### Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Recent "climeseries" data sets](raw/master/inst/extdata/latest/latest.zip).
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Recent "climeseries" data sets](inst/extdata/latest/latest.zip?raw=true).
