@@ -1,7 +1,7 @@
 # climeseries
 Download, aggregate, process, and display monthly climatological data.
 
-## I don't care about your stupid program---where's the latest data?!
+## I don't care about your stupid program&mdash;where's the latest data?!
 Geez, okay, [here](raw/master/inst/extdata/latest/latest.zip).
 
 ## Preliminaries
