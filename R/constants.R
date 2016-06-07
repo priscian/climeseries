@@ -47,7 +47,7 @@ defaultBaseline <- 1981:2010
 
 ## Some climatological time-series base URLs.
 gistempBase <- "http://data.giss.nasa.gov/gistemp/tabledata_v3/"
-hadcrutBase <- "http://www.cru.uea.ac.uk/cru/data/temperature/"
+hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
 esrlBase <- "http://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&lon1=-180&lon2=180&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&var=@@VAR@@"
 
@@ -57,11 +57,10 @@ instrumentalUrls <- list( # Last updated 24 Feb. 2016.
   `GISTEMP NH` = gistempBase %_% "NH.Ts+dSST.txt",
   NCEI = "http://www.ncdc.noaa.gov/cag/time-series/global/globe/land_ocean/p12/12/1880-2100.csv",
   # But...? ftp://ftp.ncdc.noaa.gov/pub/data/mlost/operational/products/aravg.mon.land_ocean.90S.90N.v3.5.4.201504.asc
-  HadCRUT3 = hadcrutBase %_% "HadCRUT3-gl.dat",
-  HadCRUT3v = hadcrutBase %_% "HadCRUT3v-gl.dat",
-  ## TODO: Change HadCRUT4 URL and processing, and also include uncertainties:
-  ## http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/HadCRUT.4.4.0.0.monthly_ns_avg.txt
-  HadCRUT4 = hadcrutBase %_% "HadCRUT4-gl.dat",
+  HadCRUT4 = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_ns_avg.txt",
+  `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_sh.txt",
+  `HadCRUT4 NH` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_nh.txt",
+  `HadCRUT4 Tropics` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_30S_30N.txt",
   `Cowtan & Way Hybrid` = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.txt",
   BEST = "http://berkeleyearth.lbl.gov/auto/Global/Land_and_Ocean_complete.txt",
   JMA = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/grid/gst_mon_1891_last.gz",

@@ -82,8 +82,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    HadCRUT3 =,
-    HadCRUT3v =,
+    `HadCRUT4 SH` =,
+    `HadCRUT4 NH` =,
+    `HadCRUT4 Tropics` =,
     HadCRUT4 = (function(p) {
       x <- NULL
 
@@ -93,20 +94,17 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         x <- read.table(p, header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
       }, error=Error, warning=Error)
 
-      y <- x[!duplicated(x[, 1L], fromLast=TRUE), ]
-      x <- x[!duplicated(x[, 1L]), ]
+      re <- "(\\d{4})/(\\d{2})"
+      yearMatches <- str_match(x$V1, re)
+      yearValue <- as.numeric(yearMatches[, 2L])
+      monthValue <- as.numeric(yearMatches[, 3L])
 
-      flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
-      for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
-      flit <- dplyr::arrange(flit, V1, month)
+      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
+      ## Apparently there are no missing values, so no need for their conversion to NA.
 
-      rawTemps <- reshape2::melt(y[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
-      for (i in names(rawTemps)) rawTemps[[i]] <- as.numeric(rawTemps[[i]])
-      rawTemps <- dplyr::arrange(rawTemps, V1, month)
-
-      d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
-      ## Missing values are given as "0.000", but it's possible for an anomaly to equal 0.0, so:
-      is.na(d$temp) <- d$temp == 0.000 & rawTemps$temp == 0
+      ## Add value of 95% total uncertainty to data frame.
+      ## "Columns 9 and 10 are the lower and upper bounds of the 95% confidence interval of the combination of measurement and sampling and bias uncertainties." From http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/series_format.html.
+      d[[series %_% "_uncertainty"]] <- x$V10 - x$V9
 
       return (d)
     })(path),
@@ -462,9 +460,10 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #'   \item{GISTEMP}{Goddard Institute for Space Studies (GISS) global average combined land+SST temperature anomaly.}
 #'   \item{GISTEMP NH}{GISS northern hemisphere average combined land+SST temperature anomaly.}
 #'   \item{GISTEMP SH}{GISS southern hemisphere average combined land+SST temperature anomaly.}
-#'   \item{HadCRUT3}{UK Met Office Hadley Centre global average combined land+SST temperature anomaly (deprecated).}
-#'   \item{HadCRUT3v}{UK Met Office Hadley Centre variance-adjusted global average combined land+SST temperature anomaly (deprecated).}
 #'   \item{HadCRUT4}{UK Met Office Hadley Centre global average combined land+SST temperature anomaly.}
+#'   \item{HadCRUT4 NH}{UK Met Office Hadley Centre northern hemisphere average combined land+SST temperature anomaly.}
+#'   \item{HadCRUT4 SH}{UK Met Office Hadley Centre southern hemisphere average combined land+SST temperature anomaly.}
+#'   \item{HadCRUT4 Tropics}{UK Met Office Hadley Centre tropics (30S–30N latitude) average combined land+SST temperature anomaly.}
 #'   \item{JMA}{Japan Meteorological Agency (JMA) global average combined land+SST temperature anomaly.}
 #'   \item{Keeling}{Scripps Institution of Oceanography CO2 measurements at Mauna Loa.}
 #'   \item{NCEI}{U.S. National Centers for Environmental Information (NCEI) global average combined land+SST temperature anomaly.}

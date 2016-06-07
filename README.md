@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Geez, okay, [here](inst/extdata/latest/climate-series_20160519.zip?raw=true).
+Geez, okay, [here](inst/extdata/latest/climate-series_20160607.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -47,7 +47,7 @@ series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA",
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
 
-![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-2016.3_ma12_baseline1981-2010.png)
+![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-2016.5_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -56,10 +56,10 @@ plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("Cowtan & Way Hybrid", "HadCRUT4")
-plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
+plot_climate_data(inst, series=series, 1850, ma=12, lwd=2, conf_int=TRUE, col=c("red", "blue"))
 ```
 
-![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4_1880.1-2016.3_ma12_baseline1981-2010.png)
+![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1880.1-2016.5_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -97,4 +97,4 @@ library(help=climeseries)
 from the R command line.
 
 ### Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160519.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160607.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
