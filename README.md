@@ -59,7 +59,7 @@ series <- c("Cowtan & Way Hybrid", "HadCRUT4")
 plot_climate_data(inst, series=series, 1850, ma=12, lwd=2, conf_int=TRUE, col=c("red", "blue"))
 ```
 
-![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1880.1-2016.5_ma12_baseline1981-2010.png)
+![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1850.1-2016.5_ma12_baseline1981-2010.png)
 
 ```
 ########################################
