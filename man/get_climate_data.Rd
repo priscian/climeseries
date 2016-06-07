@@ -34,9 +34,10 @@ A data frame containing monthly climatological data sets with the following colu
   \item{GISTEMP}{Goddard Institute for Space Studies (GISS) global average combined land+SST temperature anomaly.}
   \item{GISTEMP NH}{GISS northern hemisphere average combined land+SST temperature anomaly.}
   \item{GISTEMP SH}{GISS southern hemisphere average combined land+SST temperature anomaly.}
-  \item{HadCRUT3}{UK Met Office Hadley Centre global average combined land+SST temperature anomaly (deprecated).}
-  \item{HadCRUT3v}{UK Met Office Hadley Centre variance-adjusted global average combined land+SST temperature anomaly (deprecated).}
   \item{HadCRUT4}{UK Met Office Hadley Centre global average combined land+SST temperature anomaly.}
+  \item{HadCRUT4 NH}{UK Met Office Hadley Centre northern hemisphere average combined land+SST temperature anomaly.}
+  \item{HadCRUT4 SH}{UK Met Office Hadley Centre southern hemisphere average combined land+SST temperature anomaly.}
+  \item{HadCRUT4 Tropics}{UK Met Office Hadley Centre tropics (30S–30N latitude) average combined land+SST temperature anomaly.}
   \item{JMA}{Japan Meteorological Agency (JMA) global average combined land+SST temperature anomaly.}
   \item{Keeling}{Scripps Institution of Oceanography CO2 measurements at Mauna Loa.}
   \item{NCEI}{U.S. National Centers for Environmental Information (NCEI) global average combined land+SST temperature anomaly.}
