@@ -103,8 +103,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## Apparently there are no missing values, so no need for their conversion to NA.
 
       ## Add value of 95% total uncertainty to data frame.
-      ## "Columns 9 and 10 are the lower and upper bounds of the 95% confidence interval of the combination of measurement and sampling and bias uncertainties." From http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/series_format.html.
-      d[[series %_% "_uncertainty"]] <- x$V10 - x$V9
+      ## "Columns 9 and 10 are the lower and upper bounds of the 95% confidence interval of the combination of measurement and sampling and bias uncertainties. Columns 11 and 12 are the lower and upper bounds of the 95% confidence interval of the combined effects of all the uncertainties described in the HadCRUT4 error model (measurement and sampling, bias and coverage uncertainties)." From http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/series_format.html.
+      d[[series %_% "_uncertainty"]] <- x$V12 - x$V11
 
       return (d)
     })(path),
