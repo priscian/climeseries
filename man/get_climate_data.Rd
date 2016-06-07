@@ -37,14 +37,14 @@ A data frame containing monthly climatological data sets with the following colu
   \item{HadCRUT4}{UK Met Office Hadley Centre global average combined land+SST temperature anomaly.}
   \item{HadCRUT4 NH}{UK Met Office Hadley Centre northern hemisphere average combined land+SST temperature anomaly.}
   \item{HadCRUT4 SH}{UK Met Office Hadley Centre southern hemisphere average combined land+SST temperature anomaly.}
-  \item{HadCRUT4 Tropics}{UK Met Office Hadley Centre tropics (30Sâ€“30N latitude) average combined land+SST temperature anomaly.}
+  \item{HadCRUT4 Tropics}{UK Met Office Hadley Centre tropics (30S–30N latitude) average combined land+SST temperature anomaly.}
   \item{JMA}{Japan Meteorological Agency (JMA) global average combined land+SST temperature anomaly.}
   \item{Keeling}{Scripps Institution of Oceanography CO2 measurements at Mauna Loa.}
   \item{NCEI}{U.S. National Centers for Environmental Information (NCEI) global average combined land+SST temperature anomaly.}
   \item{NCEP Surface Air}{National Centers for Environmental Prediction (NCEP) NCEP/NCAR reanalysis estimate of global average surface air temperature.}
   \item{NCEP Surface Air NH}{NCEP/NCAR reanalysis estimate of northern hemisphere average surface air temperature.}
   \item{NCEP Surface Air SH}{NCEP/NCAR reanalysis estimate of southern hemisphere average surface air temperature.}
-  \item{RATPAC-A 850-300 mb}{NOAA's Radiosonde Atmospheric Temperature Products for Assessing Climate (RATPAC) global average tropospheric temperature anomaly (850â€“300 mb).}
+  \item{RATPAC-A 850-300 mb}{NOAA's Radiosonde Atmospheric Temperature Products for Assessing Climate (RATPAC) global average tropospheric temperature anomaly (850–300 mb).}
   \item{RSS TLT 3.3}{Remote Sensing Systems (RSS) Temperature Lower Troposphere (TLT) global average temperature anomaly (v. 3.3).}
   \item{RSS TMT 3.3}{RSS Temperature Middle Troposphere (TMT) global average temperature anomaly (v. 3.3).}
   \item{RSS TMT 4.0}{RSS Temperature Middle Troposphere (TMT) global average temperature anomaly (v. 4.0).}
