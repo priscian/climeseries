@@ -231,7 +231,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
   means <- unclass(by(d[[series]], d$year, mean, na.rm=TRUE))
   yearNames <- names(means)
   means <- as.vector(means); names(means) <- yearNames
-  means <- means[na.unwrap(means)]
+  means <- means[na_unwrap(means)]
   rates <- rep(NA, length(means))
   rates <- data.frame(rate=rates, lwr=rates, upr=rates)
   rownames(rates) <- names(means)
@@ -248,7 +248,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
   }
 
   if (is.null(start)) start <- head(years, 1L)
-  if (is.null(end)) end <- currentYear - 5
+  if (is.null(end)) end <- current_year - 5
 
   attr(rates, "series") <- series
   attr(rates, "trend_start") <- start
@@ -258,17 +258,17 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
   ccYears <- as.numeric(rownames(ccRates))[years <= end]
 
   plotArgs <- list(
-    x <- ccYears,
-    y <- ccRates[, "rate"],
-    type <- "o",
-    pch <- 16,
-    ylim <- c(-1.0, 1.0),
-    lwd <- 2,
-    col <- "black",
-    panel.first <- quote(abline(h=0.0, col='darkgray', lty="dashed")),
-    xlab <- "Start year of trend",
-    ylab <- expression(paste("Trend (", phantom(l) * degree, "C/dec.)", sep="")),
-    main <- "Linear Temperature Trend (" %_% series %_% ") + 95% CIs"
+    x = ccYears,
+    y = ccRates[, "rate"],
+    type = "o",
+    pch = 16,
+    ylim = c(-1.0, 1.0),
+    lwd = 2,
+    col = "black",
+    panel.first = quote(abline(h=0.0, col='darkgray', lty="dashed")),
+    xlab = "Start year of trend",
+    ylab = expression(paste("Trend (", phantom(l) * degree, "C/dec.)", sep="")),
+    main = "Linear Temperature Trend (" %_% series %_% ") + 95% CIs"
   )
   plotArgs <- modifyList(plotArgs, plot...)
 
