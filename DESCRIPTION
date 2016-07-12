@@ -1,11 +1,10 @@
 Package: climeseries
 Title: Download, Aggregate, Process, and Plot Monthly Climatological Data
-Version: 0.12.1
+Version: 0.12.2
 Authors@R: person("Jim", "Java", email = "priscian@gmail.com", role = c("aut", "cre"))
 Description: These are various functions for collecting, processing, and
     plotting monthly climatological data.
-Depends: R (>= 3.2.0)
-Imports: dplyr, grDevices, lubridate, RCurl, RColorBrewer, reshape2, scales, stringr, XML, zoo
+Depends: R (>= 3.2.0), dplyr, grDevices, lubridate, RCurl, RColorBrewer, reshape2, scales, stringr, XML, zoo
 Suggests: knitr, testthat, bfast, colorRamps, forecast, ggplot2, ggfortify, segmented
 VignetteBuilder: knitr
 License: Artistic-2.0
