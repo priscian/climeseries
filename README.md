@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Geez, okay, [here](inst/extdata/latest/climate-series_20160711.zip?raw=true).
+Geez, okay, [here](inst/extdata/latest/climate-series_20160712.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -43,7 +43,7 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA", "RSS TLT 3.3", "UAH TLT 6.0",
-  "RATPAC-A 850-300 mb")
+  "RATPAC-A 850-300 mb Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
 
@@ -97,4 +97,4 @@ library(help=climeseries)
 from the R command line.
 
 ### Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160711.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160712.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.

@@ -15,6 +15,25 @@ seqle <- function(x, incr=1)
 ## Find leading and trailing NAs in a vector; returns 'FALSE' for leading/trailing NAs, 'TRUE' for NA-enwrapped values.
 #' @export
 na_unwrap <- function(x, ...)
+  UseMethod("na_unwrap")
+
+
+#' @export
+na_unwrap.matrix <- function(x, ...)
+{
+  apply(apply(x, 2, na_unwrap.default), 1, any)
+}
+
+
+#' @export
+na_unwrap.data.frame <- function(x, ...)
+{
+  na_unwrap.matrix(x, ...)
+}
+
+
+#' @export
+na_unwrap.default <- function(x, ...)
 {
   nai <- na.omit(x)
   #s <- rle(attr(nai, "na.action")) # See external function definition.
@@ -129,4 +148,18 @@ interpNA <- function (x, method=c("linear", "before", "after"), ...)
   }
 
   x
+}
+
+
+## http://stackoverflow.com/questions/16357962/r-split-numeric-vector-at-position
+#' @export
+split_at <- function(x, pos, split_after=FALSE)
+{
+  unname(split(x, cumsum(seq_along(x) %in% (pos + as.integer(split_after)))))
+}
+
+
+merge_fun_factory <- function(by=intersect(names(x), names(y)), all=TRUE)
+{
+  function(x, y, ...) base::merge(x, y[c(by, setdiff(colnames(y), colnames(x)))], ..., by=by, all=all)
 }

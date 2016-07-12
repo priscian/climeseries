@@ -69,7 +69,7 @@ instrumentalUrls <- list( # Last updated 24 Feb. 2016.
   `RSS TMT 4.0` = rssBase %_% "RSS_Monthly_MSU_AMSU_Channel_TMT_Anomalies_Land_and_Ocean_v04_0.txt",
   `UAH TLT 5.6` = "http://www.nsstc.uah.edu/data/msu/t2lt/tltglhmam_5.6.txt",
   `UAH TLT 6.0` = "http://vortex.nsstc.uah.edu/data/msu/v6.0beta/tlt/tltglhmam_6.0beta5", # Updated 8 February 2016 from "beta4".
-  `RATPAC-A 850-300 mb` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt",
+  `RATPAC-A` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt",
   `NCEP Surface Air SH` = sub("@@LAT1@@", "0", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlBase))),
   `NCEP Surface Air NH` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "0", sub("@@VAR@@", "Air+Temperature", esrlBase))),
   `NCEP Surface Air` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlBase))),

@@ -268,28 +268,45 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `RATPAC-A 850-300 mb` = (function(p) {
+    `RATPAC-A` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
       tryCatch({
-        temp <- sub("^\\s", "#", readLines(p))
-        y <- read.fortran(tc <- textConnection(temp), format=c("2I4", "7F7.0"), header=FALSE, skip=skip, check.names=FALSE, comment.char="#"); close(tc)
+        flit <- readLines(p)
+        re <- "^\\s+(\\d{1})"
+        pressureLevels <- trimws(grep(re, flit, value=TRUE, perl=TRUE))
+        flit <- sub(re, "#\\1", flit)
+        flit <- gsub("\t", " ", flit) # Remove some curious tabs in the headers.
+        #flit <- sub("^\\s+", "", flit)
+        flit <- split_at(flit, grep("^#", flit, perl=TRUE))
+        y <- lapply(flit,
+          function(x)
+          {
+            r <- read.fortran(tc <- textConnection(x), format=c("2I4", "7F7.0"), header=TRUE, skip=skip, check.names=FALSE, comment.char="#"); close(tc)
+            ## Since the headers are read in badly, replace them outright.
+            names(r) <- c("year", "season", "NH", "SH", "Global", "Tropics", "NH Ex-Tropics", "SH Ex-Tropics", "20N-S")
+            r
+          }
+        )
       }, error=Error, warning=Error)
 
-      ## Use only mid-troposphere 850–300 mb readings here, but 'y' also contains 300–100 and 100–50 mb data.
-      z <- y[seq(nrow(y)/3), ]
-      z$month <- (z$V2 * 3) - 2 # V. http://www1.ncdc.noaa.gov/pub/data/ratpac/readme.txt
+      d <- mapply(pressureLevels, y,
+        FUN = function(l, y)
+        {
+          y$month <- (y$season * 3) - 2 # V. http://www1.ncdc.noaa.gov/pub/data/ratpac/readme.txt
+          flit <- expand.grid(month=1:12, year=unique(y$year))
+          flit <- merge(flit, y, by=c("year", "month"), all.x=TRUE)
+          d <- data.frame(year=flit$year, yr_part=flit$year + (2 * flit$month - 1)/24, month=flit$month, check.names=FALSE, stringsAsFactors=FALSE)
+          flit <- data.matrix(flit[, -(1:3)])
+          is.na(flit) <- flit == 999.000
+          d <- cbind(d, flit)
+          names(d)[!(names(d) %in% commonColumns)] <- paste("RATPAC-A", l, names(d)[!(names(d) %in% commonColumns)])
 
-      temp <- expand.grid(month=1:12, V1=unique(z$V1))
-      x <- merge(temp, z, by=c("V1", "month"), all.x=TRUE)
-      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$month - 1)/24, month=x$month, temp=x$V5, check.names=FALSE, stringsAsFactors=FALSE)
-      ## Missing values are given as "999.000".
-      is.na(d$temp) <- d$temp == 999.000
-
-      ## Remove trailing NA's.
-      d <- d[na_unwrap(d$temp), ]
+          d
+        }, SIMPLIFY = FALSE
+      )
 
       return (d)
     })(path),
@@ -345,35 +362,48 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
   else if (verbose) { cat("Done.", fill=TRUE); flush.console() }
 
   if (!is.null(d)) {
-    if (!is.null(baseline)) {
-      useBaseline <- TRUE
-      if (is.logical(baseline)) {
-        if (baseline)
-          baseline <- defaultBaseline
-        else {
-          useBaseline <- FALSE
-          d$base <- 0.0
-          baseline <- NULL
+    if (!is.data.frame(d))
+      d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(commonColumns), lapply(d, names))))), d)
+
+    climeNames <- !grepl("^yr_|^met_|^year|^month|_uncertainty$", names(d), d)
+    d[, climeNames] <- as.data.frame(apply(d[, climeNames, drop=FALSE], 2, # Weird results without 'as.data.frame()' here.
+      function(x)
+      {
+        if (!is.null(baseline)) {
+          useBaseline <- TRUE
+          if (is.logical(baseline)) {
+            if (baseline)
+              baseline <- defaultBaseline
+            else {
+              useBaseline <- FALSE
+              base <- rep(0.0, length(x))
+              baseline <- NULL
+            }
+          }
+
+          if (useBaseline) {
+            ## Calculate monthly average temperatures over baseline period.
+            flit <- x[d$year %in% baseline]
+            bma <- tapply(flit, d$month[d$year %in% baseline], mean, na.rm=TRUE)
+            base <- NA
+            null <- sapply(names(bma), function(x) { base[d$month == x] <<- bma[x] }); null <- NULL
+          }
         }
+        else
+          base <- rep(0.0, length(x))
+
+        ## Center anomalies on average baseline-period temperatures.
+        anom <- round(x - base, 3L)
+
+        anom
       }
+    ))
 
-      if (useBaseline) {
-        ## Calculate monthly average temperatures over baseline period.
-        flit <- subset(d, d$year %in% baseline)
-        bma <- tapply(flit$temp, flit$month, mean, na.rm=TRUE)
-        d$base <- NA
-        null <- sapply(names(bma), function(x) { d$base[d$month == x] <<- bma[x] }); null <- NULL
-      }
-    }
-    else
-      d$base <- 0.0
-
-    ## Center anomalies on average baseline-period temperatures.
-    d$anom <- round(d$temp - d$base, 3L)
-    d[[series]] <- d$anom
-
+    if (sum(climeNames, na.rm=TRUE) == 1L && names(d)[climeNames] == "temp")
+      d[[series]] <- d$temp
     d$met_year <- NA
 
+    d <- subset(d, na_unwrap(d[, !grepl("^yr_|^met_|^year|^month|_uncertainty$", names(d), d)]))
     attr(d, "baseline") <- baseline
   }
 
@@ -394,10 +424,11 @@ DownloadInstrumentalData <- function(paths, baseline, verbose, dataDir, filename
   d <- NULL
   for (i in ls(e)) {
     uncertainty <- grep("_uncertainty$", names(e[[i]]), value=TRUE)
+    climeNames <- names(e[[i]])[!grepl("^yr_|^met_|^year|^month|_uncertainty$|^temp$", names(e[[i]]))]
     if (is.null(d))
-      d <- e[[i]][, c(commonColumns, i, uncertainty)]
+      d <- e[[i]][, c(commonColumns, climeNames, uncertainty)]
     else
-      d <- merge(d, e[[i]][, c(commonColumns, i, uncertainty)], by=commonColumns, all=TRUE)
+      d <- merge(d, e[[i]][, c(commonColumns, climeNames, uncertainty)], by=commonColumns, all=TRUE)
   }
 
   attr(d, "baseline") <- NULL
@@ -492,7 +523,7 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' ## Which year is the warmest?
 #'
 #' inst <- get_climate_data(download=FALSE, baseline=TRUE)
-#' series <- setdiff(names(inst), c(commonColumns, c("Keeling")))
+#' series <- setdiff(names(inst), c(climeseries:::commonColumns, c("Keeling")))
 #' yearType <- "year" # "year" or "met_year" = meteorological year.
 #' annual <- sapply(series, function(s) { rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv })
 #'

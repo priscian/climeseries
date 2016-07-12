@@ -50,7 +50,7 @@ Readily displays annotated climate time series on a common plot with many config
 \dontrun{
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 
-series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA", "RSS TLT 3.3", "UAH TLT 6.0", "RATPAC-A 850-300 mb")
+series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA", "RSS TLT 3.3", "UAH TLT 6.0", "RATPAC-A 850-300 mb Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 
 ########################################
