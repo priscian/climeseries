@@ -69,7 +69,7 @@ e <- get_climate_data(download=FALSE, baseline=FALSE)
 ## Which year is the warmest?
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
-series <- setdiff(names(inst), c(climeseries:::commonColumns, c("Keeling")))
+series <- setdiff(names(inst), c(climeseries:::commonColumns, c("CO2 Mauna Loa")))
 yearType <- "year" # "year" or "met_year" = meteorological year.
 annual <- sapply(series, function(s) { rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv })
 

@@ -27,9 +27,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
   ## N.B. The monthly midpoint calculations below would be clearer, though no more correct, as (month_num - 0.5)/12; v. http://davidappell.blogspot.com/2015/05/wood-for-trees-you-cant-trust-it.html for an example.
   d <- switch(series,
+    `GISTEMP SH Land` =,
+    `GISTEMP NH Land` =,
+    `GISTEMP Global Land` =,
     `GISTEMP SH` =,
     `GISTEMP NH` =,
-    GISTEMP = (function(p) { # GISS is weirdly formatted, not conducive to easy reading.
+    `GISTEMP Global` = (function(p) { # GISS is weirdly formatted, not conducive to easy reading.
       x <- NULL
 
       yearGroups <- seq(1880, 2080, by=20)
@@ -56,24 +59,40 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       flit <- dplyr::arrange(flit, Year, month)
 
       d <- data.frame(year=flit$Year, yr_part=flit$Year + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
-      #d$temp <- gissGlobalMean + (d$temp / 100) # Don't need to do this.
-      #d$temp <- gissGlobalMean + round(rep(runif(12), length.out=length(d$temp)), 3) + (d$temp / 100) # For testing only.
       d$temp <- d$temp / 100
 
       return (d)
     })(path),
 
-    NCEI = (function(p) {
+    `NCEI US Avg. Temp.` =,
+    `NCEI US Max. Temp.` =,
+    `NCEI US Min. Temp.` =,
+    `NCEI US Precip.` =,
+    `NCEI US PDSI` =,
+    `NCEI US PHDI` =,
+    `NCEI US PMDI` =,
+    `NCEI US Palmer Z-Index` =,
+    `NCEI SH Land` =,
+    `NCEI NH Land` =,
+    `NCEI Global Land` =,
+    `NCEI SH Ocean` =,
+    `NCEI NH Ocean` =,
+    `NCEI Global Ocean` =,
+    `NCEI SH` =,
+    `NCEI NH` =,
+    `NCEI Global` = (function(p) {
       x <- NULL
 
       skip <- 3L # Changed from 2 (22 Mar. 2016).
+      if (type == "drought")
+        skip <- 2L
 
       tryCatch({
         x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
-      yearMatches <- str_match(x$Year, re)
+      yearMatches <- str_match(x[[1]], re) # Column name "Year" or "Date".
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(yearMatches[, 3L])
 
@@ -82,10 +101,14 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `HadSST3 SH` =,
+    `HadSST3 NH` =,
+    `HadSST3 Tropics` =,
+    `HadSST3 Global` =,
     `HadCRUT4 SH` =,
     `HadCRUT4 NH` =,
     `HadCRUT4 Tropics` =,
-    HadCRUT4 = (function(p) {
+    `HadCRUT4 Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -109,7 +132,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `Cowtan & Way Hybrid` = (function(p) {
+    `Cowtan & Way Krig. Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -131,7 +154,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    BEST = (function(p) {
+    `BEST Global Land` =,
+    `BEST SH Land` =,
+    `BEST NH Land` =,
+    `BEST US` =,
+    `BEST Antarctica` =,
+    `BEST Greenland` =,
+    `BEST Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -140,16 +169,36 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="%")
       }, error=Error, warning=Error)
 
-      x <- x[!duplicated(x[, c("V1", "V2")]), ]
+      dupIndex <- duplicated(x[, c("V1", "V2")])
+      if (any(dupIndex)) {
+        if (grepl("Land_and_Ocean_complete", path)) { # The Berkeley Earth Land + Ocean data set.
+          ## "with Sea Ice Temperature Inferred from Air Temperatures"
+          y <- x[!dupIndex, ]
+          d1 <- data.frame(year=y$V1, yr_part=y$V1 + (2 * y$V2 - 1)/24, month=y$V2, `BEST Global (Air Ice Temp.)`=y$V3, check.names=FALSE, stringsAsFactors=FALSE)
+          d1Series <- grep("^yr_|^met_|^year|^month|_uncertainty$", names(d1), value=TRUE, invert=TRUE)
+          d1[[d1Series %_% "_uncertainty"]] <- y$V4
 
-      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
-      ## "Uncertainties represent the 95% confidence interval for statistical and spatial undersampling effects as well as ocean biases." From http://berkeleyearth.lbl.gov/auto/Global/Land_and_Ocean_complete.txt.
-      d[[series %_% "_uncertainty"]] <- x$V4
+          ## "with Sea Ice Temperature Inferred from Water Temperatures"
+          y <- x[dupIndex, ]
+          d2 <- data.frame(year=y$V1, yr_part=y$V1 + (2 * y$V2 - 1)/24, month=y$V2, `BEST Global (Water Ice Temp.)`=y$V3, check.names=FALSE, stringsAsFactors=FALSE)
+          d2Series <- grep("^yr_|^met_|^year|^month|_uncertainty$", names(d2), value=TRUE, invert=TRUE)
+          d2[[d2Series %_% "_uncertainty"]] <- y$V4
+
+          d <- list(d1, d2); names(d) <- c(d1Series, d2Series)
+        }
+        else
+          stop("Unknown data set.")
+      }
+      else {
+        d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
+        ## "Uncertainties represent the 95% confidence interval for statistical and spatial undersampling effects as well as ocean biases." From http://berkeleyearth.lbl.gov/auto/Global/Land_and_Ocean_complete.txt.
+        d[[series %_% "_uncertainty"]] <- x$V4
+      }
 
       return (d)
     })(path),
 
-    JMA = (function(p) {
+    `JMA Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -217,53 +266,62 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `RSS TLT 3.3 Land` =,
+    `RSS TLT 3.3 Ocean` =,
     `RSS TLT 3.3` =,
+    `RSS TMT 3.3 Land` =,
+    `RSS TMT 3.3 Ocean` =,
     `RSS TMT 3.3` =,
+    `RSS TMT 4.0 Land` =,
+    `RSS TMT 4.0 Ocean` =,
     `RSS TMT 4.0` = (function(p) {
       x <- NULL
 
-      skip <- 5L
+      skip <- 3L
 
       tryCatch({
+        temp <- trimws(readLines(p, n=2L)) # I.e. 'skip - 1'.
+        temp[1] <- substring(temp[1], abs(diff(nchar(temp))))
+        flitNames <- paste(series, apply(read.table(text=temp, stringsAsFactors=FALSE), 2, paste, collapse=""))
+        flitNames <- gsub("\\.([A-Za-z])", ". \\1", flitNames) # Add spaces after periods preceding letters in column names.
+        flitNames <- gsub("/$", "", flitNames) # Remove any trailing '/' slashes from column names.
         x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
 
-      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
+      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
+      flit <- data.matrix(x[, -(1:2)])
       ## Missing values are given as "-99.9".
-      is.na(d$temp) <- d$temp == -99.90
+      is.na(flit) <- flit == -99.90
+      colnames(flit) <- flitNames
+      d <- cbind(d, flit)
 
       return (d)
     })(path),
 
-    `UAH TLT 5.6` = (function(p) {
-      x <- NULL
-
-      skip <- 5L
-
-      tryCatch({
-        x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="D") # "D" is a hack to skip over the "DECADAL TREND" summary at the end.
-      }, error=Error, warning=Error)
-
-      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
-      # Missing values are given as "-99.99".
-      is.na(d$temp) <- d$temp == -99.99
-
-      return (d)
-    })(path),
-
+    `UAH TMT 5.6` =,
+    `UAH TLT 5.6` =,
+    `UAH TMT 6.0` =,
     `UAH TLT 6.0` = (function(p) {
       x <- NULL
 
-      skip <- 4L
+      skip <- 1L
 
       tryCatch({
-        x <- read.fwf(p, widths=c(7L, 5L, 8L), header=FALSE, skip=skip, check.names=FALSE, comment.char="D") # "D" is a hack to skip over the "DECADAL TREND" summary at the end.
+        flit <- readLines(p)
+        flit <- flit[trimws(flit) != ""]
+        flit <- split_at(flit, which(duplicated(flit)))[[1]]
+        x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
-      x <- x[complete.cases(x), ] # Necessary because of the fixed-width column reading.
-      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
-      ## Missing values are given as "-999.000".
-      is.na(d$temp) <- d$temp == -999.000
+      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
+      flit <- data.matrix(x[, -(1:2)])
+      ## There are no missing values in these data sets, and no missing-value value is given.
+      #is.na(flit) <- flit == -99.99
+      colParts <- list(c("Global", "NH", "SH", "Tropics", "NH Extratropic", "SH Extratropic", "NH Polar", "SH Polar"), c("", " Land", " Ocean"))
+      colNames <- as.vector(t(outer(colParts[[1]], colParts[[2]], paste, sep=""))) # 't()' preserves the order.
+      colNames <- paste(series, c(colNames, "USA 48", "USA 48 + Alaska", "Australia"))
+      colnames(flit) <- colNames
+      d <- cbind(d, flit)
 
       return (d)
     })(path),
@@ -286,7 +344,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           {
             r <- read.fortran(tc <- textConnection(x), format=c("2I4", "7F7.0"), header=TRUE, skip=skip, check.names=FALSE, comment.char="#"); close(tc)
             ## Since the headers are read in badly, replace them outright.
-            names(r) <- c("year", "season", "NH", "SH", "Global", "Tropics", "NH Ex-Tropics", "SH Ex-Tropics", "20N-S")
+            names(r) <- c("year", "season", "NH", "SH", "Global", "Tropics", "NH Extratropic", "SH Extratropic", "20N-S")
             r
           }
         )
@@ -312,8 +370,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     })(path),
 
     `NCEP Surface Air SH` =,
+    `NCEP Surface Air SH Polar` =,
     `NCEP Surface Air NH` =,
-    `NCEP Surface Air` = (function(p) {
+    `NCEP Surface Air NH Polar` =,
+    `NCEP Surface Air Tropics` =,
+    `NCEP Surface Air USA 48` =,
+    `NCEP Surface Air Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -341,7 +403,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    Keeling = (function(p) {
+    `CO2 Mauna Loa` = (function(p) {
       x <- NULL
 
       skip <- 57L
@@ -523,7 +585,7 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' ## Which year is the warmest?
 #'
 #' inst <- get_climate_data(download=FALSE, baseline=TRUE)
-#' series <- setdiff(names(inst), c(climeseries:::commonColumns, c("Keeling")))
+#' series <- setdiff(names(inst), c(climeseries:::commonColumns, c("CO2 Mauna Loa")))
 #' yearType <- "year" # "year" or "met_year" = meteorological year.
 #' annual <- sapply(series, function(s) { rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv })
 #'

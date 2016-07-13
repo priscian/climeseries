@@ -50,14 +50,14 @@ Readily displays annotated climate time series on a common plot with many config
 \dontrun{
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 
-series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA", "RSS TLT 3.3", "UAH TLT 6.0", "RATPAC-A 850-300 mb Global")
+series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 70.0/82.5", "UAH TLT 6.0 Global", "RATPAC-A 850-300 mb Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 
 ########################################
 ## Plot instrumental series with 95\% confidence intervals.
 ########################################
 
-series <- c("Cowtan & Way Hybrid", "HadCRUT4")
+series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 
 ########################################
@@ -69,7 +69,7 @@ baseline <- TRUE
 d <- get_climate_data(download=FALSE, baseline=baseline)
 #d[d$month != 1, get_climate_series_names(d)] <- NA # Uncomment to pick out a single month or range of months.
 m <- list()
-m$series <- c("GISTEMP", "NCEI", "HadCRUT4", "RSS TLT 3.3", "UAH TLT 6.0")
+m$series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 70.0/82.5", "UAH TLT 6.0 Global")
 m$range <- list(start=1979, end=NULL) # Use 'start=2011' to cherry-pick a really rapid increase!
 m$col <- suppressWarnings(brewer.pal(length(m$series),"Paired"))
 #m$col <- topo.colors(length(m$series))
@@ -100,7 +100,7 @@ legend("bottomright", inset=c(0.2, 0.2), legend=legendText, col=m$col, lwd=2, bt
 baseline <- TRUE
 d <- get_climate_data(download=FALSE, baseline=baseline)
 m <- list()
-m$series <- c("GISTEMP", "NCEI", "HadCRUT4")
+m$series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global")
 m$range <- list(start=1880, end=NULL)
 m$col <- suppressWarnings(brewer.pal(length(m$series),"Paired"))
 length(m$col) <- length(m$series); names(m$col) <- m$series

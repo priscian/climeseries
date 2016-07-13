@@ -23,14 +23,14 @@
 #' \dontrun{
 #' inst <- get_climate_data(download=FALSE, baseline=TRUE)
 #'
-#' series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA", "RSS TLT 3.3", "UAH TLT 6.0", "RATPAC-A 850-300 mb Global")
+#' series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 70.0/82.5", "UAH TLT 6.0 Global", "RATPAC-A 850-300 mb Global")
 #' plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 #'
 #' ########################################
 #' ## Plot instrumental series with 95% confidence intervals.
 #' ########################################
 #'
-#' series <- c("Cowtan & Way Hybrid", "HadCRUT4")
+#' series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
 #' plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 #'
 #' ########################################
@@ -42,7 +42,7 @@
 #' d <- get_climate_data(download=FALSE, baseline=baseline)
 #' #d[d$month != 1, get_climate_series_names(d)] <- NA # Uncomment to pick out a single month or range of months.
 #' m <- list()
-#' m$series <- c("GISTEMP", "NCEI", "HadCRUT4", "RSS TLT 3.3", "UAH TLT 6.0")
+#' m$series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 70.0/82.5", "UAH TLT 6.0 Global")
 #' m$range <- list(start=1979, end=NULL) # Use 'start=2011' to cherry-pick a really rapid increase!
 #' m$col <- suppressWarnings(brewer.pal(length(m$series),"Paired"))
 #' #m$col <- topo.colors(length(m$series))
@@ -73,7 +73,7 @@
 #' baseline <- TRUE
 #' d <- get_climate_data(download=FALSE, baseline=baseline)
 #' m <- list()
-#' m$series <- c("GISTEMP", "NCEI", "HadCRUT4")
+#' m$series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global")
 #' m$range <- list(start=1880, end=NULL)
 #' m$col <- suppressWarnings(brewer.pal(length(m$series),"Paired"))
 #' length(m$col) <- length(m$series); names(m$col) <- m$series
@@ -143,7 +143,7 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
 
   xlab <- "Year"
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
-  main <- "Global Average Temperature"
+  main <- "Average Temperature"
   startTS <- start(w_ma); endTS <- end(w_ma)
   if (is.null(end)) endTS <- c(year(Sys.Date()), month(Sys.Date()) - 1)
   main <- paste(main, " (", MOS[startTS[2L]], ". ", startTS[1L], "\u2013", MOS[endTS[2L]], ". ", endTS[1L], ")", sep="")
@@ -325,10 +325,10 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
   return (rates)
 }
 ## usage:
-# rates <- plot_sequential_trend("RSS TLT 3.3")
-# rates <- plot_sequential_trend("GISTEMP", use_polygon=TRUE)
-# rates <- plot_sequential_trend("GISTEMP", use_polygon=FALSE, mark_years=c(1998))
-# rates <- plot_sequential_trend("GISTEMP", use_polygon=FALSE, mark_years=c(1998), use_current_year=TRUE)
+# rates <- plot_sequential_trend("RSS TLT 3.3 70.0/82.5")
+# rates <- plot_sequential_trend("GISTEMP Global", use_polygon=TRUE)
+# rates <- plot_sequential_trend("GISTEMP Global", use_polygon=FALSE, mark_years=c(1998))
+# rates <- plot_sequential_trend("GISTEMP Global", use_polygon=FALSE, mark_years=c(1998), use_current_year=TRUE)
 
 
 #' Plot Climatological Time Series with Model Results
@@ -372,7 +372,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
 #'
 #' ## CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.
-#' series <- c("GISTEMP")
+#' series <- c("GISTEMP Global")
 #' plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12, ma_i=12,
 #'   baseline=1951:1980, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles", envelope_text="quantiles",
 #'   ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())

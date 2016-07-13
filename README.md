@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Geez, okay, [here](inst/extdata/latest/climate-series_20160712.zip?raw=true).
+Geez, okay, [here](inst/extdata/latest/climate-series_20160713.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -42,8 +42,8 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
-series <- c("GISTEMP", "NCEI", "HadCRUT4", "Cowtan & Way Hybrid", "BEST", "JMA", "RSS TLT 3.3", "UAH TLT 6.0",
-  "RATPAC-A 850-300 mb Global")
+series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
+  "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 70.0/82.5", "UAH TLT 6.0 Global", "RATPAC-A 850-300 mb Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
 
@@ -55,7 +55,7 @@ plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
-series <- c("Cowtan & Way Hybrid", "HadCRUT4")
+series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
 plot_climate_data(inst, series=series, 1850, ma=12, lwd=2, conf_int=TRUE, col=c("red", "blue"))
 ```
 
@@ -81,7 +81,7 @@ plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, 
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 cmip5 <- get_models_data(ensemble="cmip5")
-series <- c("GISTEMP")
+series <- c("GISTEMP Global")
 plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12,
   ma_i=12, baseline=1951:1980, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles",
   envelope_text="quantiles", ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
@@ -97,4 +97,4 @@ library(help=climeseries)
 from the R command line.
 
 ### Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160712.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160713.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.

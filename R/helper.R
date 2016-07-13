@@ -44,15 +44,13 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 }
 
 ## usage:
-# [File: "HadCRUT3v-vs-CO2_1850-2015.png"]
-# rv <- correlate_co2_temperature("HadCRUT3v", 1850)
 # [File: "HadCRUT4-vs-CO2_1850-2015.png"]
-# rv <- correlate_co2_temperature("HadCRUT4", 1850)
+# rv <- correlate_co2_temperature("HadCRUT4 Global", 1850)
 # [File: "HadCRUT4-vs-CO2_1970-2015.png"]
-# rv <- correlate_co2_temperature("HadCRUT4", 1970)
+# rv <- correlate_co2_temperature("HadCRUT4 Global", 1970)
 # [File: "GISTEMP-vs-CO2_1880-2015.png"]
-# rv <- correlate_co2_temperature("GISTEMP", 1880)
+# rv <- correlate_co2_temperature("GISTEMP Global", 1880)
 # [File: "RATPAC-A 850-300 mb-vs-CO2_1958-2015.png"]
-# rv <- correlate_co2_temperature("RATPAC-A 850-300 mb", 1958)
+# rv <- correlate_co2_temperature("RATPAC-A 850-300 mb Global", 1958)
 # [File: "RSS TLT 3.3-vs-CO2_1979-2015.png"]
-# rv <- correlate_co2_temperature("RSS TLT 3.3", 1979)
+# rv <- correlate_co2_temperature("RSS TLT 3.3 70.0/82.5", 1979)
