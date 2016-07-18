@@ -4,7 +4,7 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
   d <- get_climate_data(download=download, baseline=baseline)
   e <- get_climate_data(download=download, baseline=FALSE)
 
-  dm1 <- data.matrix(e[e$year %in% ifelse(start_year < 1958, 1958, start_year):end_year, c(series, "Keeling")])
+  dm1 <- data.matrix(e[e$year %in% ifelse(start_year < 1958, 1958, start_year):end_year, c(series, "CO2 Mauna Loa")])
 
   colnames(dm1) <- c("temp", "co2")
   row.names(dm1) <- apply(e[e$year %in% ifelse(start_year < 1958, 1958, start_year):end_year, c("year", "month")], 1, paste, collapse=".")

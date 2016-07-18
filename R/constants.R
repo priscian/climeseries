@@ -94,6 +94,7 @@ instrumentalUrls <- list( # Last updated 24 Feb. 2016.
   `HadSST3 SH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
   `HadSST3 NH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
   `HadSST3 Tropics` = hadsstBase %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
+  ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Cowtan & Way
   `Cowtan & Way Krig. Global` = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.txt",
   ## BEST
