@@ -7,8 +7,9 @@
 plot_climate_data(x, series = NULL, start = 1880, end = NULL, ma = NULL,
   baseline = NULL, plot_type = c("single", "multiple"), type = "l",
   col = NULL, col_fun = RColorBrewer::brewer.pal, col_fun... = list(name =
-  "Paired"), alpha = 0.5, lwd = 2, omit_series = c("Keeling"),
-  conf_int = FALSE, ci_alpha = 0.3, ...)
+  "Paired"), alpha = 0.5, lwd = 2,
+  omit_series = climeseries:::omit_series, conf_int = FALSE,
+  ci_alpha = 0.3, show_trends = FALSE, ...)
 }
 \arguments{
 \item{x}{A data set (down)loaded by function \code{\link{get_climate_data}}.}

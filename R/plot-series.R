@@ -99,7 +99,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, baseline=NULL, plot_type=c("single", "multiple"), type="l", col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, omit_series=c("Keeling"), conf_int=FALSE, ci_alpha=0.3, ...)
+plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, baseline=NULL, plot_type=c("single", "multiple"), type="l", col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, omit_series=climeseries:::omit_series, conf_int=FALSE, ci_alpha=0.3, show_trends=FALSE, ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -218,7 +218,36 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
   plot(w_ma, plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.ts()'.
 
   legend(x="topleft", legend=series, col=col, lwd=lwd, bty="n", cex=0.8)
+
+  ## Decadal linear trends. Simple, but can be extended later for more control.
+  if (show_trends) {
+    m <- list()
+    m$series <- series
+    m$range <- list(start=start, end=end)
+    m$col <- col
+    m$data <- x[x$year >= ifelse(!is.null(m$range$start), m$range$start, -Inf) & x$year <= ifelse(!is.null(m$range$end), m$range$end, Inf), ]
+    for (s in m$series) {
+      m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data)
+      #summary(m[[s]]$lm)
+      m[[s]]$warming <- coef(m[[s]]$lm)[2] * diff(range(m[[s]]$lm$model[, 2]))
+      m[[s]]$rate <- coef(m[[s]]$lm)[2] * 10
+      m[[s]]$rateText <- eval(substitute(expression(paste(Delta, "T = ", r, phantom(l) * degree, "C/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="%+1.3f"))))
+      m[[s]]$col <- m$col[s]
+    }
+
+    legendText <- NULL
+    for (s in m$series) {
+      abline(coef(m[[s]]$lm)[1L], coef(m[[s]]$lm)[2L], col=m[[s]]$col, lwd=2)
+      legendText <- c(legendText, m[[s]]$rateText)
+    }
+
+    legend("bottomright", inset=c(0.2, 0.2), legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
+  }
+
+  return (nop())
 }
+
+omit_series <- c("CO2 Mauna Loa", "NCEI US Palmer Z-Index", "NCEI US PDSI", "NCEI US PHDI", "NCEI US PMDI", "NCEI US Precip." )
 
 
 ##  Plot sequential global annual mean surface-temp. trend with confidence intervals (via Chris Colose).
