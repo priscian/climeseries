@@ -141,11 +141,8 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
   if (!is.null(baseline))
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
 
-  xlab <- eval(xlab)
   if (is.null(ylab))
     ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
-  else
-    ylab <- eval(ylab)
   if (is.null(main))
     main <- "Average Temperature"
   startTS <- start(w_ma); endTS <- end(w_ma)
@@ -244,7 +241,8 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
       legendText <- c(legendText, m[[s]]$rateText)
     }
 
-    legend("bottomright", inset=trend_legend_inset, legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
+    if (!is.null(trend_legend_inset))
+      legend("bottomright", inset=trend_legend_inset, legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
   }
 
   return (nop())

@@ -148,6 +148,7 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   `Rutgers N. America Snow Cover` = list(path=rutgerssnowBase %_% "namgnld.txt", type="snow"),
   `Rutgers N. America (No Greenland) Snow Cover` = list(path=rutgerssnowBase %_% "nam.txt", type="snow"),
   `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar")
+  ## TODO: Ocean heat content, SLR.
 )
 
 commonColumns <- c("year", "met_year", "yr_part", "month")
