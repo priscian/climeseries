@@ -56,8 +56,9 @@ rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
 rssTlt <- "RSS_Monthly_MSU_AMSU_Channel_TLT_Anomalies_"; rssTmt <- "RSS_Monthly_MSU_AMSU_Channel_TMT_Anomalies_"
 esrlBase <- "http://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&lon1=@@LON1@@&lon2=@@LON2@@&var=@@VAR@@"
 esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
+rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 
-instrumentalUrls <- list( # Last updated 24 Feb. 2016.
+instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   ## GISTEMP
   `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.txt",
   `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.txt",
@@ -136,8 +137,17 @@ instrumentalUrls <- list( # Last updated 24 Feb. 2016.
   ## For the US: https://www.quora.com/What-is-the-longitude-and-latitude-of-a-bounding-box-around-the-continental-United-States
   `NCEP Surface Air USA 48` = sub("@@LON1", "-125", sub("@@LON2@@", "-70", sub("@@LAT1@@", "50", sub("@@LAT2@@", "25", sub("@@VAR@@", "Air+Temperature", esrlBase))))),
   ## CO2
-  `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/sites/default/files/data/in_situ_co2/monthly_mlo.csv", type="CO2") # Mauna Loa CO2 series.
+  `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/sites/default/files/data/in_situ_co2/monthly_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   ## Cape Grim: http://www.csiro.au/greenhouse-gases/GreenhouseGas/data/CapeGrim_CO2_data_download.txt
+  `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
+  `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
+  `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),
+  `TSI Reconstructed` = list(path="http://spot.colorado.edu/~koppg/TSI/TSI_TIM_Reconstruction.txt", type="solar"),
+  `Rutgers NH Snow Cover` = list(path=rutgerssnowBase %_% "nhland.txt", type="snow"),
+  `Rutgers Eurasia Snow Cover` = list(path=rutgerssnowBase %_% "eurasia.txt", type="snow"),
+  `Rutgers N. America Snow Cover` = list(path=rutgerssnowBase %_% "namgnld.txt", type="snow"),
+  `Rutgers N. America (No Greenland) Snow Cover` = list(path=rutgerssnowBase %_% "nam.txt", type="snow"),
+  `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar")
 )
 
 commonColumns <- c("year", "met_year", "yr_part", "month")

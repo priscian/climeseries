@@ -417,6 +417,129 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       is.na(d$temp) <- d$temp == -99.99
 
       return (d)
+    })(path),
+
+    `PIOMAS Arctic Sea Ice Volume` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
+      for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+      flit <- dplyr::arrange(flit, V1, month)
+
+      d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+      is.na(d$temp) <- d$temp == -1.0
+
+      return (d)
+    })(path),
+
+    `NSIDC Sea Ice` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- mapply(climeseries:::MOS, sprintf("%02d", seq_along(climeseries:::MOS)),
+          FUN = function(x, y)
+          {
+            r <- data.frame()
+            for (i in c("N", "S")) {
+              flit <- readLines(paste(p, x, paste(i, y, "area_v2.txt", sep="_"), sep="/"))
+              flit <- read.table(text=flit[!grepl("^\\s+", flit)], header=TRUE, check.names=FALSE)
+              r <- rbind(r, flit)
+            }
+
+            r
+          }, SIMPLIFY = FALSE
+        )
+      }, error=Error, warning=Error)
+
+      flit <- dplyr::arrange(Reduce(rbind, x), region, year, mo)
+      y <- data.frame(year=flit$year, month=flit$mo, region=flit$region %_% "H", check.names=FALSE, stringsAsFactors=FALSE)
+      flit <- data.matrix(flit[, -(1:4)])
+      is.na(flit) <- flit == -9999
+      y <- cbind(y, flit)
+      y <- by(y, y$region, identity, simplify=FALSE)
+
+      re <- "^(extent|area)"
+      for (i in names(y)) {
+        n <- names(y[[i]])
+        names(y[[i]])[grep(re, n, perl=TRUE)] <- paste(series, capwords(sub(re, i %_% " \\1", n[grep(re, n, perl=TRUE)])))
+      }
+      d <- base::merge(y[[1]][, -3], y[[2]][, -3], by=c("year", "month"), all=TRUE) # -3 means leave out column "region".
+      globalColumns <- paste(series, "Global", c("Extent", "Area"))
+      d[[globalColumns[1]]] <- rowSums(d[, grep("extent", names(d), ignore.case=TRUE)])
+      d[[globalColumns[2]]] <- rowSums(d[, grep("area", names(d), ignore.case=TRUE)])
+      d$yr_part <- d$year + (2 * d$month - 1)/24
+      d <- dplyr::arrange(d, yr_part)
+
+      return (d)
+    })(path),
+
+    `PMOD TSI` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, skip=1L, comment.char=";", check.names=FALSE, colClasses=c(V1="character"))
+      }, error=Error, warning=Error)
+
+      dates <- as.POSIXct(x$V2 * 86400, origin="1980-01-01")
+      d <- data.frame(year(dates), month(dates), check.names=FALSE, stringsAsFactors=FALSE)
+      flit <- data.matrix(x[, -(1:2)])
+      is.na(flit) <- flit < -98
+      d <- cbind(d, flit)
+      names(d) <- c("year", "month", "PMOD TSI (new VIRGO)", "PMOD TSI (orig. VIRGO)")
+
+      ## This data is daily, so it needs to be turned into monthly averages.
+      d <- cbind(d[!duplicated(d[, 1:2]), 1:2], Reduce(rbind, by(d[, -(1:2)], list(d$month, d$year), colMeans, na.rm=TRUE, simplify=FALSE)))
+
+      d$yr_part <- d$year + (2 * d$month - 1)/24
+
+      return (d)
+    })(path),
+
+    `TSI Reconstructed` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, comment.char=";", check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      yrs <- as.numeric(sub("(.+?)\\..+?", "\\1", x$V1, perl=TRUE))
+      d <- data.frame(year=yrs, month=6, temp=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
+      ## Since this is the oldest data set so far, make sure all months are accounted for at the start of the data set.
+      d <- base::merge(expand.grid(month=1:12, year=d$year), d, by=c("year", "month"), all=TRUE)
+      d$yr_part <- d$year + (2 * d$month - 1)/24
+
+      return (d)
+    })(path),
+
+    `Rutgers NH Snow Cover` =,
+    `Rutgers Eurasia Snow Cover` =,
+    `Rutgers N. America Snow Cover` =,
+    `Rutgers N. America (No Greenland) Snow Cover` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      d <- data.frame(year=x$V1, month=x$V2, yr_part=x$V1 + (2 * x$V2 - 1)/24, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
+
+      return (d)
+    })(path),
+
+    `NOAA Sunspot No.` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, comment.char="*")
+      }, error=Error, warning=Error)
+
+      d <- data.frame(year=x$V1, month=x$V2, yr_part=x$V1 + (2 * x$V2 - 1)/24, temp=x$V4, check.names=FALSE, stringsAsFactors=FALSE)
+
+      return (d)
     })(path)
   )
 
@@ -435,11 +558,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           useBaseline <- TRUE
           if (is.logical(baseline)) {
             if (baseline)
-              baseline <- defaultBaseline
+              baseline <<- defaultBaseline
             else {
               useBaseline <- FALSE
               base <- rep(0.0, length(x))
-              baseline <- NULL
+              baseline <<- NULL
             }
           }
 

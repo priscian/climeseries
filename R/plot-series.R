@@ -99,7 +99,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, baseline=NULL, plot_type=c("single", "multiple"), type="l", col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, omit_series=climeseries:::omit_series, conf_int=FALSE, ci_alpha=0.3, show_trend=FALSE, ...)
+plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, baseline=NULL, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, omit_series=climeseries:::omit_series, conf_int=FALSE, ci_alpha=0.3, show_trend=FALSE, trend_legend_inset=c(0.2, 0.2), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -141,9 +141,13 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
   if (!is.null(baseline))
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
 
-  xlab <- "Year"
-  ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
-  main <- "Average Temperature"
+  xlab <- eval(xlab)
+  if (is.null(ylab))
+    ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
+  else
+    ylab <- eval(ylab)
+  if (is.null(main))
+    main <- "Average Temperature"
   startTS <- start(w_ma); endTS <- end(w_ma)
   if (is.null(end)) endTS <- c(year(Sys.Date()), month(Sys.Date()) - 1)
   main <- paste(main, " (", MOS[startTS[2L]], ". ", startTS[1L], "\u2013", MOS[endTS[2L]], ". ", endTS[1L], ")", sep="")
@@ -240,7 +244,7 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
       legendText <- c(legendText, m[[s]]$rateText)
     }
 
-    legend("bottomright", inset=c(0.2, 0.2), legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
+    legend("bottomright", inset=trend_legend_inset, legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
   }
 
   return (nop())

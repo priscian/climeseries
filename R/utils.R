@@ -199,7 +199,7 @@ get_dots <- function(..., evaluate=FALSE)
 #' @export
 merge_fun_factory <- function(...)
 {
-  function(x, y) base::merge(x, y[, c(eval(get_dots(...)$arguments$by), setdiff(colnames(y), colnames(x)))], ...)
+  function(x, y) base::merge(x, y[, c(eval(get_dots(..., evaluate=TRUE)$evaluated$by), setdiff(colnames(y), colnames(x)))], ...)
 }
 
 
@@ -207,4 +207,17 @@ merge_fun_factory <- function(...)
 nop <- function(x=NULL)
 {
   return (invisible(x))
+}
+
+
+#' @export
+capwords <- function(s, strict = FALSE) {
+  cap <- function(s) paste(toupper(substring(s, 1L, 1L)), { s <- substring(s, 2L); if(strict) tolower(s) else s }, sep='', collapse=' ')
+  sapply(strsplit(s, split=' '), cap, USE.NAMES=!is.null(names(s)))
+}
+
+
+#' @export
+`%nin%` <- function(x, table) {
+  match(x, table, nomatch=0) == 0
 }
