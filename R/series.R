@@ -281,7 +281,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         temp <- trimws(readLines(p, n=2L)) # I.e. 'skip - 1'.
-        temp[1] <- substring(temp[1], abs(diff(nchar(temp))))
+        temp[1] <- trimws(substring(temp[1], abs(diff(nchar(temp))) - 1))
         flitNames <- paste(series, apply(read.table(text=temp, stringsAsFactors=FALSE), 2, paste, collapse=""))
         flitNames <- gsub("\\.([A-Za-z])", ". \\1", flitNames) # Add spaces after periods preceding letters in column names.
         flitNames <- gsub("/$", "", flitNames) # Remove any trailing '/' slashes from column names.
