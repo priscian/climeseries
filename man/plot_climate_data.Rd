@@ -4,7 +4,7 @@
 \alias{plot_climate_data}
 \title{Plot Climatological Time Series}
 \usage{
-plot_climate_data(x, series = NULL, start = 1880, end = NULL, ma = NULL,
+plot_climate_data(x, series = NULL, start = NULL, end = NULL, ma = NULL,
   baseline = NULL, plot_type = c("single", "multiple"), type = "l",
   xlab = "Year", ylab = NULL, main = NULL, col = NULL,
   col_fun = RColorBrewer::brewer.pal, col_fun... = list(name = "Paired"),

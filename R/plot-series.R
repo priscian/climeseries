@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, baseline=NULL, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, omit_series=climeseries:::omit_series, conf_int=FALSE, ci_alpha=0.3, show_trend=FALSE, trend_legend_inset=c(0.2, 0.2), ...)
+plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, baseline=NULL, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, omit_series=climeseries:::omit_series, conf_int=FALSE, ci_alpha=0.3, show_trend=FALSE, trend_legend_inset=c(0.2, 0.2), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -93,6 +93,8 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
 
   if (!is.null(baseline))
     x <- recenter_anomalies(x, baseline, conf_int=FALSE)
+
+  if (is.null(start)) start <- as.vector(data.matrix(head(x[, c("year")], 1)))
 
   s <- make_time_series_from_anomalies(x, conf_int=TRUE)
   s_yr_part <- ts(x[, "yr_part"], unlist(x[1L, c("year", "month")]), frequency=12)
@@ -121,7 +123,9 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
   if (is.null(main))
     main <- "Average Temperature"
   startTS <- start(w_ma); endTS <- end(w_ma)
-  if (is.null(end)) endTS <- c(year(Sys.Date()), month(Sys.Date()) - 1)
+  if (is.null(start)) startTS <- as.vector(data.matrix(head(x[, c("year", "month")], 1)))
+  #if (is.null(end)) endTS <- c(year(Sys.Date()), month(Sys.Date()) - 1)
+  if (is.null(end)) endTS <- as.vector(data.matrix(tail(x[, c("year", "month")], 1)))
   main <- paste(main, " (", MOS[startTS[2L]], ". ", startTS[1L], "\u2013", MOS[endTS[2L]], ". ", endTS[1L], ")", sep="")
 
   if (is.null(col)) {
@@ -201,7 +205,7 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
     m$series <- series
     m$range <- list(start=start, end=end)
     m$col <- col
-    m$data <- x[x$year >= ifelse(!is.null(m$range$start), m$range$start, -Inf) & x$year <= ifelse(!is.null(m$range$end), m$range$end, Inf), ]
+    m$data <- x[x$year >= ifelse(!is.null(m$range$start), m$range$start, -Inf) & x$year <= ifelse(!is.null(m$range$end), m$range$end, Inf), c(climeseries:::commonColumns, series)]
     for (s in m$series) {
       m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data)
       m[[s]]$warming <- coef(m[[s]]$lm)[2] * diff(range(m[[s]]$lm$model[, 2]))
