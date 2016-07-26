@@ -218,6 +218,8 @@ plot_climate_data <- function(x, series=NULL, start=1880, end=NULL, ma=NULL, bas
 
     if (!is.null(trend_legend_inset))
       legend("bottomright", inset=trend_legend_inset, legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
+
+    return (invisble(m))
   }
 
   return (nop())
