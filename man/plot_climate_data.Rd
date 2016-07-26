@@ -52,7 +52,7 @@ Readily displays annotated climate time series on a common plot with many config
 \dontrun{
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 
-series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 70.0/82.5", "UAH TLT 6.0 Global", "RATPAC-A 850-300 mb Global")
+series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global", "RATPAC-A 850-300 mb Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 
 ########################################
@@ -63,36 +63,11 @@ series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2, conf_int=TRUE)
 
 ########################################
-## Plot instrumental series and trend line. (N.B. I should build this into 'plot_climate_data()'.)
+## Plot instrumental series and trend line.
 ########################################
 
-## Prepare trend data.
-baseline <- TRUE
-d <- get_climate_data(download=FALSE, baseline=baseline)
-#d[d$month != 1, get_climate_series_names(d)] <- NA # Uncomment to pick out a single month or range of months.
-m <- list()
-m$series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 70.0/82.5", "UAH TLT 6.0 Global")
-m$range <- list(start=1979, end=NULL) # Use 'start=2011' to cherry-pick a really rapid increase!
-m$col <- suppressWarnings(brewer.pal(length(m$series),"Paired"))
-#m$col <- topo.colors(length(m$series))
-length(m$col) <- length(m$series); names(m$col) <- m$series
-m$data <- d[d$year >= ifelse(!is.null(m$range$start), m$range$start, -Inf) & d$year <= ifelse(!is.null(m$range$end), m$range$end, Inf), ]
-for (s in m$series) {
-  m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data)
-  summary(m[[s]]$lm)
-  m[[s]]$warming <- coef(m[[s]]$lm)[2] * diff(range(m[[s]]$lm$model[, 2]))
-  m[[s]]$rate <- coef(m[[s]]$lm)[2] * 10
-  m[[s]]$rateText <- eval(substitute(expression(paste(Delta, "T = ", r, phantom(l) * degree, "C/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="\%+1.3f"))))
-  m[[s]]$col <- m$col[s]
-}
-## Plot series and trends.
-plot_climate_data(d, m$series, m$range$start, m$range$end, ma=12, lwd=2, col=m$col, baseline=baseline)
-legendText <- NULL
-for (s in m$series) {
-  abline(coef(m[[s]]$lm)[1L], coef(m[[s]]$lm)[2L], col=m$col[s], lwd=2)
-  legendText <- c(legendText, m[[s]]$rateText)
-}
-legend("bottomright", inset=c(0.2, 0.2), legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
+series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global")
+plot_climate_data(inst, series=series, 1979, ma=12, lwd=2, show_trend=TRUE)
 
 ########################################
 ## Plot piecewise linear trends based on changepoint analysis (similar to Cahill et al. 2015, dx.doi.org/10.1088/1748-9326/10/8/084002).

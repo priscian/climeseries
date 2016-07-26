@@ -60,13 +60,15 @@ rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 
 instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   ## GISTEMP
-  `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.txt",
-  `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.txt",
-  `GISTEMP NH` = gistempBase %_% "NH.Ts+dSST.txt",
-  `GISTEMP Global Land` = gistempBase %_% "GLB.Ts.txt",
-  `GISTEMP SH Land` = gistempBase %_% "SH.Ts.txt",
-  `GISTEMP NH Land` = gistempBase %_% "NH.Ts.txt",
+  `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.csv",
+  `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.csv",
+  `GISTEMP NH` = gistempBase %_% "NH.Ts+dSST.csv",
+  `GISTEMP Global Land` = gistempBase %_% "GLB.Ts.csv",
+  `GISTEMP SH Land` = gistempBase %_% "SH.Ts.csv",
+  `GISTEMP NH Land` = gistempBase %_% "NH.Ts.csv",
   ## GISTEMP Zonal: http://data.giss.nasa.gov/gistemp/tabledata_v3/ZonAnn.Ts.txt (yearly only)
+  `GISTEMP Zonal` = gistempBase %_% "ZonAnn.Ts+dSST.csv",
+  `GISTEMP Zonal Land` = gistempBase %_% "ZonAnn.Ts.csv",
   ## NCEI
   `NCEI Global` = nceiBase %_% "global/globe/land_ocean" %_% nceiGlobalMonthly,
   `NCEI SH` = nceiBase %_% "global/shem/land_ocean" %_% nceiGlobalMonthly,
@@ -147,8 +149,10 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   `Rutgers Eurasia Snow Cover` = list(path=rutgerssnowBase %_% "eurasia.txt", type="snow"),
   `Rutgers N. America Snow Cover` = list(path=rutgerssnowBase %_% "namgnld.txt", type="snow"),
   `Rutgers N. America (No Greenland) Snow Cover` = list(path=rutgerssnowBase %_% "nam.txt", type="snow"),
-  `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar")
-  ## TODO: Ocean heat content, SLR.
+  `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar"),
+  ## CSIRO GMSL
+  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level")
+  ## TODO: Ocean heat content.
 )
 
 commonColumns <- c("year", "met_year", "yr_part", "month")

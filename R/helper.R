@@ -53,4 +53,4 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 # [File: "RATPAC-A 850-300 mb-vs-CO2_1958-2015.png"]
 # rv <- correlate_co2_temperature("RATPAC-A 850-300 mb Global", 1958)
 # [File: "RSS TLT 3.3-vs-CO2_1979-2015.png"]
-# rv <- correlate_co2_temperature("RSS TLT 3.3 70.0/82.5", 1979)
+# rv <- correlate_co2_temperature("RSS TLT 3.3 -70.0/82.5", 1979)

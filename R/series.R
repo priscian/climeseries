@@ -32,15 +32,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `GISTEMP Global Land` =,
     `GISTEMP SH` =,
     `GISTEMP NH` =,
-    `GISTEMP Global` = (function(p) { # GISS is weirdly formatted, not conducive to easy reading.
+    `GISTEMP Global` = (function(p) { # GISS .TXT files are weirdly formatted, so use the .CSVs instead.
       x <- NULL
 
-      yearGroups <- seq(1880, 2080, by=20)
-      groupLength <- 22
-      skip <- 7L # Skip over notes at start of data.
-      ## Must read only a specific number of rows before the trailing notes:
-      numRows <- nearest_below(yearGroups, current_year) * groupLength - (nearest_above(yearGroups, current_year, TRUE) - current_year) - skip
-      gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
+      skip <- 1L
 
       ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
       ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
@@ -48,18 +43,38 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
         r <- getURL(p, curl=curl)
-        x <- read.table(tc <- textConnection(r), header=TRUE, as.is=TRUE, na.strings=c("***", "****"), skip=skip, nrow=numRows, check.names=FALSE); close(tc)
+        x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
-
-      ## Remove duplicate rows with repeated column names.
-      x <- x[!(duplicated(x) | duplicated(x, fromLast=TRUE)), ]
 
       flit <- reshape2::melt(x[, 1L:13L], id.vars="Year", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
       flit <- dplyr::arrange(flit, Year, month)
 
       d <- data.frame(year=flit$Year, yr_part=flit$Year + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
-      d$temp <- d$temp / 100
+
+      return (d)
+    })(path),
+
+    `GISTEMP Zonal` =,
+    `GISTEMP Zonal Land` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
+      ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
+      curl <- getCurlHandle()
+      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+      tryCatch({
+        r <- getURL(p, curl=curl)
+        x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      flit <- x[, -1]
+      colnames(flit) <- paste(series, colnames(flit))
+      d <- cbind(data.frame(year=x$Year, month=6, check.names=FALSE, stringsAsFactors=FALSE), flit)
+      d <- base::merge(expand.grid(month=1:12, year=d$year), d, by=c("year", "month"), all=TRUE)
+      d$yr_part <- d$year + (2 * d$month - 1)/24
 
       return (d)
     })(path),
@@ -538,6 +553,25 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       d <- data.frame(year=x$V1, month=x$V2, yr_part=x$V1 + (2 * x$V2 - 1)/24, temp=x$V4, check.names=FALSE, stringsAsFactors=FALSE)
+
+      return (d)
+    })(path),
+
+    `CSIRO Global Mean Sea Level` = (function(p) {
+      x <- NULL
+
+      skip <- 1L # Ignore header
+
+      tryCatch({
+        x <- read.csv(p, header=FALSE, skip=skip, check.names=FALSE, na.strings="#N/A")
+      }, error=Error, warning=Error)
+
+      re <- "(\\d{4})\\.(\\d{3})"
+      yearMatches <- str_match(x$V1, re)
+      yearValue <- as.numeric(yearMatches[, 2L])
+      monthValue <- as.numeric(factor(yearMatches[, 3L]))
+
+      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
 
       return (d)
     })(path)
