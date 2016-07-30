@@ -523,6 +523,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       yrs <- as.numeric(sub("(.+?)\\..+?", "\\1", x$V1, perl=TRUE))
       d <- data.frame(year=yrs, month=6, temp=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
+      ## Remove any duplicated years (which seems to be a problem).
+      d <- subset(d, !duplicated(d[, "year"]))
       ## Since this is the oldest data set so far, make sure all months are accounted for at the start of the data set.
       d <- base::merge(expand.grid(month=1:12, year=d$year), d, by=c("year", "month"), all=TRUE)
       d$yr_part <- d$year + (2 * d$month - 1)/24
@@ -574,7 +576,32 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
 
       return (d)
-    })(path)
+    })(path),
+
+    `Antarctica Land Ice Mass Variation` =,
+    `Greenland Land Ice Mass Variation` = (function(p) {
+      ## N.B. This is very hacky, scraping the JSON from NASA's Web page, but it will eventually be replaced by averaged gridded data.
+      parsedUrl <- strsplit(p, "\\?")[[1]]
+      p <- parsedUrl[1]; land <- parsedUrl[2]
+
+      curl <- getCurlHandle()
+      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+      tryCatch({
+        r <- getURLContent(p, curl=curl)
+        x <- grep("createData\\(\"LandIce" %_% land, strsplit(r, "\n")[[1]], value=TRUE, perl=TRUE)
+        flit <- fromJSON(sub("^.+?createData\\(\"LandIce" %_% land %_% "\",(\\[.+?\\]).+?$", "\\1", x, perl=TRUE))
+      }, error=Error, warning=Error)
+
+      flit <- as.data.frame(data.matrix(flit[, c("year", "month", "y", "y_margin_max", "y_margin_min")]))
+
+      d <- data.frame(year=flit$year, yr_part=flit$year + (2 * flit$month - 1)/24, month=flit$month, temp=flit$y, check.names=FALSE, stringsAsFactors=FALSE)
+      d[[series %_% "_uncertainty"]] <- flit$y_margin_max - flit$y_margin_min
+
+      ## For multiple readings in a single month, keep only the first reading. (I have to sacrifice either the value or the error.)
+      d <- subset(d, !duplicated(d[, c("year", "month")]))
+
+      return (d)
+    })(path),
   )
 
   if (is.null(d) && verbose) tryCatch(message(""), message=Error)
@@ -583,6 +610,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
   if (!is.null(d)) {
     if (!is.data.frame(d))
       d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(commonColumns), lapply(d, names))))), d)
+
+    if (any(duplicated(d[, c("year", "month"), drop=FALSE]))) stop("Data set has duplicated year/month rows.")
 
     climeNames <- !grepl("^yr_|^met_|^year|^month|_uncertainty$", names(d), d)
     d[, climeNames] <- as.data.frame(apply(d[, climeNames, drop=FALSE], 2, # Weird results without 'as.data.frame()' here.

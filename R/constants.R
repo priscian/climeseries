@@ -59,6 +59,9 @@ esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 
 instrumentalUrls <- list( # Last updated 20 Jul. 2016.
+  ## Land Ice Mass
+  `Greenland Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Greenland", type="land ice"),
+  `Antarctica Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Antarctica", type="land ice"),
   ## GISTEMP
   `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.csv",
   `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.csv",
