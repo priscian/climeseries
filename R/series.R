@@ -142,7 +142,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       ## Add value of 95% total uncertainty to data frame.
       ## "Columns 9 and 10 are the lower and upper bounds of the 95% confidence interval of the combination of measurement and sampling and bias uncertainties. Columns 11 and 12 are the lower and upper bounds of the 95% confidence interval of the combined effects of all the uncertainties described in the HadCRUT4 error model (measurement and sampling, bias and coverage uncertainties)." From http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/series_format.html.
-      d[[series %_% "_uncertainty"]] <- x$V12 - x$V11
+      ## [23 Aug. 2016] But even the Met Office doesn't use the full uncertainty ensemble here: http://www.metoffice.gov.uk/research/monitoring/climate/surface-temperature.
+      d[[series %_% "_uncertainty"]] <- x$V10 - x$V9
+      #d[[series %_% "_uncertainty"]] <- x$V12 - x$V11
 
       return (d)
     })(path),
@@ -182,6 +184,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="%")
+        dev_null <- sapply(names(x), function(y) is.na(x[[y]]) <<- is.nan(x[[y]]))
       }, error=Error, warning=Error)
 
       dupIndex <- duplicated(x[, c("V1", "V2")])
@@ -224,7 +227,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         con <- file(flit) # R does transparent decompression of certain compressed files, e.g. ".gz".
         comments <- str_extract(readLines(con), "^#.*$")
         comments <- comments[!is.na(comments)]
-        m <- read.table(tc <- textConnection(comments), comment.char=""); close(tc) # 'm' for "meta".
+        m <- read.table(text=comments, comment.char="") # 'm' for "meta".
         x <- read.table(con, skip=skip, comment.char="#")
         unlink(flit)
       }, error=Error, warning=Error)
@@ -332,7 +335,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       flit <- data.matrix(x[, -(1:2)])
       ## There are no missing values in these data sets, and no missing-value value is given.
       #is.na(flit) <- flit == -99.99
-      colParts <- list(c("Global", "NH", "SH", "Tropics", "NH Extratropic", "SH Extratropic", "NH Polar", "SH Polar"), c("", " Land", " Ocean"))
+      colParts <- list(c("Global", "NH", "SH", "Tropics", "NH Extratropics", "SH Extratropics", "NH Polar", "SH Polar"), c("", " Land", " Ocean"))
       colNames <- as.vector(t(outer(colParts[[1]], colParts[[2]], paste, sep=""))) # 't()' preserves the order.
       colNames <- paste(series, c(colNames, "USA 48", "USA 48 + Alaska", "Australia"))
       colnames(flit) <- colNames
@@ -341,15 +344,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `RATPAC-A` = (function(p) {
+    `RATPAC-A Seasonal Layers` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
       tryCatch({
-        flit <- readLines(p)
+        tempFile <- tempfile()
+        download.file(p, tempFile, quiet=TRUE)
+        con <- unz(tempFile, "RATPAC-A-seasonal-layers.txt")
+        flit <- readLines(con)
+        close(con); unlink(tempFile)
         re <- "^\\s+(\\d{1})"
-        pressureLevels <- trimws(grep(re, flit, value=TRUE, perl=TRUE))
+        pressureLayers <- trimws(grep(re, flit, value=TRUE, perl=TRUE))
         flit <- sub(re, "#\\1", flit)
         flit <- gsub("\t", " ", flit) # Remove some curious tabs in the headers.
         #flit <- sub("^\\s+", "", flit)
@@ -358,14 +365,15 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           function(x)
           {
             r <- read.fortran(tc <- textConnection(x), format=c("2I4", "7F7.0"), header=TRUE, skip=skip, check.names=FALSE, comment.char="#"); close(tc)
+
             ## Since the headers are read in badly, replace them outright.
-            names(r) <- c("year", "season", "NH", "SH", "Global", "Tropics", "NH Extratropic", "SH Extratropic", "20N-S")
+            names(r) <- c("year", "season", "NH", "SH", "Global", "Tropics", "NH Extratropics", "SH Extratropics", "20N-S")
             r
           }
         )
       }, error=Error, warning=Error)
 
-      d <- mapply(pressureLevels, y,
+      d <- mapply(pressureLayers, y,
         FUN = function(l, y)
         {
           y$month <- (y$season * 3) - 2 # V. http://www1.ncdc.noaa.gov/pub/data/ratpac/readme.txt
@@ -376,6 +384,50 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           is.na(flit) <- flit == 999.000
           d <- cbind(d, flit)
           names(d)[!(names(d) %in% commonColumns)] <- paste("RATPAC-A", l, names(d)[!(names(d) %in% commonColumns)])
+
+          d
+        }, SIMPLIFY = FALSE
+      )
+
+      return (d)
+    })(path),
+
+    `RATPAC-A Annual Levels` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        tempFile <- tempfile()
+        download.file(p, tempFile, quiet=TRUE)
+        con <- unz(tempFile, "RATPAC-A-annual-levels.txt")
+        flit <- readLines(con)
+        close(con); unlink(tempFile)
+        re <- "^\\s+(\\D{1})"
+        regions <- sub("\\s*(-)\\s*", "\\1", trimws(grep(re, flit, value=TRUE, perl=TRUE)), perl=TRUE)
+        flit <- sub(re, "#\\1", flit)
+        flit <- split_at(flit, grep("^#", flit, perl=TRUE))
+        y <- lapply(flit,
+          function(x)
+          {
+            r <- read.table(text=x, header=TRUE, skip=skip, check.names=FALSE, comment.char="#")
+
+            r
+          }
+        )
+      }, error=Error, warning=Error)
+
+      d <- mapply(regions, y,
+        FUN = function(l, y)
+        {
+          y$month <- 6
+          flit <- expand.grid(month=1:12, year=unique(y$year))
+          flit <- merge(flit, y, by=c("year", "month"), all.x=TRUE)
+          d <- data.frame(year=flit$year, yr_part=flit$year + (2 * flit$month - 1)/24, month=flit$month, check.names=FALSE, stringsAsFactors=FALSE)
+          flit <- data.matrix(flit[, -(1:3)])
+          is.na(flit) <- flit == 999.000
+          d <- cbind(d, flit)
+          names(d)[!(names(d) %in% commonColumns)] <- paste("RATPAC-A", names(d)[!(names(d) %in% commonColumns)], "mb", l)
 
           d
         }, SIMPLIFY = FALSE
@@ -404,7 +456,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         pre <- XML::xpathSApply(pageTree, "//*/pre", xmlValue)
         ## Clean up the table by removing descriptive text.
         tab <- gsub("^(?!\\d{4}\\s+).*$", "", strsplit(pre, '\n')[[1L]], perl=TRUE)
-        x <- read.table(tc <- textConnection(tab), header=FALSE, skip=skip, fill=TRUE, check.names=FALSE); close(tc)
+        x <- read.table(text=tab, header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
       }, error=Error, warning=Error)
 
       flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")

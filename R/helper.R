@@ -54,3 +54,98 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 # rv <- correlate_co2_temperature("RATPAC-A 850-300 mb Global", 1958)
 # [File: "RSS TLT 3.3-vs-CO2_1979-2015.png"]
 # rv <- correlate_co2_temperature("RSS TLT 3.3 -70.0/82.5", 1979)
+
+
+#' @export
+#' @import data.table
+plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE)
+{
+  library(directlabels)
+
+  inst <- get_climate_data(download=FALSE, baseline=baseline)
+
+  d <- inst[, c("year", "month", series)]
+  d <- subset(d, na_unwrap(d[, series]))
+  d1 <- tbl_dt(dcast(d, year ~ month, value.var=series))
+  d2 <- data.table::copy(d1)
+  ## Calculate cumulative average by row.
+  d2[, names(d2[, !1, with=FALSE]) := as.list((function(x) { cumsum(as.matrix(x)[1, ]) / seq_along(x) })(.SD)), .SDcols=names(d2[, !1, with=FALSE]), by=1:nrow(d2)]
+  ## Melt data set for plotting.
+  d3 <- dplyr::arrange(data.table::melt(d2, id.vars=c("year"), variable.name="month", value.name="YTD mean temp."), year, month)
+  d4 <- data.table::copy(d2)
+  d4[, `latest YTD mean temp.` := as.list((function(x) { y <- as.matrix(x)[1, ]; tail(y[!is.na(y)], 1) })(.SD)), .SDcols=names(d4[, !1, with=FALSE]), by=1:nrow(d4)]
+  d4 <- dplyr::arrange(d4[, .(year, `latest YTD mean temp.`)], dplyr::desc(`latest YTD mean temp.`))
+
+  ## Top n warmest years:
+  if (!is.null(top_n_years)) {
+    if (top_n_years < 0)
+      d4 <- tail(d4, -top_n_years)
+    else
+      d4 <- head(d4, top_n_years)
+
+    d3 <- d3[year %in% d4$year, ]
+  }
+
+  subtitle <- paste(series, min(d4$year), "\u2013", max(d4$year), sep="")
+  baselineText <- " w.r.t. " %_% 1981 %_% "\u2013" %_% 2010
+  ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
+  g <- ggplot(d3, aes(x=month, y=`YTD mean temp.`, group=factor(year), color=factor(year))) +
+    geom_line() +
+    scale_colour_discrete(guide="none") +
+    scale_x_discrete(expand=c(0, 1)) +
+    geom_dl(aes(label=year), method = list(dl.trans(x=x + 0.2), "last.points", cex = 0.8)) +
+    # coord_cartesian(ylim(c(-4, 4)) + # No clipping.
+    labs(list(title="Year-to-Date Temperature Anomalies", subtitle=subtitle, y=ylab))
+
+  print(g)
+
+  return(d4)
+}
+
+## usage:
+# plot_horse_race("GISTEMP Global")
+# plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+
+
+#' @export
+get_old_gistemp <- function(series="GISTEMP Global Land 1998", uri="http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt")
+{
+  Error <- function(e) {
+    cat(series %_% " series not available.", fill=TRUE)
+  }
+
+  x <- NULL
+
+  gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
+
+  ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
+  ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
+  curl <- getCurlHandle()
+  curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+  tryCatch({
+    r <- getURL(uri, curl=curl)
+    tab <- gsub("^(?!\\d{4}\\s+).*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
+    tab <- tab[tab != ""]
+    x <- read.table(text=tab, header=FALSE, as.is=TRUE, na.strings=c("***", "****"), skip=0L, check.names=FALSE)
+  }, error=Error, warning=Error)
+
+  flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
+  for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+  flit <- dplyr::arrange(flit, V1, month)
+
+  d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+  #d$temp <- gissGlobalMean + (d$temp / 100) # Don't need to do this.
+  #d$temp <- gissGlobalMean + round(rep(runif(12), length.out=length(d$temp)), 3) + (d$temp / 100) # For testing only.
+  d$temp <- d$temp / 100
+
+  names(d)[names(d) == "temp"] <- series
+
+  return (d)
+}
+
+## usage:
+# inst <- get_climate_data(download=FALSE, baseline=FALSE)
+# g <- get_old_gistemp()
+# d <- recenter_anomalies(merge(inst, g, all=TRUE), 1951:1980) # Should be the same baseline, but make sure.
+# series <- c("GISTEMP Global Land", "GISTEMP Global Land 1998")
+# plot_climate_data(d, series=series, ma=12, lwd=2, conf_int=FALSE, show_trend=TRUE)

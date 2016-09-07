@@ -69,7 +69,6 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   `GISTEMP Global Land` = gistempBase %_% "GLB.Ts.csv",
   `GISTEMP SH Land` = gistempBase %_% "SH.Ts.csv",
   `GISTEMP NH Land` = gistempBase %_% "NH.Ts.csv",
-  ## GISTEMP Zonal: http://data.giss.nasa.gov/gistemp/tabledata_v3/ZonAnn.Ts.txt (yearly only)
   `GISTEMP Zonal` = gistempBase %_% "ZonAnn.Ts+dSST.csv",
   `GISTEMP Zonal Land` = gistempBase %_% "ZonAnn.Ts.csv",
   ## NCEI
@@ -130,8 +129,8 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   `UAH TLT 6.0` = "http://vortex.nsstc.uah.edu/data/msu/v6.0beta/tlt/uahncdc_lt_6.0beta5.txt",
   `UAH TMT 6.0` = "http://vortex.nsstc.uah.edu/data/msu/v6.0beta/tmt/uahncdc_mt_6.0beta5.txt",
   ## RATPAC
-  `RATPAC-A` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt",
-  # http://www1.ncdc.noaa.gov/pub/data/ratpac/v2beta/
+  `RATPAC-A Seasonal Layers` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt.zip", # Version 2; Version 1 is now deprecated (6 Sep. 2016).
+  `RATPAC-A Annual Levels` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-annual-levels.txt.zip",
   ## NCEP
   `NCEP Surface Air SH` = sub("@@LAT1@@", "0", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
   `NCEP Surface Air SH Polar` = sub("@@LAT1@@", "-60", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
@@ -156,6 +155,7 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   ## CSIRO GMSL
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level")
   ## TODO: Ocean heat content.
+  # http://www.esrl.noaa.gov/psd/data/timeseries/AMO/
 )
 
 commonColumns <- c("year", "met_year", "yr_part", "month")

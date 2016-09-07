@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Geez, okay, [here](inst/extdata/latest/climate-series_20160730.zip?raw=true).
+Geez, okay, [here](inst/extdata/latest/climate-series_20160907.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -97,7 +97,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160730.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20160907.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -216,26 +216,110 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. PIOMAS Arctic Sea Ice Volume
 1. PMOD TSI (new VIRGO)
 1. PMOD TSI (orig. VIRGO)
+1. RATPAC-A 850 mb NH
+1. RATPAC-A 700 mb NH
+1. RATPAC-A 500 mb NH
+1. RATPAC-A 400 mb NH
+1. RATPAC-A 300 mb NH
+1. RATPAC-A 250 mb NH
+1. RATPAC-A 200 mb NH
+1. RATPAC-A 150 mb NH
+1. RATPAC-A 100 mb NH
+1. RATPAC-A 70 mb NH
+1. RATPAC-A 50 mb NH
+1. RATPAC-A 30 mb NH
+1. RATPAC-A 850 mb SH
+1. RATPAC-A 700 mb SH
+1. RATPAC-A 500 mb SH
+1. RATPAC-A 400 mb SH
+1. RATPAC-A 300 mb SH
+1. RATPAC-A 250 mb SH
+1. RATPAC-A 200 mb SH
+1. RATPAC-A 150 mb SH
+1. RATPAC-A 100 mb SH
+1. RATPAC-A 70 mb SH
+1. RATPAC-A 50 mb SH
+1. RATPAC-A 30 mb SH
+1. RATPAC-A 850 mb GLOBE
+1. RATPAC-A 700 mb GLOBE
+1. RATPAC-A 500 mb GLOBE
+1. RATPAC-A 400 mb GLOBE
+1. RATPAC-A 300 mb GLOBE
+1. RATPAC-A 250 mb GLOBE
+1. RATPAC-A 200 mb GLOBE
+1. RATPAC-A 150 mb GLOBE
+1. RATPAC-A 100 mb GLOBE
+1. RATPAC-A 70 mb GLOBE
+1. RATPAC-A 50 mb GLOBE
+1. RATPAC-A 30 mb GLOBE
+1. RATPAC-A 850 mb TROPICS (30S-30N)
+1. RATPAC-A 700 mb TROPICS (30S-30N)
+1. RATPAC-A 500 mb TROPICS (30S-30N)
+1. RATPAC-A 400 mb TROPICS (30S-30N)
+1. RATPAC-A 300 mb TROPICS (30S-30N)
+1. RATPAC-A 250 mb TROPICS (30S-30N)
+1. RATPAC-A 200 mb TROPICS (30S-30N)
+1. RATPAC-A 150 mb TROPICS (30S-30N)
+1. RATPAC-A 100 mb TROPICS (30S-30N)
+1. RATPAC-A 70 mb TROPICS (30S-30N)
+1. RATPAC-A 50 mb TROPICS (30S-30N)
+1. RATPAC-A 30 mb TROPICS (30S-30N)
+1. RATPAC-A 850 mb NH Extratropics
+1. RATPAC-A 700 mb NH Extratropics
+1. RATPAC-A 500 mb NH Extratropics
+1. RATPAC-A 400 mb NH Extratropics
+1. RATPAC-A 300 mb NH Extratropics
+1. RATPAC-A 250 mb NH Extratropics
+1. RATPAC-A 200 mb NH Extratropics
+1. RATPAC-A 150 mb NH Extratropics
+1. RATPAC-A 100 mb NH Extratropics
+1. RATPAC-A 70 mb NH Extratropics
+1. RATPAC-A 50 mb NH Extratropics
+1. RATPAC-A 30 mb NH Extratropics
+1. RATPAC-A 850 mb SH Extratropics
+1. RATPAC-A 700 mb SH Extratropics
+1. RATPAC-A 500 mb SH Extratropics
+1. RATPAC-A 400 mb SH Extratropics
+1. RATPAC-A 300 mb SH Extratropics
+1. RATPAC-A 250 mb SH Extratropics
+1. RATPAC-A 200 mb SH Extratropics
+1. RATPAC-A 150 mb SH Extratropics
+1. RATPAC-A 100 mb SH Extratropics
+1. RATPAC-A 70 mb SH Extratropics
+1. RATPAC-A 50 mb SH Extratropics
+1. RATPAC-A 30 mb SH Extratropics
+1. RATPAC-A 850 mb TROPICS (20S-20N)
+1. RATPAC-A 700 mb TROPICS (20S-20N)
+1. RATPAC-A 500 mb TROPICS (20S-20N)
+1. RATPAC-A 400 mb TROPICS (20S-20N)
+1. RATPAC-A 300 mb TROPICS (20S-20N)
+1. RATPAC-A 250 mb TROPICS (20S-20N)
+1. RATPAC-A 200 mb TROPICS (20S-20N)
+1. RATPAC-A 150 mb TROPICS (20S-20N)
+1. RATPAC-A 100 mb TROPICS (20S-20N)
+1. RATPAC-A 70 mb TROPICS (20S-20N)
+1. RATPAC-A 50 mb TROPICS (20S-20N)
+1. RATPAC-A 30 mb TROPICS (20S-20N)
 1. RATPAC-A 850-300 mb NH
 1. RATPAC-A 850-300 mb SH
 1. RATPAC-A 850-300 mb Global
 1. RATPAC-A 850-300 mb Tropics
-1. RATPAC-A 850-300 mb NH Extratropic
-1. RATPAC-A 850-300 mb SH Extratropic
+1. RATPAC-A 850-300 mb NH Extratropics
+1. RATPAC-A 850-300 mb SH Extratropics
 1. RATPAC-A 850-300 mb 20N-S
 1. RATPAC-A 300-100 mb NH
 1. RATPAC-A 300-100 mb SH
 1. RATPAC-A 300-100 mb Global
 1. RATPAC-A 300-100 mb Tropics
-1. RATPAC-A 300-100 mb NH Extratropic
-1. RATPAC-A 300-100 mb SH Extratropic
+1. RATPAC-A 300-100 mb NH Extratropics
+1. RATPAC-A 300-100 mb SH Extratropics
 1. RATPAC-A 300-100 mb 20N-S
 1. RATPAC-A 100-50 mb NH
 1. RATPAC-A 100-50 mb SH
 1. RATPAC-A 100-50 mb Global
 1. RATPAC-A 100-50 mb Tropics
-1. RATPAC-A 100-50 mb NH Extratropic
-1. RATPAC-A 100-50 mb SH Extratropic
+1. RATPAC-A 100-50 mb NH Extratropics
+1. RATPAC-A 100-50 mb SH Extratropics
 1. RATPAC-A 100-50 mb 20N-S
 1. RSS TLT 3.3 -70.0/82.5
 1. RSS TLT 3.3 -20.0/20.0
@@ -317,12 +401,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. UAH TLT 5.6 Tropics
 1. UAH TLT 5.6 Tropics Land
 1. UAH TLT 5.6 Tropics Ocean
-1. UAH TLT 5.6 NH Extratropic
-1. UAH TLT 5.6 NH Extratropic Land
-1. UAH TLT 5.6 NH Extratropic Ocean
-1. UAH TLT 5.6 SH Extratropic
-1. UAH TLT 5.6 SH Extratropic Land
-1. UAH TLT 5.6 SH Extratropic Ocean
+1. UAH TLT 5.6 NH Extratropics
+1. UAH TLT 5.6 NH Extratropics Land
+1. UAH TLT 5.6 NH Extratropics Ocean
+1. UAH TLT 5.6 SH Extratropics
+1. UAH TLT 5.6 SH Extratropics Land
+1. UAH TLT 5.6 SH Extratropics Ocean
 1. UAH TLT 5.6 NH Polar
 1. UAH TLT 5.6 NH Polar Land
 1. UAH TLT 5.6 NH Polar Ocean
@@ -344,12 +428,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. UAH TLT 6.0 Tropics
 1. UAH TLT 6.0 Tropics Land
 1. UAH TLT 6.0 Tropics Ocean
-1. UAH TLT 6.0 NH Extratropic
-1. UAH TLT 6.0 NH Extratropic Land
-1. UAH TLT 6.0 NH Extratropic Ocean
-1. UAH TLT 6.0 SH Extratropic
-1. UAH TLT 6.0 SH Extratropic Land
-1. UAH TLT 6.0 SH Extratropic Ocean
+1. UAH TLT 6.0 NH Extratropics
+1. UAH TLT 6.0 NH Extratropics Land
+1. UAH TLT 6.0 NH Extratropics Ocean
+1. UAH TLT 6.0 SH Extratropics
+1. UAH TLT 6.0 SH Extratropics Land
+1. UAH TLT 6.0 SH Extratropics Ocean
 1. UAH TLT 6.0 NH Polar
 1. UAH TLT 6.0 NH Polar Land
 1. UAH TLT 6.0 NH Polar Ocean
@@ -371,12 +455,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. UAH TMT 5.6 Tropics
 1. UAH TMT 5.6 Tropics Land
 1. UAH TMT 5.6 Tropics Ocean
-1. UAH TMT 5.6 NH Extratropic
-1. UAH TMT 5.6 NH Extratropic Land
-1. UAH TMT 5.6 NH Extratropic Ocean
-1. UAH TMT 5.6 SH Extratropic
-1. UAH TMT 5.6 SH Extratropic Land
-1. UAH TMT 5.6 SH Extratropic Ocean
+1. UAH TMT 5.6 NH Extratropics
+1. UAH TMT 5.6 NH Extratropics Land
+1. UAH TMT 5.6 NH Extratropics Ocean
+1. UAH TMT 5.6 SH Extratropics
+1. UAH TMT 5.6 SH Extratropics Land
+1. UAH TMT 5.6 SH Extratropics Ocean
 1. UAH TMT 5.6 NH Polar
 1. UAH TMT 5.6 NH Polar Land
 1. UAH TMT 5.6 NH Polar Ocean
@@ -398,12 +482,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. UAH TMT 6.0 Tropics
 1. UAH TMT 6.0 Tropics Land
 1. UAH TMT 6.0 Tropics Ocean
-1. UAH TMT 6.0 NH Extratropic
-1. UAH TMT 6.0 NH Extratropic Land
-1. UAH TMT 6.0 NH Extratropic Ocean
-1. UAH TMT 6.0 SH Extratropic
-1. UAH TMT 6.0 SH Extratropic Land
-1. UAH TMT 6.0 SH Extratropic Ocean
+1. UAH TMT 6.0 NH Extratropics
+1. UAH TMT 6.0 NH Extratropics Land
+1. UAH TMT 6.0 NH Extratropics Ocean
+1. UAH TMT 6.0 SH Extratropics
+1. UAH TMT 6.0 SH Extratropics Land
+1. UAH TMT 6.0 SH Extratropics Ocean
 1. UAH TMT 6.0 NH Polar
 1. UAH TMT 6.0 NH Polar Land
 1. UAH TMT 6.0 NH Polar Ocean
