@@ -89,7 +89,8 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   `NCEI US PHDI` = list(path=nceiBase %_% "us/110/00/phdi" %_% nceiUsMonthly, type="drought"),
   `NCEI US PMDI` = list(path=nceiBase %_% "us/110/00/pmdi" %_% nceiUsMonthly, type="drought"),
   `NCEI US Palmer Z-Index` = list(path=nceiBase %_% "us/110/00/zndx" %_% nceiUsMonthly, type="drought"),
-  ## But...? ftp://ftp.ncdc.noaa.gov/pub/data/mlost/operational/products/aravg.mon.land_ocean.90S.90N.v3.5.4.201504.asc
+  ## ERSSTv4
+  ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## Hadley
   `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_ns_avg.txt",
   `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_sh.txt",

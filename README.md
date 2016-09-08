@@ -47,7 +47,7 @@ series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Kr
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
 
-![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-2016.5_ma12_baseline1981-2010.png)
+![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-2016.8_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -59,7 +59,7 @@ series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
 plot_climate_data(inst, series=series, 1850, ma=12, lwd=2, conf_int=TRUE, col=c("red", "blue"))
 ```
 
-![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1850.1-2016.5_ma12_baseline1981-2010.png)
+![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1850.1-2016.7_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -129,6 +129,84 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
 1. CSIRO Global Mean Sea Level
+1. ERSSTv4 Land 00N-30N
+1. ERSSTv4 Land 00N-90N
+1. ERSSTv4 Land 20N-90N
+1. ERSSTv4 Land 20S-20N
+1. ERSSTv4 Land 30N-60N
+1. ERSSTv4 Land 30S-00N
+1. ERSSTv4 Land 60N-90N
+1. ERSSTv4 Land 60S-30S
+1. ERSSTv4 Land 60S-60N
+1. ERSSTv4 Land 90S-00N
+1. ERSSTv4 Land 90S-20S
+1. ERSSTv4 Land 90S-60S
+1. ERSSTv4 Land 90S-90N
+1. ERSSTv4 Land + Ocean 00N-30N
+1. ERSSTv4 Land + Ocean 00N-90N
+1. ERSSTv4 Land + Ocean 20N-90N
+1. ERSSTv4 Land + Ocean 20S-20N
+1. ERSSTv4 Land + Ocean 30N-60N
+1. ERSSTv4 Land + Ocean 30S-00N
+1. ERSSTv4 Land + Ocean 60N-90N
+1. ERSSTv4 Land + Ocean 60S-30S
+1. ERSSTv4 Land + Ocean 60S-60N
+1. ERSSTv4 Land + Ocean 90S-00N
+1. ERSSTv4 Land + Ocean 90S-20S
+1. ERSSTv4 Land + Ocean 90S-60S
+1. ERSSTv4 Land + Ocean 90S-90N
+1. ERSSTv4 Ocean 00N-30N
+1. ERSSTv4 Ocean 00N-90N
+1. ERSSTv4 Ocean 20N-90N
+1. ERSSTv4 Ocean 20S-20N
+1. ERSSTv4 Ocean 30N-60N
+1. ERSSTv4 Ocean 30S-00N
+1. ERSSTv4 Ocean 60N-90N
+1. ERSSTv4 Ocean 60S-30S
+1. ERSSTv4 Ocean 60S-60N
+1. ERSSTv4 Ocean 90S-00N
+1. ERSSTv4 Ocean 90S-20S
+1. ERSSTv4 Ocean 90S-60S
+1. ERSSTv4 Ocean 90S-90N
+1. ERSSTv4 Land 00N-30N_uncertainty
+1. ERSSTv4 Land 00N-90N_uncertainty
+1. ERSSTv4 Land 20N-90N_uncertainty
+1. ERSSTv4 Land 20S-20N_uncertainty
+1. ERSSTv4 Land 30N-60N_uncertainty
+1. ERSSTv4 Land 30S-00N_uncertainty
+1. ERSSTv4 Land 60N-90N_uncertainty
+1. ERSSTv4 Land 60S-30S_uncertainty
+1. ERSSTv4 Land 60S-60N_uncertainty
+1. ERSSTv4 Land 90S-00N_uncertainty
+1. ERSSTv4 Land 90S-20S_uncertainty
+1. ERSSTv4 Land 90S-60S_uncertainty
+1. ERSSTv4 Land 90S-90N_uncertainty
+1. ERSSTv4 Land + Ocean 00N-30N_uncertainty
+1. ERSSTv4 Land + Ocean 00N-90N_uncertainty
+1. ERSSTv4 Land + Ocean 20N-90N_uncertainty
+1. ERSSTv4 Land + Ocean 20S-20N_uncertainty
+1. ERSSTv4 Land + Ocean 30N-60N_uncertainty
+1. ERSSTv4 Land + Ocean 30S-00N_uncertainty
+1. ERSSTv4 Land + Ocean 60N-90N_uncertainty
+1. ERSSTv4 Land + Ocean 60S-30S_uncertainty
+1. ERSSTv4 Land + Ocean 60S-60N_uncertainty
+1. ERSSTv4 Land + Ocean 90S-00N_uncertainty
+1. ERSSTv4 Land + Ocean 90S-20S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
+1. ERSSTv4 Ocean 00N-30N_uncertainty
+1. ERSSTv4 Ocean 00N-90N_uncertainty
+1. ERSSTv4 Ocean 20N-90N_uncertainty
+1. ERSSTv4 Ocean 20S-20N_uncertainty
+1. ERSSTv4 Ocean 30N-60N_uncertainty
+1. ERSSTv4 Ocean 30S-00N_uncertainty
+1. ERSSTv4 Ocean 60N-90N_uncertainty
+1. ERSSTv4 Ocean 60S-30S_uncertainty
+1. ERSSTv4 Ocean 60S-60N_uncertainty
+1. ERSSTv4 Ocean 90S-00N_uncertainty
+1. ERSSTv4 Ocean 90S-20S_uncertainty
+1. ERSSTv4 Ocean 90S-60S_uncertainty
+1. ERSSTv4 Ocean 90S-90N_uncertainty
 1. GISTEMP Global
 1. GISTEMP Global Land
 1. GISTEMP NH

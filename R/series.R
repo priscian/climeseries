@@ -116,6 +116,37 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `ERSSTv4` = (function(p) {
+      skip <- 0L
+
+      tryCatch({
+        fileNames <- strsplit(getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
+        ## Keep only monthly data files.
+        re <- "^aravg\\.mon\\.(?<type>.+?)\\.(?<lat1>.+?)\\.(?<lat2>.+?)\\..*?\\.asc$"
+        fileNames <- grep(re, fileNames, value=TRUE, perl=TRUE)
+        m <- regexpr(re, fileNames, perl=TRUE)
+        namedMatches <- cbind(file=fileNames, parse_one(fileNames, m))
+        namedMatches[, "type"] <- capwords(sub("_", " + ", namedMatches[, "type"]))
+        cat(fill=TRUE)
+        l <- apply(namedMatches, 1,
+          function(y)
+          {
+            seriesName <- paste("ERSSTv4", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
+            cat("    Processing file", y["file"], fill=TRUE); flush.console()
+            x <- read.table(p %_% y["file"], header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
+            d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
+            ## N.B. See ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/readme.timeseries for "total error variance."
+            names(d)[names(d) == "temp"] <- seriesName
+            names(d)[names(d) == "conf_int"] <- seriesName %_% "_uncertainty"
+
+            d
+          }
+        )
+      }, error=Error, warning=Error)
+
+      return (l)
+    })(path),
+
     `HadSST3 SH` =,
     `HadSST3 NH` =,
     `HadSST3 Tropics` =,
@@ -864,6 +895,9 @@ get_climate_data <- function(download, data_dir, filename_base, urls=climeseries
 
   return (d)
 }
+
+## Get column names for including in the README file:
+# cat("1. " %_% names(d), sep="\n")
 
 
 #' Get Names of Climate Time Series from Data Set

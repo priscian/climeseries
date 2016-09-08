@@ -212,7 +212,7 @@ nop <- function(x=NULL)
 
 #' @export
 capwords <- function(s, strict = FALSE) {
-  cap <- function(s) paste(toupper(substring(s, 1L, 1L)), { s <- substring(s, 2L); if(strict) tolower(s) else s }, sep='', collapse=' ')
+  cap <- function(s) paste(toupper(substring(s, 1L, 1L)), { s <- substring(s, 2L); if (strict) tolower(s) else s }, sep='', collapse=' ')
   sapply(strsplit(s, split=' '), cap, USE.NAMES=!is.null(names(s)))
 }
 
@@ -220,4 +220,20 @@ capwords <- function(s, strict = FALSE) {
 #' @export
 `%nin%` <- function(x, table) {
   match(x, table, nomatch=0) == 0
+}
+
+
+## V. '?base::grep' from the R command line.
+#' @export
+parse_one <- function(res, result)
+{
+  m <- do.call(rbind, lapply(seq_along(res),
+    function(i) {
+      if (result[i] == -1) return("")
+      st <- attr(result, "capture.start")[i, ]
+      substring(res[i], st, st + attr(result, "capture.length")[i, ] - 1)
+    }))
+  colnames(m) <- attr(result, "capture.names")
+
+  m
 }
