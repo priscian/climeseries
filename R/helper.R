@@ -86,7 +86,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE)
     d3 <- d3[year %in% d4$year, ]
   }
 
-  subtitle <- paste(series, min(d4$year), "\u2013", max(d4$year), sep="")
+  subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep="")
   baselineText <- " w.r.t. " %_% 1981 %_% "\u2013" %_% 2010
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
   g <- ggplot(d3, aes(x=month, y=`YTD mean temp.`, group=factor(year), color=factor(year))) +
