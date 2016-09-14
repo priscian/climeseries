@@ -124,7 +124,6 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
     main <- "Average Temperature"
   startTS <- start(w_ma); endTS <- end(w_ma)
   if (is.null(start)) startTS <- as.vector(data.matrix(head(x[, c("year", "month")], 1)))
-  #if (is.null(end)) endTS <- c(year(Sys.Date()), month(Sys.Date()) - 1)
   if (is.null(end)) endTS <- as.vector(data.matrix(tail(x[, c("year", "month")], 1)))
   main <- paste(main, " (", MOS[startTS[2L]], ". ", startTS[1L], "\u2013", MOS[endTS[2L]], ". ", endTS[1L], ")", sep="")
 
@@ -146,7 +145,7 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   col <- alpha(col, alpha)
   names(col) <- series
 
-  GetXAxisTicks <- function(min=1800, max=3000, by=10)
+  GetXAxisTicks <- function(min=1500, max=3000, by=10)
   {
     yearGroups <- seq(min, max, by=by)
     plotStart <- start
