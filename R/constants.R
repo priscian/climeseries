@@ -50,7 +50,7 @@ gistempBase <- "http://data.giss.nasa.gov/gistemp/tabledata_v3/"
 nceiBase <- "http://www.ncdc.noaa.gov/cag/time-series/"
 nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
-hadsstBase <- "http://hadobs.metoffice.com/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
+hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
 rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
 rssTlt <- "RSS_Monthly_MSU_AMSU_Channel_TLT_Anomalies_"; rssTmt <- "RSS_Monthly_MSU_AMSU_Channel_TMT_Anomalies_"
@@ -92,10 +92,10 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   ## ERSSTv4
   ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## Hadley
-  `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_ns_avg.txt",
-  `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_sh.txt",
-  `HadCRUT4 NH` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_nh.txt",
-  `HadCRUT4 Tropics` = hadcrutBase %_% "HadCRUT.4.4.0.0.monthly_30S_30N.txt",
+  `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_ns_avg.txt",
+  `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_sh.txt",
+  `HadCRUT4 NH` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_nh.txt",
+  `HadCRUT4 Tropics` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_30S_30N.txt",
   `HadSST3 Global` = hadsstBase %_% "HadSST.3.1.1.0_monthly_globe_ts.txt",
   `HadSST3 SH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
   `HadSST3 NH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
