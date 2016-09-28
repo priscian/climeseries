@@ -58,7 +58,7 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 
 #' @export
 #' @import data.table
-plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE)
+plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 {
   library(directlabels)
 
@@ -89,6 +89,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE)
   baselineText <- ""
   if (is.logical(baseline)) {
     if (baseline) baseline <- defaultBaseline
+    else baseline <- NULL
   }
   if (!is.null(baseline))
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
@@ -96,7 +97,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE)
   subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep="")
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
   g <- ggplot(d3, aes(x=month, y=`YTD mean temp.`, group=factor(year), color=factor(year))) +
-    geom_line() +
+    geom_line(size=size) +
     scale_colour_discrete(guide="none") +
     scale_x_discrete(expand=c(0, 1)) +
     geom_dl(aes(label=year), method = list(dl.trans(x=x + 0.2), "last.points", cex = 0.8)) +
