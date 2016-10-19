@@ -98,12 +98,15 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `NCEI Global` = (function(p) {
       x <- NULL
 
-      skip <- 3L # Changed from 2 (22 Mar. 2016).
-      if (type == "drought")
-        skip <- 2L
+      #skip <- 4L # Changed from 3 (18 Oct. 2016).
+      #if (type == "drought")
+      #  skip <- 3L
 
       tryCatch({
-        x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE)
+        flit <- readLines(p)
+        flit <- flit[trimws(flit) != ""]
+        flit <- flit[grep("^\\d", flit, perl=TRUE)]
+        x <- read.csv(header=FALSE, skip=0L, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
@@ -111,7 +114,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(yearMatches[, 3L])
 
-      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x$Value, check.names=FALSE, stringsAsFactors=FALSE)
+      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x[[2]], check.names=FALSE, stringsAsFactors=FALSE)
+      ## Missing values are given as "-9999".
+      is.na(d$temp) <- d$temp == -9999
 
       return (d)
     })(path),

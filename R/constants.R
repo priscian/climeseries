@@ -62,6 +62,8 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   ## Land Ice Mass
   `Greenland Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Greenland", type="land ice"),
   `Antarctica Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Antarctica", type="land ice"),
+  #https://sealevel-nexus.jpl.nasa.gov/data/ANT_mass_changes_Watkins053116.csv
+  #https://sealevel-nexus.jpl.nasa.gov/data/GRN_mass_changes_Watkins053116.csv
   ## GISTEMP
   `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.csv",
   `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.csv",
@@ -142,7 +144,8 @@ instrumentalUrls <- list( # Last updated 20 Jul. 2016.
   ## For the US: https://www.quora.com/What-is-the-longitude-and-latitude-of-a-bounding-box-around-the-continental-United-States
   `NCEP Surface Air USA 48` = sub("@@LON1", "-125", sub("@@LON2@@", "-70", sub("@@LAT1@@", "50", sub("@@LAT2@@", "25", sub("@@VAR@@", "Air+Temperature", esrlBase))))),
   ## CO2
-  `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/sites/default/files/data/in_situ_co2/monthly_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
+  #`CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/sites/default/files/data/in_situ_co2/monthly_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
+  `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   ## Cape Grim: http://www.csiro.au/greenhouse-gases/GreenhouseGas/data/CapeGrim_CO2_data_download.txt
   `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
