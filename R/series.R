@@ -690,6 +690,33 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
+
+    `Land Ice Mass Variation` = (function(p) {
+      x <- NULL
+
+      skip <- 13L
+
+      tryCatch({
+        x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      x$year <- trunc(x[[1]])
+      d <- expand.grid(month=1:12, year=sort(unique(x$year))); d$yr_part <- d$year + (2 * d$month - 1)/24
+      x$yr_part <- sapply(x[[1]], function(x) { d$yr_part[which.min(abs(x - d$yr_part))[1]] }, simplify=TRUE)
+      y <- subset(x, !duplicated(x$yr_part))
+
+      temp <- Reduce(rbind, by(x[, 2:4], x$yr_part, colMeans, na.rm=TRUE, simplify=FALSE)); rownames(temp) <- NULL
+      temp <- apply(temp, 2, function(x) x - x[1])
+      colNames <- paste(c("Greenland Land Ice", "Antarctica Land Ice", "Ocean"), "Mass Variation")
+      colnames(temp) <- colNames
+      temp <- as.data.frame(temp)
+      temp[[colNames[2] %_% "_uncertainty"]] <- 79.0 * 2 # V. http://climate.nasa.gov/vital-signs/land-ice/ for values.
+      temp[[colNames[1] %_% "_uncertainty"]] <- 29.0 * 2
+
+      d <- base::merge(d, data.frame(yr_part=y$yr_part, temp, check.names=FALSE, stringsAsFactors=FALSE), by=c("yr_part"), all.x=TRUE)
+
+      return (d)
+    })(path),
   )
 
   if (is.null(d) && verbose) tryCatch(message(""), message=Error)

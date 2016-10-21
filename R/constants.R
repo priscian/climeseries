@@ -58,10 +58,11 @@ esrlBase <- "http://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?
 esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 
-instrumentalUrls <- list( # Last updated 20 Jul. 2016.
+instrumentalUrls <- list( # Last updated 21 Oct. 2016.
   ## Land Ice Mass
-  `Greenland Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Greenland", type="land ice"),
-  `Antarctica Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Antarctica", type="land ice"),
+  #`Greenland Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Greenland", type="land ice"),
+  #`Antarctica Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Antarctica", type="land ice"),
+  `Land Ice Mass Variation` = list(path="https://sealevel-nexus.jpl.nasa.gov/data/ANT_mass_changes_Watkins053116.csv", type="land ice"),
   #https://sealevel-nexus.jpl.nasa.gov/data/ANT_mass_changes_Watkins053116.csv
   #https://sealevel-nexus.jpl.nasa.gov/data/GRN_mass_changes_Watkins053116.csv
   ## GISTEMP
