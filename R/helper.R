@@ -115,7 +115,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 
 
 #' @export
-get_old_gistemp <- function(series="GISTEMP Global Land 1998", uri="http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt")
+get_old_yearly_gistemp <- function(series="GISTEMP Global Land 1998", uri="http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt")
 {
   Error <- function(e) {
     cat(series %_% " series not available.", fill=TRUE)
@@ -152,7 +152,66 @@ get_old_gistemp <- function(series="GISTEMP Global Land 1998", uri="http://web.a
 
 ## usage:
 # inst <- get_climate_data(download=FALSE, baseline=FALSE)
-# g <- get_old_gistemp()
+# g <- get_old_yearly_gistemp()
 # d <- recenter_anomalies(merge(inst, g, all=TRUE), 1951:1980) # Should be the same baseline, but make sure.
 # series <- c("GISTEMP Global Land", "GISTEMP Global Land 1998")
+# plot_climate_data(d, series=series, ma=12, lwd=2, conf_int=FALSE, show_trend=TRUE)
+
+
+#' @export
+get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http://web.archive.org/web/20151218065405/http://data.giss.nasa.gov/gistemp/tabledata_v3/GLB.Ts+dSST.txt", skip=7L, end_year=2015)
+{
+  Error <- function(e) {
+    cat(series %_% " series not available.", fill=TRUE)
+  }
+
+  x <- NULL
+
+  yearGroups <- seq(1880, 2080, by=20)
+  groupLength <- 22
+  skip <- skip # Skip over notes at start of data.
+  ## Must read only a specific number of rows before the trailing notes:
+  numRows <- nearest_below(yearGroups, end_year) * groupLength - (nearest_above(yearGroups, end_year, TRUE) - end_year) - skip + 1
+  gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
+
+  ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
+  ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
+  curl <- getCurlHandle()
+  curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+  tryCatch({
+    r <- getURL(uri, curl=curl)
+    r <- gsub("\\*\\*\\*\\*\\*", " ****", r)
+    x <- read.table(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****"), skip=skip, nrow=numRows, check.names=FALSE)
+  }, error=Error, warning=Error)
+
+  ## Remove duplicate rows with repeated column names.
+  x <- x[!(duplicated(x) | duplicated(x, fromLast=TRUE)), ]
+
+  flit <- reshape2::melt(x[, 1L:13L], id.vars="Year", variable.name="month", value.name="temp")
+  for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+  flit <- dplyr::arrange(flit, Year, month)
+
+  d <- data.frame(year=flit$Year, yr_part=flit$Year + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+  d$temp <- d$temp / 100
+
+  names(d)[names(d) == "temp"] <- series
+
+  return (d)
+}
+
+## usage:
+# inst <- get_climate_data(download=FALSE, baseline=FALSE)
+# climeseriesDataPath <- "C:/common/data/climate/climeseries"
+# env <- new.env()
+# load(paste(climeseriesDataPath, "climate-series_raw_20160711.RData", sep="/"), envir=env) # Get GISTEMP Global data from climeseries archive.
+# env$d$`GISTEMP Global May 2016` <- env$d$GISTEMP
+# allSeries <- list(
+#   inst,
+#   get_old_monthly_gistemp("GISTEMP Global Nov. 2005", "http://web.archive.org/web/20051227031241/http://data.giss.nasa.gov/gistemp/tabledata/GLB.Ts+dSST.txt", 8L, 2005),
+#   env$d[, c(climeseries:::commonColumns, "GISTEMP Global May 2016")],
+#   get_old_monthly_gistemp()
+# )
+# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
+# d <- recenter_anomalies(d, 1951:1980) # Should be the same baseline, but make sure.
+# series <- c("GISTEMP Global Nov. 2005", "GISTEMP Global Nov. 2015", "GISTEMP Global May 2016", "GISTEMP Global")
 # plot_climate_data(d, series=series, ma=12, lwd=2, conf_int=FALSE, show_trend=TRUE)
