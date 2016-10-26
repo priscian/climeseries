@@ -115,7 +115,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 
 
 #' @export
-get_old_yearly_gistemp <- function(series="GISTEMP Global Land 1998", uri="http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt")
+get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="https://web.archive.org/web/20051029130103/http://data.giss.nasa.gov/gistemp/graphs/Fig_A.txt", skip=0L)
 {
   Error <- function(e) {
     cat(series %_% " series not available.", fill=TRUE)
@@ -131,19 +131,14 @@ get_old_yearly_gistemp <- function(series="GISTEMP Global Land 1998", uri="http:
   curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
   tryCatch({
     r <- getURL(uri, curl=curl)
-    tab <- gsub("^(?!\\d{4}\\s+).*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
+    tab <- gsub("^(?!\\s*\\d{4}\\s+).*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
     tab <- tab[tab != ""]
-    x <- read.table(text=tab, header=FALSE, as.is=TRUE, na.strings=c("***", "****"), skip=0L, check.names=FALSE)
+    x <- read.table(text=tab, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
   }, error=Error, warning=Error)
 
-  flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
-  for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
-  flit <- dplyr::arrange(flit, V1, month)
-
-  d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
-  #d$temp <- gissGlobalMean + (d$temp / 100) # Don't need to do this.
-  #d$temp <- gissGlobalMean + round(rep(runif(12), length.out=length(d$temp)), 3) + (d$temp / 100) # For testing only.
-  d$temp <- d$temp / 100
+  d <- cbind(data.frame(year=x$V1, month=6, check.names=FALSE, stringsAsFactors=FALSE), temp=x$V2)
+  d <- base::merge(expand.grid(month=1:12, year=d$year), d, by=c("year", "month"), all=TRUE)
+  d$yr_part <- d$year + (2 * d$month - 1)/24
 
   names(d)[names(d) == "temp"] <- series
 
@@ -152,14 +147,22 @@ get_old_yearly_gistemp <- function(series="GISTEMP Global Land 1998", uri="http:
 
 ## usage:
 # inst <- get_climate_data(download=FALSE, baseline=FALSE)
-# g <- get_old_yearly_gistemp()
-# d <- recenter_anomalies(merge(inst, g, all=TRUE), 1951:1980) # Should be the same baseline, but make sure.
-# series <- c("GISTEMP Global Land", "GISTEMP Global Land 1998")
-# plot_climate_data(d, series=series, ma=12, lwd=2, conf_int=FALSE, show_trend=TRUE)
+# allSeries <- list(
+#   inst,
+#   get_yearly_gistemp("GISTEMP Global Met. Stations Oct. 2005", "https://web.archive.org/web/20051029130103/http://data.giss.nasa.gov/gistemp/graphs/Fig_A.txt"),
+#   get_yearly_gistemp("GISTEMP Global Met. Stations Sep. 2015", "https://web.archive.org/web/20150918040726/http://data.giss.nasa.gov/gistemp/graphs_v3/Fig.A.txt"),
+#   get_yearly_gistemp("GISTEMP Global Met. Stations Apr. 2016", "https://web.archive.org/web/20160419081141/http://data.giss.nasa.gov/gistemp/graphs_v3/Fig.A.txt"),
+#   get_yearly_gistemp("GISTEMP Global Met. Stations Current", "http://data.giss.nasa.gov/gistemp/graphs_v3/Fig.A.txt")
+# )
+# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
+# d <- recenter_anomalies(d, 1951:1980) # Should be the same baseline, but make sure.
+# series <- sapply(allSeries[-1], get_climate_series_names)
+# plot_climate_data(d, series=series, start=1994, ma=NULL, lwd=2, conf_int=FALSE, show_trend=TRUE)
+## N.B 'show_trend=TRUE' requires that the column 'met_year' be in the data frame 'x'. Fix this!
 
 
 #' @export
-get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http://web.archive.org/web/20151218065405/http://data.giss.nasa.gov/gistemp/tabledata_v3/GLB.Ts+dSST.txt", skip=7L, end_year=2015)
+get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http://web.archive.org/web/20151218065405/http://data.giss.nasa.gov/gistemp/tabledata_v3/GLB.Ts+dSST.txt", skip=7L, group_length=22, end_year=2015)
 {
   Error <- function(e) {
     cat(series %_% " series not available.", fill=TRUE)
@@ -167,8 +170,8 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
 
   x <- NULL
 
-  yearGroups <- seq(1880, 2080, by=20)
-  groupLength <- 22
+  yearGroups <- seq(1860, 2080, by=20)
+  groupLength <- group_length
   skip <- skip # Skip over notes at start of data.
   ## Must read only a specific number of rows before the trailing notes:
   numRows <- nearest_below(yearGroups, end_year) * groupLength - (nearest_above(yearGroups, end_year, TRUE) - end_year) - skip + 1
@@ -180,8 +183,8 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
   curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
   tryCatch({
     r <- getURL(uri, curl=curl)
-    r <- gsub("\\*\\*\\*\\*\\*", " ****", r)
-    x <- read.table(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****"), skip=skip, nrow=numRows, check.names=FALSE)
+    r <- gsub("*****", " ****", r, fixed=TRUE)
+    x <- read.table(text=r, header=TRUE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, nrow=numRows, check.names=FALSE)
   }, error=Error, warning=Error)
 
   ## Remove duplicate rows with repeated column names.
@@ -215,3 +218,6 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
 # d <- recenter_anomalies(d, 1951:1980) # Should be the same baseline, but make sure.
 # series <- c("GISTEMP Global Nov. 2005", "GISTEMP Global Nov. 2015", "GISTEMP Global May 2016", "GISTEMP Global")
 # plot_climate_data(d, series=series, ma=12, lwd=2, conf_int=FALSE, show_trend=TRUE)
+#
+## Even older e.g.:
+# e <- get_old_monthly_gistemp("GISTEMP Global Land Dec. 1998", "http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt", group_length=21, end_year=1998)
