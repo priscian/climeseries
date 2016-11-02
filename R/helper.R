@@ -132,7 +132,6 @@ get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="ht
   tryCatch({
     r <- getURL(uri, curl=curl)
     tab <- gsub("^(?!\\s*\\d{4}\\s+).*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
-    tab <- tab[tab != ""]
     x <- read.table(text=tab, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
   }, error=Error, warning=Error)
 
@@ -162,7 +161,7 @@ get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="ht
 
 
 #' @export
-get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http://web.archive.org/web/20151218065405/http://data.giss.nasa.gov/gistemp/tabledata_v3/GLB.Ts+dSST.txt", skip=7L, group_length=22, end_year=2015)
+get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http://web.archive.org/web/20151218065405/http://data.giss.nasa.gov/gistemp/tabledata_v3/GLB.Ts+dSST.txt", skip=0L)
 {
   Error <- function(e) {
     cat(series %_% " series not available.", fill=TRUE)
@@ -170,31 +169,25 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
 
   x <- NULL
 
-  yearGroups <- seq(1860, 2080, by=20)
-  groupLength <- group_length
   skip <- skip # Skip over notes at start of data.
-  ## Must read only a specific number of rows before the trailing notes:
-  numRows <- nearest_below(yearGroups, end_year) * groupLength - (nearest_above(yearGroups, end_year, TRUE) - end_year) - skip + 1
   gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
 
   ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
   ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
   curl <- getCurlHandle()
   curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
-  tryCatch({
+  #tryCatch({
     r <- getURL(uri, curl=curl)
     r <- gsub("*****", " ****", r, fixed=TRUE)
-    x <- read.table(text=r, header=TRUE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, nrow=numRows, check.names=FALSE)
-  }, error=Error, warning=Error)
+    r <- gsub("^\\D+.*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
+    x <- read.table(text=r, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
+  #}, error=Error, warning=Error)
 
-  ## Remove duplicate rows with repeated column names.
-  x <- x[!(duplicated(x) | duplicated(x, fromLast=TRUE)), ]
-
-  flit <- reshape2::melt(x[, 1L:13L], id.vars="Year", variable.name="month", value.name="temp")
+  flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
   for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
-  flit <- dplyr::arrange(flit, Year, month)
+  flit <- dplyr::arrange(flit, V1, month)
 
-  d <- data.frame(year=flit$Year, yr_part=flit$Year + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+  d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
   d$temp <- d$temp / 100
 
   names(d)[names(d) == "temp"] <- series
@@ -210,7 +203,7 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
 # env$d$`GISTEMP Global May 2016` <- env$d$GISTEMP
 # allSeries <- list(
 #   inst,
-#   get_old_monthly_gistemp("GISTEMP Global Nov. 2005", "http://web.archive.org/web/20051227031241/http://data.giss.nasa.gov/gistemp/tabledata/GLB.Ts+dSST.txt", 8L, 2005),
+#   get_old_monthly_gistemp("GISTEMP Global Nov. 2005", "http://web.archive.org/web/20051227031241/http://data.giss.nasa.gov/gistemp/tabledata/GLB.Ts+dSST.txt"),
 #   env$d[, c(climeseries:::commonColumns, "GISTEMP Global May 2016")],
 #   get_old_monthly_gistemp()
 # )
@@ -220,4 +213,5 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
 # plot_climate_data(d, series=series, ma=12, lwd=2, conf_int=FALSE, show_trend=TRUE)
 #
 ## Even older e.g.:
-# e <- get_old_monthly_gistemp("GISTEMP Global Land Dec. 1998", "http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt", group_length=21, end_year=1998)
+# d1 <- get_old_monthly_gistemp("GISTEMP Global Land Dec. 1998", "http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt")
+# d2 <- get_old_monthly_gistemp("GISTEMP Global Dec. 2001", "https://web.archive.org/web/20020122065805/http://www.giss.nasa.gov/data/update/gistemp/GLB.Ts+dSST.txt")

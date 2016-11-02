@@ -56,6 +56,7 @@ rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
 rssTlt <- "RSS_Monthly_MSU_AMSU_Channel_TLT_Anomalies_"; rssTmt <- "RSS_Monthly_MSU_AMSU_Channel_TMT_Anomalies_"
 esrlBase <- "http://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&lon1=@@LON1@@&lon2=@@LON2@@&var=@@VAR@@"
 esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
+## Start here: http://www.esrl.noaa.gov/psd/data/timeseries/
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 
 instrumentalUrls <- list( # Last updated 21 Oct. 2016.
