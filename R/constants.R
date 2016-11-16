@@ -59,7 +59,9 @@ esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 ## Start here: http://www.esrl.noaa.gov/psd/data/timeseries/
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 
-instrumentalUrls <- list( # Last updated 21 Oct. 2016.
+instrumentalUrls <- list( # Last updated 16 Nov. 2016.
+  `Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei/table.html", type="ENSO"),
+  `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass
   #`Greenland Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Greenland", type="land ice"),
   #`Antarctica Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Antarctica", type="land ice"),

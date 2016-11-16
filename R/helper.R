@@ -215,3 +215,133 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
 ## Even older e.g.:
 # d1 <- get_old_monthly_gistemp("GISTEMP Global Land Dec. 1998", "http://web.archive.org/web/19990220235952/http://www.giss.nasa.gov/data/gistemp/GLB.Ts.txt")
 # d2 <- get_old_monthly_gistemp("GISTEMP Global Dec. 2001", "https://web.archive.org/web/20020122065805/http://www.giss.nasa.gov/data/update/gistemp/GLB.Ts+dSST.txt")
+
+
+satelliteSlrBaseUrl <- "http://sealevel.colorado.edu/cgi-bin/table.cgi?q=content%2Finteractive-sea-level-time-series-wizard&dlat=@@LAT@@&dlon=@@LON@@&fit=s&smooth=n&days=0"
+
+#' @export
+get_satellite_slr <- function(lat, lon) # +lat N of the equator, -lon W of the prime meridian.
+{
+  Error <- function(e) {
+    cat(series %_% " series not available.", fill=TRUE)
+  }
+
+  skip <- 1L
+
+  x <- NULL
+
+  uri <- sub("@@LAT@@", lat, sub("@@LON@@", lon, satelliteSlrBaseUrl))
+
+  tryCatch({
+    ## Scrape Web page for data.
+    webPage <- getURL(uri)
+    webPage <- readLines(tc <- textConnection(webPage)); close(tc)
+    pageTree <- htmlTreeParse(webPage, useInternalNodes=TRUE)
+    ## The data table is in a PRE node (the only one, hopefully).
+    pre <- XML::xpathSApply(pageTree, "//*/pre", xmlValue)
+    ## Prepare the table text.
+    tab <- strsplit(pre, '\n')[[1L]]
+    tab <- tab[tab != ""]
+    x <- read.table(text=tab, header=FALSE, skip=skip, fill=FALSE, check.names=FALSE, stringsAsFactors=FALSE)
+  }, error=Error, warning=Error)
+
+  x$V2 <- as.numeric(x$V2) * 10 # Convert to mm.
+
+  names(x) <- c("Year", "Sea Level (mm)")
+
+  x
+}
+
+## usage:
+# d <- get_satellite_slr(lat=26, lon=-80) # Off the coast of Miami, FL.
+
+
+tidegaugeSlrBaseUrl <- "http://www.psmsl.org/data/obtaining/rlr.monthly.data/@@STATION_ID@@.rlrdata"
+## List of IDs: http://www.psmsl.org/data/obtaining/
+
+#' @export
+get_tidegauge_slr <- function(station_id)
+{
+  Error <- function(e) {
+    cat(series %_% " series not available.", fill=TRUE)
+  }
+
+  skip <- 1L
+
+  x <- NULL
+
+  uri <- sub("@@STATION_ID@@", station_id, tidegaugeSlrBaseUrl)
+
+  tryCatch({
+    x <- read.csv2(uri, header=FALSE, fill=FALSE, check.names=FALSE, stringsAsFactors=FALSE)
+  }, error=Error, warning=Error)
+
+  x <- x[, 1:2]
+  x$V2 <- as.numeric(x$V2)
+  is.na(x$V2) <- x$V2 == -99999
+
+  names(x) <- c("Year", "Sea Level (mm)")
+
+  x
+}
+
+## usage:
+# d <- get_tidegauge_slr(station_id=1858) # E.g. Virginia Key, E of Miami, FL.
+
+
+## Based on the technique described at https://tamino.wordpress.com/2012/01/08/trend-and-cycle-together/.
+#' @export
+remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmonics=4, loess...=list(), unwrap=TRUE, ...)
+{
+  d <- inst[, c(climeseries:::commonColumns, series)]
+  if (unwrap)
+    d <- subset(d, na_unwrap(d[, series]))
+  d[[series %_% " (interpolated)"]] <- interpNA(d[, series], "linear")
+
+  if (is.null(period)) { # Estimate period from data.
+    spectralDensity <- spectrum(y)
+    period <- 1 / spectralDensity$freq[spectralDensity$spec == max(spectralDensity$spec)]
+  }
+
+  ## Get residuals from LOESS fit.
+  loessArgs = list(
+    formula = eval(substitute(s ~ yr_part, list(s=as.name(series %_% " (interpolated)")))),
+    data = d,
+    span = 0.2
+  )
+  loessArgs <- modifyList(loessArgs, loess...)
+
+  l <- do.call("loess", loessArgs)
+  d[[series %_% " (LOESS fit)"]] <- l$fit
+  r <- l$resid
+
+  ## Construct model formula for given no. of harmonics.
+  fBase <- "r ~ "; f <- NULL
+  for (i in seq(num_harmonics))
+    f <- c(f, paste0(c("sin", "cos"), paste0("(", 2 * i, " * pi / period * yr_part)")))
+  f <- as.formula(paste0(fBase, paste0(f, collapse=" + ")))
+
+  rfit <- lm(f, data=d, ...)
+  uncycled <- d[[series]] - rfit$fit
+
+  if (is.logical(center))
+    d[[series %_% " (anomalies)"]] <- scale(uncycled, center=center, scale=FALSE)
+  else
+    d[[series %_% " (anomalies)"]] <- uncycled - mean(uncycled[d$year %in% center], na.rm=TRUE)
+
+  d
+}
+
+## usage:
+# inst <- get_climate_data(download=FALSE, baseline=FALSE)
+# series <- "CO2 Mauna Loa"
+# d <- remove_periodic_cycle(inst, series, center=2000:2012)
+# plot(d$yr_part, d[, series %_% " (anomalies)"], type="o", pch=20, xlim=c(2000, 2012), ylim=c(-15, 15))
+# ## Temperature series.
+# inst <- get_climate_data(download=FALSE, baseline=TRUE)
+# series <- "GISTEMP Global"
+# ## To calculate Fourier series only on a specific time range, subset the data first, e.g. 'subset(inst, inst$year %in% 1970:2016)':
+# d <- remove_periodic_cycle(subset(inst, inst$year %in% 1970:2016), series, center=climeseries:::defaultBaseline)
+# plot(d$yr_part, d[, series %_% " (anomalies)"], type="o", pch=20)
+# ## Monthly anomalies are almost the same because trend and cycle are very different in size.
+# lines(d$yr_part, d[, series], type="o", pch=20, col="red")
