@@ -58,6 +58,7 @@ esrlBase <- "http://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?
 esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 ## Start here: http://www.esrl.noaa.gov/psd/data/timeseries/
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
+modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&service=ArAvTs&starttime=2000-03-01T00:00:00Z&endtime=@@DATE@@T23:59:59Z&data=MOD08_M3_6_Aerosol_Optical_Depth_Land_Ocean_Mean_Mean&portal=GIOVANNI&format=json"
 
 instrumentalUrls <- list( # Last updated 16 Nov. 2016.
   `Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei/table.html", type="ENSO"),
@@ -161,7 +162,9 @@ instrumentalUrls <- list( # Last updated 16 Nov. 2016.
   `Rutgers N. America (No Greenland) Snow Cover` = list(path=rutgerssnowBase %_% "nam.txt", type="snow"),
   `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar"),
   ## CSIRO GMSL
-  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level")
+  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"),
+  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = "http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt",
+  `MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD")
   ## TODO: Ocean heat content.
   # http://www.esrl.noaa.gov/psd/data/timeseries/AMO/
 )

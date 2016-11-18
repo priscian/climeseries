@@ -736,7 +736,77 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
 
       return (d)
-    })(path)
+    })(path),
+
+    `MODIS Aerosol Optical Thickness (550 nm)` = (function(p) {
+      curl <- getCurlHandle()
+      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+      tryCatch({
+        ## Get new session ID.
+        r <- getURLContent("http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl", curl=curl)
+        xml_ <- xmlParse(r, useInternalNodes=TRUE)
+        sessionId <- XML::xpathSApply(xml_, "/session", xmlAttrs)["id"]
+        submitUrl <- sub("@@DATE@@", format(today(), "%Y-%m-%d"), sub("@@SESSIONID@@", sessionId, p))
+
+        ## Set off build of MODIS AOD data set.
+        sessionContent <- getURLContent(submitUrl, curl=curl)
+        sessionJson <- fromJSON(sessionContent, simplifyVector=TRUE, flatten=TRUE)
+        resultsetId <- sessionJson$session$resultset$id
+        resultId <- sessionJson$session$resultset$result[[1]]$id
+
+        ## Check progress of build of MODIS AOD data set.
+        percentComplete <- 0
+        cat(fill=TRUE)
+        while (percentComplete != 100) {
+          cat("    Data build", percentComplete %_% "% complete.", fill=TRUE); flush.console()
+          progressUrlBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&resultset=@@RESULTSETID@@&result=@@RESULTID@@&portal=GIOVANNI&format=json"
+          progressUrl <- sub("@@RESULTID@@", resultId, sub("@@RESULTSETID@@", resultsetId, sub("@@SESSIONID@@", sessionId, progressUrlBase)))
+          progressContent <- getURLContent(progressUrl, curl=curl)
+          progressJson <- fromJSON(progressContent, simplifyVector=TRUE, flatten=TRUE)
+          percentComplete <- progressJson$session$result$result[[1]]$status[[1]]$percentComplete[[1]]$value
+          Sys.sleep(15) # Pause for 15 s.
+        }
+        cat("    Data build", percentComplete %_% "% complete.", fill=TRUE); flush.console()
+
+        ## Get resulting data set.
+        dataUrl <- "http://giovanni.gsfc.nasa.gov/giovanni/" %_% progressJson$session$result$result[[1]]$data[[1]]$fileGroup[[1]]$dataFile[[1]]$dataUrl[[1]]$value
+        skip <- 7L
+        x <- read.csv(dataUrl, header=TRUE, as.is=TRUE, skip=skip, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      re <- "(\\d{4})-(\\d{2})"
+      dateMatches <- str_match(x[[1]], re)
+      yearValue <- as.numeric(dateMatches[, 2L])
+      monthValue <- as.numeric(dateMatches[, 3L])
+      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x[[2]], check.names=FALSE, stringsAsFactors=FALSE)
+      is.na(d$temp) <- d$temp == -9999
+
+      return (d)
+    })(path),
+
+    `GISS Stratospheric Aerosol Optical Depth (550 nm)` = (function(p) {
+      x <- NULL
+
+      skip <- 4L
+
+      tryCatch({
+        x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      re <- "(\\d{4})\\.(\\d{3})"
+      yearMatches <- str_match(x$V1, re)
+      yearValue <- as.numeric(yearMatches[, 2L])
+      monthValue <- as.numeric(factor(yearMatches[, 3L]))
+
+      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
+      flit <- data.matrix(x[, -1])# * 1000
+      ## Missing values.
+      #is.na(flit) <- flit == missingValue
+      colnames(flit) <- paste(series, c("Global", "NH", "SH"))
+      d <- cbind(d, flit)
+
+      return (d)
+    })(path),
   )
 
   if (is.null(d) && verbose) tryCatch(message(""), message=Error)
@@ -776,7 +846,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           base <- rep(0.0, length(x))
 
         ## Center anomalies on average baseline-period temperatures.
-        anom <- round(x - base, 3L)
+        anom <- round(x - base, 4L)
 
         anom
       }
