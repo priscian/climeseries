@@ -265,7 +265,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Ocean Mass Variation
 1. Antarctica Land Ice Mass Variation_uncertainty
 1. Greenland Land Ice Mass Variation_uncertainty
-[//]: <> 1. MODIS Aerosol Optical Thickness (550 nm)
+<!--- 1. MODIS Aerosol Optical Thickness (550 nm) -->
 1. Multivariate ENSO Index
 1. NCEI Global
 1. NCEI Global Land
