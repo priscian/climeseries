@@ -60,8 +60,6 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 #' @import data.table
 plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 {
-  library(directlabels)
-
   inst <- get_climate_data(download=FALSE, baseline=baseline)
 
   d <- inst[, c("year", "month", series)]
@@ -100,7 +98,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
     geom_line(size=size) +
     scale_colour_discrete(guide="none") +
     scale_x_discrete(expand=c(0, 1)) +
-    geom_dl(aes(label=year), method = list(dl.trans(x=x + 0.2), "last.points", cex = 0.8)) +
+    directlabels::geom_dl(aes(label=year), method = list(directlabels::dl.trans(x=x + 0.2), "last.points", cex = 0.8)) +
     # coord_cartesian(ylim(c(-4, 4)) + # No clipping.
     labs(list(title="Year-to-Date Temperature Anomalies", subtitle=subtitle, y=ylab))
 
@@ -345,3 +343,289 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
 # plot(d$yr_part, d[, series %_% " (anomalies)"], type="o", pch=20)
 # ## Monthly anomalies are almost the same because trend and cycle are very different in size.
 # lines(d$yr_part, d[, series], type="o", pch=20, col="red")
+
+
+## Convert Fahrenheit temperatures to Kelvin.
+#' @export
+fahr_to_kelvin <- function(temp)
+{
+  ((temp - 32) * (5/9)) + 273.15
+}
+
+## Convert Kelvin temperatures to Celsius.
+#' @export
+kelvin_to_celsius <- function(temp)
+{
+  temp - 273.15
+}
+
+## Convert Fahrenheit temperatures to Celsius.
+#' @export
+fahr_to_celsius <- function(temp)
+{
+  kelvin_to_celsius(fahr_to_kelvin(temp))
+}
+
+## Convert Celsius temperatures to Fahrenheit.
+#' @export
+celsius_to_fahr <- function(temp)
+{
+  temp * (9/5) + 32
+}
+
+
+## Aided by the description at http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/download.html.
+#' @export
+#' @import plyr
+make_planetary_grid <- function(lat_range=c(90, -90), long_range=c(0, 0), grid_size=c(5, 5), clockwise=FALSE, reverse_long=FALSE, container=list(structure(list(c(NA)), weight=1.0)), digits=3)
+{
+  ## N.B. 90° N = +90° lat; 90° S = -90° lat; 180° W = -180° long; 180° E = +180° long.
+
+  allSame <- function(x, tol=.Machine$double.eps ^ 0.5) abs(max(x) - min(x)) < tol
+
+  if (length(grid_size) == 1L)
+    grid_size <- rep(grid_size[1], 2L)
+  latSize <- grid_size[1]; longSize <- grid_size[2]
+
+  getShortArcMidpointValues <- function(r, g)
+  {
+    r <- sort(r)
+    signr <- sign(r)
+    if (allSame(signr)) {
+      if (allSame(r)) mr <- r
+      else
+        mr <- r + c(1, -1) * (g / 2)
+    }
+    else {
+      if (any(signr == 0)) signr[signr == 0] <- -sum(signr)
+      mr <- r - signr * (g / 2)
+    }
+
+    mv <- seq(mr[1], mr[2], by=g)
+
+    mv
+  }
+
+  latValues <- getShortArcMidpointValues(lat_range, latSize)
+  if (diff(lat_range) < 0)
+    latValues <- sort(latValues, decreasing=TRUE)
+
+  getLongMidpointValues <- function(r, g, clockwise)
+  {
+    if ((diff(r) > 0 && !clockwise) || (diff(r) <= 0 && clockwise)) {
+      mv <- getShortArcMidpointValues(r, g)
+      if (diff(r) < 0)
+        mv <- sort(mv, decreasing=TRUE)
+    }
+    else {
+      mv <- c(
+        sort(getShortArcMidpointValues(c(r[1], ((2 * !clockwise) - 1) * 180), g), decreasing=clockwise),
+        sort(getShortArcMidpointValues(c((2 * clockwise - 1) * 180, r[2]), g), decreasing=clockwise)
+      )
+    }
+
+    ## Reversing the order of long. values might sometimes be necessary for complete arcs, i.e. same start and end values.
+    if (reverse_long) mv <- rev(mv)
+
+    mv
+  }
+
+  longValues <- getLongMidpointValues(long_range, longSize, clockwise)
+
+  g <- matrix(container, length(latValues), length(longValues), dimnames=list(round(latValues, digits), round(longValues, digits)))
+
+  ## Add latitude-weight attributes to row elements.
+  w <- cos(matrix(rep(latValues, ncol(g)), ncol=ncol(g), byrow=FALSE) * (pi / 180)) # Latitude weights.
+  plyr::m_ply(expand.grid(r_=seq(nrow(g)), c_=seq(ncol(g))), function(r_, c_) attr(g[[r_, c_]], "weight") <<- w[r_, c_])
+
+  attr(g, "grid_size") <- grid_size; names(attr(g, "grid_size")) <- c("lat", "long")
+  class(g) <- "PlanetaryGrid"
+
+  g
+}
+
+## usage:
+# g <- make_planetary_grid() # Default complete globe after JMA, 90N–90S, 0W–0E.
+
+
+#' @export
+find_planetary_grid_square <- function(p, lat, long)
+{
+  if (!inherits(p, "PlanetaryGrid"))
+    stop("'p' must be a \"PlanetaryGrid\" object.")
+
+  gridLatValues <- as.numeric(rownames(p)); gridLongValues <- as.numeric(colnames(p))
+  gridRow <- which.min(abs(lat - gridLatValues))
+  gridCol <- which.min(abs(long - gridLongValues))
+
+  gridSize <- attr(p, "grid_size")
+  if (abs(gridLatValues[gridRow] - lat) > gridSize[1] / 2) gridRow <- NA
+  if (abs(gridLongValues[gridCol] - long) > gridSize[2] / 2) gridCol <- NA
+
+  c(row=gridRow, col=gridCol)
+}
+
+## usage:
+# g <- make_planetary_grid()
+# find_planetary_grid_square(g, 60.15, 110.82)
+
+
+#' @export
+create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract=FALSE)
+{
+  if (extract) {
+    datasetPathBase <- "/HDFEOS/SWATHS/OSIRIS\\Odin Aerosol MART/"
+    datasetPaths <- datasetPathBase %_% c("Data Fields/AerosolExtinction", "Geolocation Fields/" %_% c("Altitude", "Latitude", "Longitude"))
+    names(datasetPaths) <- c("extinction", "alt", "lat", "long")
+    dirNames <- list.dirs(path, recursive=FALSE)
+    x <- list()
+    cat(fill=TRUE)
+    for (i in dirNames) {
+      ## Make sure the following regex 'pattern' doesn't change or lead to mixed file versions.
+      fileNames <- list.files(i, pattern="^OSIRIS-Odin_L2-Aerosol-Limb-MART", full.names=TRUE)
+      x[[basename(i)]] <- list()
+      for (j in fileNames) {
+        re <- ".*?_(\\d{4})m(\\d{4})\\..*$"
+        dateMatches <- str_match(j, re)
+        yyyymmdd <- paste(dateMatches[, 2:3], collapse="")
+
+        cat("    Processing file", basename(j), fill=TRUE); flush.console()
+        #flit <- tempfile()
+        flit <- j
+
+        x[[basename(i)]][[basename(j)]] <- list()
+        for (k in names(datasetPaths))
+          x[[basename(i)]][[basename(j)]][[k]] <- h5read(flit, datasetPaths[k])
+      }
+    }
+
+    save(x, file=paste(rdata_path, "OSIRIS-Odin_L2-Aerosol-Limb-MART_v5-07.RData", sep="/"))
+  }
+  else
+    load(paste(rdata_path, "OSIRIS-Odin_L2-Aerosol-Limb-MART_v5-07.RData", sep="/"))
+
+  ### Process the extinction data to calculate monthly SAOD.
+
+  saodDaily <- NULL
+
+  cat(fill=TRUE)
+  for (i in names(x)) {
+    re <- "(\\d{4})(\\d{2})"
+    yearMatches <- str_match(i, re)
+    yearValue <- as.numeric(yearMatches[, 2L])
+    monthValue <- as.numeric(yearMatches[, 3L])
+    saodDailyTemplate <- data.frame(year=yearValue, month=monthValue, day=NA, saod=NA, check.names=FALSE, stringsAsFactors=FALSE)
+
+    for (j in seq_along(x[[i]])) {
+      dayValue <- as.numeric(str_match(names(x[[i]])[j], ".*?_\\d{4}m\\d{2}(\\d{2})\\..*$")[, 2])
+      cat("    Processing object", paste(i, tools::file_path_sans_ext(names(x[[i]])[j]), sep="/"), fill=TRUE); flush.console()
+      extinction <- x[[i]][[j]]$extinction
+      ## Missing values are given as -9999.
+      is.na(extinction) <- extinction == -9999
+      alt <- x[[i]][[j]]$alt
+      extinction <- data.frame(extinction, check.names=FALSE, stringsAsFactors=FALSE)
+      rownames(extinction) <- alt
+      lat <- x[[i]][[j]]$lat
+      long <- x[[i]][[j]]$long
+      coords <- mapply(function(x, y) c(lat=x, long=y), lat, long, SIMPLIFY=FALSE)
+
+      ## Get stratospheric subset of extinction values from 15–35 km. (After Sato et al. 1993 and Rieger et al. 2015; but v. Ridley et al. 2014 for including some aerosol effects below 15 km.)
+      keepRows <- alt >= 15 & alt <= 35
+      e <- subset(extinction, keepRows)
+      for (k in seq_along(coords)) {
+        attr(e[[k]], "alt") <- alt[keepRows]
+        attr(e[[k]], "coords") <- coords[[k]]
+      }
+
+      gridSaod <- sapply(e,
+        function(y)
+        {
+          r <- NA
+
+          ## Calculate vertical column integral of aerosol extinction.
+          if (!all(is.na(y))) {
+            r <- integratex(attr(y, "alt"), y)
+            ## Boucher - Atmospheric Aerosols--Properties and Climate Impacts (2015), p. 44 (Eq. 3.31):
+            ## τ = τ_r × (λ / λ_r)^-α; λ = 550 nm, λ_r = 750 nm, τ_r is OSIRIS value, α = 2.3 (v. Rieger et al. 2015)
+            ##   = τ_r × 2.04, where τ_r is aerosol extinction integrated from 15–35 km
+            r <- r * 2.04
+          }
+
+          attr(r, "coords") <- attr(y, "coords")
+
+          r
+        }, simplify = FALSE
+      )
+
+      ## Create global grid of 5° × 5° squares and bin each SAOD value in the correct square.
+      g <- make_planetary_grid()
+      dev_null <- sapply(gridSaod,
+        function(y)
+        {
+          coords <- attr(y, "coords")
+          lat <- coords["lat"]; long <- coords["long"]
+          rc <- find_planetary_grid_square(g, lat, long)
+          sq <- g[[rc["row"], rc["col"]]][[1]]
+          if (all(is.na(sq)))
+            g[[rc["row"], rc["col"]]][[1]] <<- as.vector(y)
+          else
+            g[[rc["row"], rc["col"]]][[1]] <<- c(sq, as.vector(y))
+        }
+      )
+
+      ## From the global grid, create a data frame of mean values for every bin and their corresponding latitude weights.
+      d <- sapply(g,
+        function(y)
+        {
+          r <- c(value=NA, weight=attr(y, "weight"))
+          if (all(is.na(y[[1]]))) return (r)
+          r["value"] <- mean(y[[1]], na.rm=TRUE)
+
+          r
+        }, simplify = FALSE
+      )
+
+      d <- data.matrix(Reduce(rbind, d))
+      saodToday <- stats::weighted.mean(d[, "value"], d[, "weight"], na.rm=TRUE)
+      saodTodayDf <- saodDailyTemplate
+      saodTodayDf$day <- dayValue
+      saodTodayDf$saod <- saodToday
+
+      saodDaily <- rbind(saodDaily, saodTodayDf, make.row.names=FALSE, stringsAsFactors=FALSE)
+    }
+  }
+
+  saod_daily <- saodDaily
+  save(saod_daily, file=paste(rdata_path, "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", sep="/"))
+}
+
+
+#' @export
+create_osiris_saod_data <- function(path=".", create_daily=FALSE, ...)
+{
+  if (create_daily)
+    create_osiris_daily_saod_data()
+  else
+    load(paste(path, "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", sep="/"), envir=environment())
+
+  r <- plyr::arrange(Reduce(rbind,
+    by(saod_daily, list(saod_daily$year, saod_daily$month),
+      function(x) data.frame(year=x$year[1], month=x$month[1], `OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global`=mean(x$saod, na.rm=TRUE), check.names=FALSE, stringsAsFactors=FALSE),
+      simplify=FALSE)), year, month)
+  r$yr_part <- r$year + (2 * r$month - 1)/24
+
+  r
+}
+
+## usage:
+# inst <- get_climate_data(download=FALSE, baseline=FALSE)
+# allSeries <- list(
+#   inst,
+#   create_osiris_saod_data()
+# )
+# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
+# series <- c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global")
+# plot_climate_data(d, series, start=1985, ylab="SAOD", main="Global Mean Stratospheric Aerosol Optical Depth")
+## Save only OSIRIS data as CSV file.
+# keepRows <- na_unwrap(d$`OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global`)
+# write.csv(d[keepRows, c("year", "month", "yr_part", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global")], "./OSIRIS-SAOD_2001.11-2016.7.csv", row.names=FALSE)

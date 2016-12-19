@@ -5,8 +5,9 @@
 \title{Get Monthly Climatological Data from a Local Data Set or from the Internet}
 \usage{
 get_climate_data(download, data_dir, filename_base,
-  urls = climeseries:::instrumentalUrls, baseline = 1981:2010,
-  verbose = TRUE)
+  urls = climeseries:::instrumentalUrls,
+  omit = climeseries:::omitDownloadUrls, only = NULL, baseline = NULL,
+  annual_mean = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{download}{Logical: if \code{TRUE}, download the latest instrumental data from the Internet; if \code{FALSE}, load the most recent instrumental data set from the default data directory.}

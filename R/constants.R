@@ -52,15 +52,18 @@ nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-210
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
-rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
+#rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
+rssBase <- "http://data.remss.com/msu/monthly_time_series/"
 rssTlt <- "RSS_Monthly_MSU_AMSU_Channel_TLT_Anomalies_"; rssTmt <- "RSS_Monthly_MSU_AMSU_Channel_TMT_Anomalies_"
-esrlBase <- "http://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&lon1=@@LON1@@&lon2=@@LON2@@&var=@@VAR@@"
+rssTtt <- "RSS_Monthly_MSU_AMSU_Channel_TTT_Anomalies_"
+esrlBase <- "https://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&lon1=@@LON1@@&lon2=@@LON2@@&var=@@VAR@@"
 esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 ## Start here: http://www.esrl.noaa.gov/psd/data/timeseries/
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&service=ArAvTs&starttime=2000-03-01T00:00:00Z&endtime=@@DATE@@T23:59:59Z&data=MOD08_M3_6_Aerosol_Optical_Depth_Land_Ocean_Mean_Mean&portal=GIOVANNI&format=json"
 
-instrumentalUrls <- list( # Last updated 16 Nov. 2016.
+instrumentalUrls <- list( # Last updated 7 Dec. 2016.
+  `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei/table.html", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
@@ -132,6 +135,12 @@ instrumentalUrls <- list( # Last updated 16 Nov. 2016.
   `RSS TMT 4.0` = rssBase %_% rssTmt %_% "Land_and_Ocean_v04_0.txt",
   `RSS TMT 4.0 Land` = rssBase %_% rssTmt %_% "Land_v04_0.txt",
   `RSS TMT 4.0 Ocean` = rssBase %_% rssTmt %_% "Ocean_v04_0.txt",
+  `RSS TTT 3.3` = rssBase %_% rssTtt %_% "Land_and_Ocean_v03_3.txt",
+  `RSS TTT 3.3 Land` = rssBase %_% rssTtt %_% "Land_v03_3.txt",
+  `RSS TTT 3.3 Ocean` = rssBase %_% rssTtt %_% "Ocean_v03_3.txt",
+  `RSS TTT 4.0` = rssBase %_% rssTtt %_% "Land_and_Ocean_v04_0.txt",
+  `RSS TTT 4.0 Land` = rssBase %_% rssTtt %_% "Land_v04_0.txt",
+  `RSS TTT 4.0 Ocean` = rssBase %_% rssTtt %_% "Ocean_v04_0.txt",
   ## UAH
   `UAH TLT 5.6` = "http://www.nsstc.uah.edu/data/msu/t2lt/uahncdc_lt_5.6.txt",
   `UAH TMT 5.6` = "http://www.nsstc.uah.edu/data/msu/t2/uahncdc_mt_5.6.txt",
@@ -164,9 +173,15 @@ instrumentalUrls <- list( # Last updated 16 Nov. 2016.
   `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar"),
   ## CSIRO GMSL
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"),
-  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = "http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt"
+  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
   ## TODO: Ocean heat content.
   # http://www.esrl.noaa.gov/psd/data/timeseries/AMO/
+)
+
+## Omit by default some series whose downloading or processing takes a very long time.
+omitDownloadUrls <- c(
+  "OSIRIS Stratospheric Aerosol Optical Depth (550 nm)"
+  #"MODIS Aerosol Optical Thickness (550 nm)"
 )
 
 commonColumns <- c("year", "met_year", "yr_part", "month")

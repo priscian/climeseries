@@ -118,6 +118,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## Missing values are given as "-9999".
       is.na(d$temp) <- d$temp == -9999
 
+      if (grepl("^NCEI US\\s+.*?Temp.*?$", series)) # US temps given in Fahrenheit.
+        d$temp <- fahr_to_celsius(d$temp)
+
       return (d)
     })(path),
 
@@ -328,7 +331,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `RSS TMT 3.3` =,
     `RSS TMT 4.0 Land` =,
     `RSS TMT 4.0 Ocean` =,
-    `RSS TMT 4.0` = (function(p) {
+    `RSS TMT 4.0` =,
+    `RSS TTT 3.3 Land` =,
+    `RSS TTT 3.3 Ocean` =,
+    `RSS TTT 3.3` =,
+    `RSS TTT 4.0 Land` =,
+    `RSS TTT 4.0 Ocean` =,
+    `RSS TTT 4.0` = (function(p) {
       x <- NULL
 
       skip <- 3L
@@ -807,6 +816,50 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
+
+    ## This is abandoned for now because of the amount of data; instead, do FTP download first, then process locally.
+    `OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Alt` = (function(p) {
+      skip <- 0L
+
+      datasetPathBase <- "/HDFEOS/SWATHS/OSIRIS\\Odin Aerosol MART/"
+      datasetPaths <- datasetPathBase %_% c("Data Fields/AerosolExtinction", "Geolocation Fields/" %_% c("Altitude", "Latitude", "Longitude"))
+      names(datasetPaths) <- c("extinction", "alt", "long", "lat")
+      #tryCatch({
+        dirNames <- strsplit(getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
+        x <- list()
+        cat(fill=TRUE)
+        for (i in dirNames) {
+          fileNames <- strsplit(getURL(paste0(p, i, "/"), dirlistonly=TRUE), "\r*\n")[[1L]]
+          ## Make sure the following regex doesn't change or lead to mixed file versions.
+          fileNames <- grep("^OSIRIS-Odin_L2-Aerosol-Limb-MART", fileNames, value=TRUE)
+          x[[i]] <- list()
+          for (j in fileNames) {
+            re <- ".*?_(\\d{4})m(\\d{4})\\..*$"
+            dateMatches <- str_match(j, re)
+            yyyymmdd <- paste(dateMatches[, 2:3], collapse="")
+
+            cat("    Downloading file", j, fill=TRUE); flush.console()
+            flit <- tempfile()
+            download.file(paste0(p, i, "/", j), flit, mode="wb", quiet=TRUE)
+
+            x[[i]][[j]] <- list()
+            for (k in names(datasetPaths))
+              x[[i]][[j]][[k]] <- h5read(flit, datasetPaths[k])
+          }
+        }
+      #}, error=Error, warning=Error)
+
+      save(x, "OSIRIS-Odin_L2-Aerosol-Limb-MART_v5-07.RData")
+
+      browser()
+      return (d)
+    })(path),
+
+    `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = (function(p) {
+      d <- create_osiris_saod_data()
+
+      return (d)
+    })(path)
   )
 
   if (is.null(d) && verbose) tryCatch(message(""), message=Error)
@@ -992,7 +1045,7 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' }
 #'
 #' @export
-get_climate_data <- function(download, data_dir, filename_base, urls=climeseries:::instrumentalUrls, baseline=1981:2010, verbose=TRUE)
+get_climate_data <- function(download, data_dir, filename_base, urls=climeseries:::instrumentalUrls, omit=climeseries:::omitDownloadUrls, only=NULL, baseline=NULL, annual_mean=FALSE, verbose=TRUE)
 {
   if (missing(data_dir)) {
     if (!is.null(getOption("climeseries_data_dir")))
@@ -1010,10 +1063,23 @@ get_climate_data <- function(download, data_dir, filename_base, urls=climeseries
 
   d <- NULL
 
-  if (download)
+  if (download) {
+    if (!is.null(only))
+      urls <- urls[names(urls) %in% only]
+    if (!is.null(omit))
+      urls <- urls[!names(urls) %in% omit]
     d <- DownloadInstrumentalData(urls, baseline, verbose, data_dir, filename_base)
+  }
   else
     d <- LoadInstrumentalData(data_dir, filename_base, baseline)
+
+  if (annual_mean) {
+    seriesNames <- get_climate_series_names(d, conf_int=FALSE)
+    temp <- aggregate(d[, seriesNames], list(year=d$year), mean, na.rm=TRUE)
+    temp <- data.matrix(temp)
+    is.na(temp) <- is.nan(temp)
+    d <- as.data.frame(temp)
+  }
 
   return (d)
 }
@@ -1054,7 +1120,7 @@ get_climate_series_names <- function(x, conf_int=FALSE)
 #' @return The data frame argument \code{x} recentered on \code{baseline}.
 #'
 #' @export
-recenter_anomalies <- function(x, baseline=defaultBaseline, digits=3L, by_month=TRUE, return_baselines_only=FALSE, ...)
+recenter_anomalies <- function(x, baseline=defaultBaseline, digits=4L, by_month=TRUE, return_baselines_only=FALSE, ...)
 {
   if (is.null(baseline))
     return (x)
