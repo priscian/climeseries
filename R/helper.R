@@ -477,7 +477,7 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract
     datasetPathBase <- "/HDFEOS/SWATHS/OSIRIS\\Odin Aerosol MART/"
     datasetPaths <- datasetPathBase %_% c("Data Fields/AerosolExtinction", "Geolocation Fields/" %_% c("Altitude", "Latitude", "Longitude"))
     names(datasetPaths) <- c("extinction", "alt", "lat", "long")
-    dirNames <- list.dirs(path, recursive=FALSE)
+    dirNames <- list.dirs(data_path, recursive=FALSE)
     x <- list()
     cat(fill=TRUE)
     for (i in dirNames) {
@@ -486,7 +486,7 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract
       x[[basename(i)]] <- list()
       for (j in fileNames) {
         re <- ".*?_(\\d{4})m(\\d{4})\\..*$"
-        dateMatches <- str_match(j, re)
+        dateMatches <- stringr::str_match(j, re)
         yyyymmdd <- paste(dateMatches[, 2:3], collapse="")
 
         cat("    Processing file", basename(j), fill=TRUE); flush.console()
@@ -511,7 +511,7 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract
   cat(fill=TRUE)
   for (i in names(x)) {
     re <- "(\\d{4})(\\d{2})"
-    yearMatches <- str_match(i, re)
+    yearMatches <- stringr::str_match(i, re)
     yearValue <- as.numeric(yearMatches[, 2L])
     monthValue <- as.numeric(yearMatches[, 3L])
     saodDailyTemplate <- data.frame(year=yearValue, month=monthValue, day=NA, saod=NA, check.names=FALSE, stringsAsFactors=FALSE)
@@ -601,12 +601,18 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract
 
 
 #' @export
-create_osiris_saod_data <- function(path=".", create_daily=FALSE, ...)
+create_osiris_saod_data <- function(path=NULL, create_daily=FALSE, ...)
 {
+  if (is.null(path)) {
+    if (!is.null(getOption("climeseries_saod_data_dir")))
+      path <- getOption("climeseries_saod_data_dir")
+    else
+      path <- "."
+  }
   if (create_daily)
-    create_osiris_daily_saod_data()
-  else
-    load(paste(path, "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", sep="/"), envir=environment())
+    create_osiris_daily_saod_data(rdata_path=path, ...)
+
+  load(paste(path, "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", sep="/"), envir=environment())
 
   r <- plyr::arrange(Reduce(rbind,
     by(saod_daily, list(saod_daily$year, saod_daily$month),
