@@ -856,7 +856,22 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     })(path),
 
     `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = (function(p) {
-      d <- create_osiris_saod_data()
+      ## Global
+      saod_daily_gl <- create_osiris_saod_data()
+
+      ## NH
+      dailyFilenameNh <- "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm_NH.RData"
+      seriesNameNh <- "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) NH"
+      saod_daily_nh <- create_osiris_saod_data(filename=dailyFilenameNh, series_name=seriesNameNh)
+
+      ## SH
+      dailyFilenameSh <- "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm_SH.RData"
+      seriesNameSh <- "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) SH"
+      saod_daily_sh <- create_osiris_saod_data(filename=dailyFilenameSh, series_name=seriesNameSh)
+
+      ## Merge.
+      allSeries <- list(saod_daily_gl, saod_daily_nh, saod_daily_sh)
+      d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
 
       return (d)
     })(path)
@@ -867,7 +882,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
   if (!is.null(d)) {
     if (!is.data.frame(d))
-      d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(commonColumns), lapply(d, names))))), d)
+      d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(d, names))))), d)
 
     if (any(duplicated(d[, c("year", "month"), drop=FALSE]))) stop("Data set has duplicated year/month rows.")
 

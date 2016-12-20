@@ -298,6 +298,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NSIDC Sea Ice Global Extent
 1. NSIDC Sea Ice Global Area
 1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global
+1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) NH
+1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) SH
 1. PIOMAS Arctic Sea Ice Volume
 1. PMOD TSI (new VIRGO)
 1. PMOD TSI (orig. VIRGO)

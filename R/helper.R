@@ -471,7 +471,7 @@ find_planetary_grid_square <- function(p, lat, long)
 
 
 #' @export
-create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract=FALSE)
+create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", daily_filename="OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", planetary_grid=NULL, extract=FALSE)
 {
   if (extract) {
     datasetPathBase <- "/HDFEOS/SWATHS/OSIRIS\\Odin Aerosol MART/"
@@ -558,13 +558,17 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract
       )
 
       ## Create global grid of 5° × 5° squares and bin each SAOD value in the correct square.
-      g <- make_planetary_grid()
+      if (is.null(planetary_grid))
+        g <- make_planetary_grid()
+      else
+        g <- planetary_grid
       dev_null <- sapply(gridSaod,
         function(y)
         {
           coords <- attr(y, "coords")
           lat <- coords["lat"]; long <- coords["long"]
           rc <- find_planetary_grid_square(g, lat, long)
+          if (any(is.na(rc))) return ()
           sq <- g[[rc["row"], rc["col"]]][[1]]
           if (all(is.na(sq)))
             g[[rc["row"], rc["col"]]][[1]] <<- as.vector(y)
@@ -596,12 +600,12 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", extract
   }
 
   saod_daily <- saodDaily
-  save(saod_daily, file=paste(rdata_path, "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", sep="/"))
+  save(saod_daily, file=paste(rdata_path, daily_filename, sep="/"))
 }
 
 
 #' @export
-create_osiris_saod_data <- function(path=NULL, create_daily=FALSE, ...)
+create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", series_name="OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global", create_daily=FALSE, ...)
 {
   if (is.null(path)) {
     if (!is.null(getOption("climeseries_saod_data_dir")))
@@ -610,15 +614,17 @@ create_osiris_saod_data <- function(path=NULL, create_daily=FALSE, ...)
       path <- "."
   }
   if (create_daily)
-    create_osiris_daily_saod_data(rdata_path=path, ...)
+    create_osiris_daily_saod_data(rdata_path=path, daily_filename=filename, ...)
 
-  load(paste(path, "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", sep="/"), envir=environment())
+  load(paste(path, filename, sep="/"), envir=environment())
 
   r <- plyr::arrange(Reduce(rbind,
     by(saod_daily, list(saod_daily$year, saod_daily$month),
-      function(x) data.frame(year=x$year[1], month=x$month[1], `OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global`=mean(x$saod, na.rm=TRUE), check.names=FALSE, stringsAsFactors=FALSE),
+      function(x) data.frame(year=x$year[1], month=x$month[1], flit=mean(x$saod, na.rm=TRUE), check.names=FALSE, stringsAsFactors=FALSE),
       simplify=FALSE)), year, month)
   r$yr_part <- r$year + (2 * r$month - 1)/24
+
+  names(r)[names(r) %in% "flit"] <- series_name
 
   r
 }
