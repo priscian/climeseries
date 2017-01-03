@@ -790,6 +790,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x[[2]], check.names=FALSE, stringsAsFactors=FALSE)
       is.na(d$temp) <- d$temp == -9999
 
+      #browser()
       return (d)
     })(path),
 
