@@ -94,7 +94,8 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   if (!is.null(baseline))
     x <- recenter_anomalies(x, baseline, conf_int=FALSE)
 
-  if (is.null(start)) startYear <- as.vector(data.matrix(head(x[, c("year")], 1)))
+  startYear <- start
+  if (is.null(startYear)) startYear <- as.vector(data.matrix(head(x[, c("year")], 1)))
 
   s <- make_time_series_from_anomalies(x, conf_int=TRUE)
   s_yr_part <- ts(x[, "yr_part"], unlist(x[1L, c("year", "month")]), frequency=12)
