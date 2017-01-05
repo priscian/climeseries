@@ -94,12 +94,12 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   if (!is.null(baseline))
     x <- recenter_anomalies(x, baseline, conf_int=FALSE)
 
-  if (is.null(start)) start <- as.vector(data.matrix(head(x[, c("year")], 1)))
+  if (is.null(start)) startYear <- as.vector(data.matrix(head(x[, c("year")], 1)))
 
   s <- make_time_series_from_anomalies(x, conf_int=TRUE)
   s_yr_part <- ts(x[, "yr_part"], unlist(x[1L, c("year", "month")]), frequency=12)
-  w <- window(s[, get_climate_series_names(s)], start, end, extend=TRUE)
-  w_yr_part <- window(s_yr_part, start, end, extend=TRUE)
+  w <- window(s[, get_climate_series_names(s)], startYear, end, extend=TRUE)
+  w_yr_part <- window(s_yr_part, startYear, end, extend=TRUE)
 
   s_raw <- s
   ## We must interpolate missing values in the time series.
@@ -111,7 +111,7 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   if (!is.null(ma))
     maText <- "(" %_% ma %_% "-month moving average)"
 
-  w_ma <- window(sma, start, end, extend=TRUE)
+  w_ma <- window(sma, startYear, end, extend=TRUE)
 
   baselineText <- ""
   baseline <- attr(x, "baseline")
@@ -148,7 +148,7 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   GetXAxisTicks <- function(min=1500, max=3000, by=10)
   {
     yearGroups <- seq(min, max, by=by)
-    plotStart <- start
+    plotStart <- startYear
     if (is.null(plotStart)) plotStart <- min(x$year)
     plotEnd <- end
     if (is.null(plotEnd)) plotEnd <- max(x$year)
@@ -185,7 +185,7 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
       for (i in seq_along(confintNames)) {
         value <- s[, seriesNames[i]]
         ci <- cis[, confintNames[i]]
-        upper <- window(MA(value + ci/2, ma), start, end, extend=TRUE); lower <- window(MA(value - ci/2, ma), start, end, extend=TRUE)
+        upper <- window(MA(value + ci/2, ma), startYear, end, extend=TRUE); lower <- window(MA(value - ci/2, ma), startYear, end, extend=TRUE)
         ciCol <- alpha(col[seriesNames[i]], ci_alpha)
         cidf <- data.frame(yr_part=w_yr_part, lower=lower, upper=upper); cidf <- cidf[complete.cases(cidf), ]
         polygon(x=c(cidf$yr_part, rev(cidf$yr_part)), y=c(cidf$upper, rev(cidf$lower)), col=ciCol, border=NA)
@@ -202,7 +202,7 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   if (show_trend) {
     m <- list()
     m$series <- series
-    m$range <- list(start=start, end=end)
+    m$range <- list(start=startYear, end=end)
     m$col <- col
     m$data <- x[x$year >= ifelse(!is.null(m$range$start), m$range$start, -Inf) & x$year <= ifelse(!is.null(m$range$end), m$range$end, Inf), c(climeseries:::commonColumns, series)]
     for (s in m$series) {

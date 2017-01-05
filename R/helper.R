@@ -109,6 +109,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 
 ## usage:
 # plot_horse_race("GISTEMP Global")
+# plot_horse_race("UAH TLT 6.0 Global", 10)
 # plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
 
 

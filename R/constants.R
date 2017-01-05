@@ -144,8 +144,8 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   ## UAH
   `UAH TLT 5.6` = "http://www.nsstc.uah.edu/data/msu/t2lt/uahncdc_lt_5.6.txt",
   `UAH TMT 5.6` = "http://www.nsstc.uah.edu/data/msu/t2/uahncdc_mt_5.6.txt",
-  `UAH TLT 6.0` = "http://vortex.nsstc.uah.edu/data/msu/v6.0beta/tlt/uahncdc_lt_6.0beta5.txt",
-  `UAH TMT 6.0` = "http://vortex.nsstc.uah.edu/data/msu/v6.0beta/tmt/uahncdc_mt_6.0beta5.txt",
+  `UAH TLT 6.0` = "http://www.nsstc.uah.edu/data/msu/v6.0/tlt/uahncdc_lt_6.0.txt",
+  `UAH TMT 6.0` = "http://www.nsstc.uah.edu/data/msu/v6.0/tmt/uahncdc_mt_6.0.txt",
   ## RATPAC
   `RATPAC-A Seasonal Layers` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt.zip", # Version 2; Version 1 is now deprecated (6 Sep. 2016).
   `RATPAC-A Annual Levels` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-annual-levels.txt.zip",
