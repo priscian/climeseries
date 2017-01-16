@@ -105,7 +105,7 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   s_raw <- s
   ## We must interpolate missing values in the time series.
   #s <- timeSeries::interpNA(s_raw, "linear")
-  s <- interpNA(s_raw, "linear")
+  s <- interpNA(s_raw, "linear", unwrap=TRUE)
   #s <- na.approx(s_raw)
   sma <- MA(s[, get_climate_series_names(s)], ma)
   maText <- ""
@@ -440,7 +440,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   i_raw <- i
   ## We must interpolate missing values in the time series.
   #i <- timeSeries::interpNA(i_raw, "linear")
-  i <- interpNA(i_raw, "linear")
+  i <- interpNA(i_raw, "linear", unwrap=TRUE)
   ima <- MA(i[, get_climate_series_names(i)], ma_i)
   if (!is.null(ma_i)) {
     if (ma_i != ma)

@@ -176,6 +176,7 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
   ## TODO: Ocean heat content.
   # http://www.esrl.noaa.gov/psd/data/timeseries/AMO/
+  ## Some aggregate data sets for modeling.
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.

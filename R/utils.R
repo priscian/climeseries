@@ -21,7 +21,7 @@ na_unwrap <- function(x, ...)
 #' @export
 na_unwrap.matrix <- function(x, ...)
 {
-  apply(apply(x, 2, na_unwrap.default), 1, any)
+  apply(apply(x, 2, na_unwrap.default, ...), 1, any)
 }
 
 
@@ -33,9 +33,11 @@ na_unwrap.data.frame <- function(x, ...)
 
 
 #' @export
-na_unwrap.default <- function(x, ...)
+na_unwrap.default <- function(x, type=c("both", "head", "tail", "none"), ...)
 {
-  nai <- na.omit(x)
+  type <- match.arg(type)
+
+  nai <- stats:::na.omit.default(x) # Changed 14 Jan. 2017 to work with "ts" objects.
   #s <- rle(attr(nai, "na.action")) # See external function definition.
   s <- seqle(attr(nai, "na.action")) # See external function definition.
 
@@ -54,7 +56,12 @@ na_unwrap.default <- function(x, ...)
   }
 
   r <- rep(TRUE, length(x))
-  r[c(leadr, trailr)] <- FALSE
+
+  switch(type,
+    both = r[c(leadr, trailr)] <- FALSE,
+    head = r[c(leadr)] <- FALSE,
+    tail = r[c(trailr)] <- FALSE
+  )
 
   return (r)
 }
@@ -65,7 +72,12 @@ na_unwrap.default <- function(x, ...)
 
 
 #' @export
-shift <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
+shift <- function(x, ...)
+  UseMethod("shift")
+
+
+#' @export
+shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
 {
   n  <- length(x)
   if (n == 0L) return(x)
@@ -105,6 +117,21 @@ shift <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
 
 
 #' @export
+shift.data.frame <- function(x, i, ...)
+{
+  if (!is.list(i)) {
+    i <- as.list(rep(i, length.out=length(x)))
+    names(i) <- names(x)
+  }
+
+  for(j in names(i))
+    x[[j]] <- shift.default(x[[j]], i[[j]], ...)
+
+  x
+}
+
+
+#' @export
 nearest_below <- function(v, x, value=FALSE) { l <- which(v == max(v[(v < x)])); if (value) v[l] else l }
 
 #' @export
@@ -120,17 +147,35 @@ MA <- moving_average
 
 
 #' @export
-interpNA <- function (x, method=c("linear", "before", "after"), ...)
+interpNA <- function (x, method=c("linear", "before", "after"), unwrap=TRUE, ...)
 {
   if (!inherits(x, "matrix") && !inherits(x, "timeSeries"))
     x <- as(x, "matrix")
 
-  interpVectorNA <- function(x, method, f) {
+  fun <- stats::approx
+  if (method[1] %nin% c("linear", "before", "after")) # '?stats::spline' for available "method"s.
+    ## The following code removes any unmatched arguments from a call to 'FUN()';
+    ## e.g. 'stats::spline()' doesn't have a formal argument 'f', which is nonetheless passed in below.
+    fun <- function(...) { FUN <- stats::spline; d <- get_dots(...); a <- d$arguments[trimws(names(d$arguments)) %in% c("", formalArgs(FUN))]; do.call(FUN, a, quote=FALSE, envir=parent.frame()) }
+  #else unwrap = FALSE
+
+  interpVectorNA <- function(x, method, f, ...)
+  {
     n <- length(x)
     idx <- (1:n)[!is.na(x)]
-    x <- approx(idx, x[idx], 1:n, method=method, f=f)$y
+    y <- fun(x=idx, y=x[idx], xout=1:n, method=method, f=f)$y
 
-    x
+    ## If spline interpolation, allow terminal NAs to be interpolated.
+    if (!unwrap) return (y)
+
+    ## If any leading/trailing NAs remain, interpolate them from the first/last value.
+    y[!na_unwrap(y, "head")] <- y[head(which(!is.na(y)), 1)]
+    y[!na_unwrap(y, "tail")] <- y[tail(which(!is.na(y)), 1)]
+
+    r <- x
+    r[na_unwrap(x, ...)] <- y[na_unwrap(x, ...)]
+
+    r
   }
 
   method <- method[1]
@@ -144,7 +189,7 @@ interpNA <- function (x, method=c("linear", "before", "after"), ...)
     f <- 1
   }
   for (i in 1:ncol(x)) {
-    x[, i] <- interpVectorNA(x[, i], method, f)
+    x[, i] <- interpVectorNA(x[, i], method, f, ...)
   }
 
   x
@@ -267,4 +312,11 @@ integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear")
   }
 
   res
+}
+
+
+#' @export
+backtick <- function(x, ...)
+{
+  sapply(x, function(a) paste("`", as.character(a), "`", sep=""), ...)
 }

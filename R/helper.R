@@ -108,9 +108,10 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 }
 
 ## usage:
-# plot_horse_race("GISTEMP Global")
-# plot_horse_race("UAH TLT 6.0 Global", 10)
-# plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+# ytd <- plot_horse_race("GISTEMP Global")
+# ytd <- plot_horse_race("UAH TLT 6.0 Global", 10)
+# ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+# print(as.data.frame(ytd), digits=3, row.names=FALSE, right=FALSE)
 
 
 #' @export
@@ -295,7 +296,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
   d <- inst[, c(climeseries:::commonColumns, series)]
   if (unwrap)
     d <- subset(d, na_unwrap(d[, series]))
-  d[[series %_% " (interpolated)"]] <- interpNA(d[, series], "linear")
+  d[[series %_% " (interpolated)"]] <- interpNA(d[, series], "fmm")
 
   if (is.null(period)) { # Estimate period from data.
     spectralDensity <- spectrum(y)
@@ -344,6 +345,143 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
 # plot(d$yr_part, d[, series %_% " (anomalies)"], type="o", pch=20)
 # ## Monthly anomalies are almost the same because trend and cycle are very different in size.
 # lines(d$yr_part, d[, series], type="o", pch=20, col="red")
+
+
+#' @export
+create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_var", interpolate=TRUE, add=TRUE, ...)
+{
+  d <- x[, var_names]
+  if (interpolate)
+    d <- interpNA(d, method="fmm", unwrap=TRUE)
+
+  r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r })
+  r <- interpNA(r, method="linear", unwrap=TRUE, ...)
+
+  if (!add) return (r)
+
+  x[[aggregate_name]] <- r
+
+  x
+}
+
+## usage:
+# e <- get_climate_data(download=TRUE, baseline=FALSE)
+# e <- create_aggregate_variable(e, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global"), "SAOD Aggregate Global", type="head")
+
+
+#' @export
+add_default_aggregate_variables <- function(x)
+{
+  x <- create_aggregate_variable(x, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index"), "MEI Aggregate Global", type="head")
+  x <- create_aggregate_variable(x, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global"), "SAOD Aggregate Global", type="head")
+  x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO)"), "TSI Aggregate Global", type="head")
+
+  x
+}
+
+## usage:
+# e <- get_climate_data(download=FALSE, baseline=FALSE)
+# e <- add_default_aggregate_variables(e)
+# plot_climate_data(e, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index", "MEI Aggregate Global"), 1940, lwd=2)
+# plot_climate_data(e, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global", "SAOD Aggregate Global"), 1985, lwd=2)
+# plot_climate_data(e, c("TSI Reconstructed", "PMOD TSI (new VIRGO)", "TSI Aggregate Global"), 1985, lwd=2)
+
+
+## Create temperature series with the influence of some exogenous factors removed.
+## Based on Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022.
+#' @export
+remove_exogenous_influences <- function(x, series,
+  start=NULL, end=NULL,
+  lags = list(`MEI Aggregate Global`=NULL, `SAOD Aggregate Global`=NULL, `TSI Aggregate Global`=NULL),
+  aggregate_vars_fun = add_default_aggregate_variables,
+  period = 1, num_harmonics = 4,
+  max_lag = 10, bs_degree = 3)
+{
+  if (missing(x))
+    x <- get_climate_data(download=FALSE, baseline=FALSE)
+
+  x <- aggregate_vars_fun(x)
+
+  lagsDf <- NULL
+
+  for (i in series) {
+    if (is.null(start)) start <- min(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
+    if (is.null(end)) end <- max(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
+    yr_part_offset <- trunc(mean(x$yr_part[na_unwrap(x[[i]])]))
+
+    ## Construct model formula for given no. of harmonics.
+    flitSeries <- x[[i]]
+    x[[i]] <- interpNA(x[[i]], type="tail")
+    fBase <- backtick(i) %_% "~"; form <- NULL
+    for (j in seq(num_harmonics))
+      form <- c(form, paste0(c("sin", "cos"), paste0("(", 2 * j, " * pi / period * yr_part)")))
+    form <- c("yr_part", paste0("splines::bs(yr_part - yr_part_offset, degree=", bs_degree, ")"), backtick(names(lags)), form)
+    form <- as.formula(paste0(fBase, paste0(form, collapse=" + ")))
+
+    y <- model.frame(form, x)
+    x[[i]] <- flitSeries
+    l <- expand.grid(sapply(lags, function(a) { r <- seq(0, max_lag); if (!is.null(a)) r <- a; r }, simplify=FALSE))
+    aic <- apply(l, 1,
+      function(a) {
+        lr <- as.list(unlist(a))
+        z <- shift(y, lr, roll=FALSE)
+        z <- subset(z, z$yr_part >= start & z$yr_part <= end)
+        z <- z[, names(z) %nin% "yr_part"]
+
+        ## Test the lag combinations to find the model with the lowest AIC.
+        AIC(lm(z))
+      }
+    )
+
+    lagMinAic <- as.list(unlist(l[which.min(aic)[1], ]))
+    z <- shift(y, lagMinAic, roll=FALSE)
+    z <- subset(z, z$yr_part >= start & z$yr_part <= end)
+    yr_part <- z$yr_part
+    z <- z[, names(z) %nin% "yr_part"]
+    m <- lm(z)
+
+    ## Check the fit:
+    # plot(yr_part, z[[1]], type="l"); lines(yr_part, m$fitted, type="l", col="red"); plot(m$residuals)
+
+    #adj <- m$residuals + coef(m)["yr_part"] * z$yr_part + coef(m)["(Intercept)"]
+    yrPartCoefs <- coef(m)[grep("bs\\(yr_part", names(coef(m)))]
+    yrPartValues <- z[[grep("bs\\(yr_part", names(z), value=TRUE)]]
+    adj <- m$residuals + (yrPartValues %*% yrPartCoefs)[, , drop=TRUE] + coef(m)["(Intercept)"]
+    adj <- adj - mean(adj)
+
+    flit <- data.frame(yr_part=yr_part, check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
+    flit[[i %_% " (adj.)"]] <- adj
+
+    lagsDf <- rbind(lagsDf, data.frame(lagMinAic, check.names=FALSE))
+
+    #browser()
+    x <- merge(x, flit, by="yr_part", all.x=TRUE)
+  }
+
+  rownames(lagsDf) <- series
+  cat("Lag values (mos.) of exogenous variables for each series:", fill=TRUE)
+  print(lagsDf, row.names=TRUE)
+  cat(fill=TRUE)
+
+  x
+}
+
+## usage:
+# e <- get_climate_data(download=FALSE, baseline=FALSE)
+# series1 <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global")
+# g <- remove_exogenous_influences(e, series=series1, 1979, 2011, bs_degree=3) # 'bs_degree=3' is the default.
+# series2 <- c("RSS TLT 3.3 -70.0/82.5", "UAH TLT 5.6 Global") # Series with different B-spline degrees must run separately.
+# g <- remove_exogenous_influences(g, series=series2, end=2011, bs_degree=1)
+# series <- c(series1, series2); series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
+# h <- g[, c(climeseries:::commonColumns, series_all)]
+# plot_climate_data(h, series_all, 1979, 2011, lwd=2, baseline=TRUE, show_trend=TRUE)
+#
+## Or, if you can use all the same 'bs()' degrees:
+# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 5.6 Global")
+# g <- remove_exogenous_influences(series=series, start=1979, end=2011, bs_degree=1)
+# series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
+# plot_climate_data(g, series_all, 1979, 2011, lwd=2, baseline=TRUE, show_trend=TRUE)
+# plot_climate_data(g, paste(series, "(adj.)"), 1979, 2011, ma=12, lwd=2, baseline=TRUE, show_trend=TRUE) # Adjusted series only.
 
 
 ## Convert Fahrenheit temperatures to Kelvin.
