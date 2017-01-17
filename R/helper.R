@@ -788,15 +788,48 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 
 
 #' @export
-make_yearly_data <- function(x)
+make_yearly_data <- function(x, na_rm=TRUE)
 {
   if (missing(x))
     x <- get_climate_data(download=FALSE, baseline=FALSE)
 
   #tbl_dt(x)[, -commonColumns[commonColumns %nin% "year"], with=FALSE][, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r }), by=year]
   ## ... but I can do this in one step:
-  tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r }), .SDcols=-commonColumns[commonColumns %nin% "year"], by=year]
+  tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-commonColumns[commonColumns %nin% "year"], by=year]
 }
+
+## usage:
+## Reproduce a plot here: https://tamino.wordpress.com/2017/01/01/tony-hellers-snow-job/.
+# g <- make_yearly_data(na_rm=FALSE) # Allow NA values for 'mean()'; possibly better for very seasonally sensitive series.
+# series <- "Rutgers NH Snow Cover"
+# h <- eval(substitute(g[na_unwrap(SERIES)][year >= min(year) & !is.na(SERIES)], list(SERIES=as.name(series))))
+# plot(h$year, h[[series]]/1e6, lwd=2, pch=19, type="o")
+
+
+#' @export
+get_yearly_difference <- function(series, start, end=current_year - 1, data, unit="°C")
+{
+  if (missing(data))
+    data <- get_climate_data(download=FALSE, baseline=FALSE)
+
+  g <- make_yearly_data(data)
+  h <- g[year %in% c(start, end), series, with=FALSE]
+
+  cat("Difference in ", unit ," from ", start, "–", end, sep="", fill=TRUE)
+  print(t(h[2] - h[1]), digits=3, row.names=FALSE)
+  cat(fill=TRUE)
+  cat("Decadal rate in ", unit ,"/dec. from ", start, "–", end, sep="", fill=TRUE)
+  print(10 * t(h[2] - h[1]) / (end - start), digits=3, row.names=FALSE)
+
+  attr(h, "range") <- c(start=start, end=end)
+
+  return (h)
+}
+
+## usage:
+# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "BEST Global (Water Ice Temp.)")
+# ytd <- get_yearly_difference(series, 1880)
+# ytd <- get_yearly_difference(series, 1970)
 
 
 ## Make "cranberry plots" à la http://variable-variability.blogspot.com/2017/01/cherry-picking-short-term-trends.html.
