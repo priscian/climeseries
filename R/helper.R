@@ -438,6 +438,9 @@ remove_exogenous_influences <- function(x, series,
     z <- subset(z, z$yr_part >= start & z$yr_part <= end)
     yr_part <- z$yr_part
     z <- z[, names(z) %nin% "yr_part"]
+    ## Interpolate exogenous variables back in time a little for long lags.
+    for (j in names(lagMinAic))
+      z[[j]] <- drop(interpNA(z[[j]], type="tail"))
     m <- lm(z)
 
     ## Check the fit:
@@ -782,3 +785,66 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 ## Save only OSIRIS data as CSV file.
 # keepRows <- na_unwrap(d$`OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global`)
 # write.csv(d[keepRows, c("year", "month", "yr_part", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global")], "./OSIRIS-SAOD_2001.11-2016.7.csv", row.names=FALSE)
+
+
+#' @export
+make_yearly_data <- function(x)
+{
+  if (missing(x))
+    x <- get_climate_data(download=FALSE, baseline=FALSE)
+
+  #tbl_dt(x)[, -commonColumns[commonColumns %nin% "year"], with=FALSE][, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r }), by=year]
+  ## ... but I can do this in one step:
+  tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r }), .SDcols=-commonColumns[commonColumns %nin% "year"], by=year]
+}
+
+
+## Make "cranberry plots" à la http://variable-variability.blogspot.com/2017/01/cherry-picking-short-term-trends.html.
+#' @export
+make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=0.2)
+{
+  if (missing(x)) g <- make_yearly_data()
+  else g <- make_yearly_data(x)
+
+  if (!missing(start)) g <- g[year >= start]
+  if (!missing(end)) g <- g[year <= end]
+
+  if (missing(ylab))
+    ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
+
+  if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
+    dev.new(width=9, height=8) # New default device.
+
+  for (i in series) {
+    h <- g[, c("year", i), with=FALSE]
+    h <- h[na_unwrap(h[[i]])]
+
+    layout(matrix(c(1, 2)))
+
+    ## Plot the time series.
+    plot(h$year, h[[i]],
+      lwd = 2, type = "l", col = "gray",
+      main = series, xlab = "year", ylab = ylab,
+      panel.first=(function(){ grid(); abline(h=0.0) })(),
+      panel.last=points(g$year, g[[i]], pch=19, col="red"))
+    l <- loess(h[[i]] ~ h$year, span=span)
+    lines(l$x, l$fitted, lwd=3, col="blue", type="l")
+
+    ## Plot the LOESS residuals.
+    plot(l$x, l$residuals, lwd=2,
+      type="l", col="gray",
+      main = "Standard Deviation = " %_% sprintf(sd(l$residuals, na.rm=TRUE), fmt="%.3f"), xlab = "year", ylab = ylab,
+      panel.last=points(l$x, l$residuals, pch=19, col="red"))
+  }
+
+  return (nop())
+}
+
+## usage:
+# series <- c("BEST Global (Water Ice Temp.)", "UAH TLT 6.0 Global")
+# g <- remove_exogenous_influences(series=series[1], bs_degree=5)
+# g <- remove_exogenous_influences(g, series=series[2], bs_degree=3)
+# make_vv_cranberry_plot(g, series[1], start=1880, span=0.3)
+# make_vv_cranberry_plot(g, series[1] %_% " (adj.)", start=1880, span=0.3)
+# make_vv_cranberry_plot(g, series[2], span=0.9)
+# make_vv_cranberry_plot(g, series[2] %_% " (adj.)", span=0.9)
