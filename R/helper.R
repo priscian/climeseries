@@ -807,7 +807,7 @@ make_yearly_data <- function(x, na_rm=TRUE)
 
 
 #' @export
-get_yearly_difference <- function(series, start, end=current_year - 1, data, unit="°C")
+get_yearly_difference <- function(series, start, end=current_year - 1, data, unit="\u00b0C")
 {
   if (missing(data))
     data <- get_climate_data(download=FALSE, baseline=FALSE)
@@ -815,10 +815,11 @@ get_yearly_difference <- function(series, start, end=current_year - 1, data, uni
   g <- make_yearly_data(data)
   h <- g[year %in% c(start, end), series, with=FALSE]
 
-  cat("Difference in ", unit ," from ", start, "–", end, sep="", fill=TRUE)
+  ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
+  cat("Difference in ", unit ," from ", start, "\u0096", end, sep="", fill=TRUE)
   print(t(h[2] - h[1]), digits=3, row.names=FALSE)
   cat(fill=TRUE)
-  cat("Decadal rate in ", unit ,"/dec. from ", start, "–", end, sep="", fill=TRUE)
+  cat("Decadal rate in ", unit ,"/dec. from ", start, "\u0096", end, sep="", fill=TRUE)
   print(10 * t(h[2] - h[1]) / (end - start), digits=3, row.names=FALSE)
 
   attr(h, "range") <- c(start=start, end=end)

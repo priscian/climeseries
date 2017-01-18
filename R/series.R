@@ -42,8 +42,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       curl <- getCurlHandle()
       curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
-        r <- getURL(p, curl=curl)
-        x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
+        #r <- getURL(p, curl=curl)
+        #x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
+        x <- read.csv(p, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
 
       flit <- reshape2::melt(x[, 1L:13L], id.vars="Year", variable.name="month", value.name="temp")
@@ -66,8 +67,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       curl <- getCurlHandle()
       curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
-        r <- getURL(p, curl=curl)
-        x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
+        #r <- getURL(p, curl=curl)
+        #x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
+        x <- read.csv(p, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
 
       flit <- x[, -1]
@@ -556,9 +558,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           FUN = function(x, y)
           {
             r <- data.frame()
-            for (i in c("N", "S")) {
-              flit <- readLines(paste(p, x, paste(i, y, "area_v2.txt", sep="_"), sep="/"))
-              flit <- read.table(text=flit[!grepl("^\\s+", flit)], header=TRUE, check.names=FALSE)
+            for (i in c("north", "south")) {
+              flit <- readLines(paste(p, i, "monthly", "data", paste(toupper(substr(i, 1, 1)), y, "extent_v2.1.csv", sep="_"), sep="/"))
+              flit <- read.csv(text=flit[!grepl("^\\s+", flit)], header=TRUE, check.names=FALSE)
               r <- rbind(r, flit)
             }
 

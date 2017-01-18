@@ -46,8 +46,8 @@ filenameBase <- "climate-series_"
 defaultBaseline <- 1981:2010
 
 ## Some climatological time-series base URLs.
-gistempBase <- "http://data.giss.nasa.gov/gistemp/tabledata_v3/"
-nceiBase <- "http://www.ncdc.noaa.gov/cag/time-series/"
+gistempBase <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
+nceiBase <- "https://www.ncdc.noaa.gov/cag/time-series/"
 nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
