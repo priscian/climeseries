@@ -816,10 +816,10 @@ get_yearly_difference <- function(series, start, end=current_year - 1, data, uni
   h <- g[year %in% c(start, end), series, with=FALSE]
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
-  cat("Difference in ", unit ," from ", start, "\u0096", end, sep="", fill=TRUE)
+  cat("Difference in ", unit ," from ", start, "\u2014", end, sep="", fill=TRUE)
   print(t(h[2] - h[1]), digits=3, row.names=FALSE)
   cat(fill=TRUE)
-  cat("Decadal rate in ", unit ,"/dec. from ", start, "\u0096", end, sep="", fill=TRUE)
+  cat("Decadal rate in ", unit ,"/dec. from ", start, "\u2014", end, sep="", fill=TRUE)
   print(10 * t(h[2] - h[1]) / (end - start), digits=3, row.names=FALSE)
 
   attr(h, "range") <- c(start=start, end=end)
@@ -882,3 +882,36 @@ make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=0.2)
 # make_vv_cranberry_plot(g, series[1] %_% " (adj.)", start=1880, span=0.3)
 # make_vv_cranberry_plot(g, series[2], span=0.9)
 # make_vv_cranberry_plot(g, series[2] %_% " (adj.)", span=0.9)
+
+
+## Basically a "show hottest year" function, but slightly configurable.
+#' @export
+show_single_value <- function(series, baseline=TRUE, data, fun=which.max, ..., value_name="temp anom. (\u00b0C)", digits=3)
+{
+  if (missing(data))
+    data <- get_climate_data(download=FALSE, baseline=baseline)
+
+  baseline <- attr(data, "baseline")
+  g <- make_yearly_data(data)[, c("year", series), with=FALSE]
+
+  single <- t(sapply(series,
+    function(a)
+    {
+      m <- fun(g[[a]], ...)
+      r <- data.frame(year=g$year[m], check.names=FALSE)
+      r[[value_name]] <- g[[a]][m]
+
+      r
+    }))
+
+  print(single, digits=digits)
+  if (!is.null(baseline))
+    cat("\nBaseline: ", min(baseline), "\u2014", max(baseline), fill=TRUE, sep="")
+
+  attr(single, "baseline") <- baseline
+  single
+}
+
+## usage:
+# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global")
+# hottest <- show_single_value(series)

@@ -1,6 +1,6 @@
 Package: climeseries
 Title: Download, Aggregate, Process, and Plot Monthly Climatological Data
-Version: 0.35.0
+Version: 0.36.0
 Authors@R: person("Jim", "Java", email = "priscian@gmail.com", role = c("aut", "cre"))
 Description: These are various functions for collecting, processing, and
     plotting monthly climatological data.
