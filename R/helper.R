@@ -355,7 +355,7 @@ create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_va
     d <- interpNA(d, method="fmm", unwrap=TRUE)
 
   r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r })
-  r <- interpNA(r, method="linear", unwrap=TRUE, ...)
+  r <- drop(interpNA(r, method="linear", unwrap=TRUE, ...))
 
   if (!add) return (r)
 
@@ -391,11 +391,11 @@ add_default_aggregate_variables <- function(x)
 ## Based on Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022.
 #' @export
 remove_exogenous_influences <- function(x, series,
-  start=NULL, end=NULL,
+  start = NULL, end = NULL,
   lags = list(`MEI Aggregate Global`=NULL, `SAOD Aggregate Global`=NULL, `TSI Aggregate Global`=NULL),
   aggregate_vars_fun = add_default_aggregate_variables,
   period = 1, num_harmonics = 4,
-  max_lag = 10, bs_degree = 3)
+  max_lag = 12, bs_df = NULL, bs_degree = 3)
 {
   if (missing(x))
     x <- get_climate_data(download=FALSE, baseline=FALSE)
@@ -405,9 +405,22 @@ remove_exogenous_influences <- function(x, series,
   lagsDf <- NULL
 
   for (i in series) {
-    if (is.null(start)) start <- min(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
-    if (is.null(end)) end <- max(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
-    yr_part_offset <- trunc(mean(x$yr_part[na_unwrap(x[[i]])]))
+    startYrPart <- min(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
+    endYrPart <- max(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
+    if (!is.null(start)) startYrPart <- max(start, startYrPart)
+    if (!is.null(end)) endYrPart <- min(end, endYrPart)
+
+    yr_part_offset <- trunc(mean(x$yr_part[x$yr_part >= startYrPart & x$yr_part <= endYrPart]))
+
+    ## This guess is crude, but should work okay for the instrumental temperature series.
+    rangeYrPart <- endYrPart - startYrPart
+    if (!is.null(bs_df))
+      bsDf <- bs_df
+    else {
+      bsDf <- 6
+      if (rangeYrPart > 50)
+        bsDf <- 8
+    }
 
     ## Construct model formula for given no. of harmonics.
     flitSeries <- x[[i]]
@@ -415,40 +428,38 @@ remove_exogenous_influences <- function(x, series,
     fBase <- backtick(i) %_% "~"; form <- NULL
     for (j in seq(num_harmonics))
       form <- c(form, paste0(c("sin", "cos"), paste0("(", 2 * j, " * pi / period * yr_part)")))
-    form <- c("yr_part", paste0("splines::bs(yr_part - yr_part_offset, degree=", bs_degree, ")"), backtick(names(lags)), form)
+    form <- c(paste0("splines::bs(yr_part - yr_part_offset, df=", bsDf, ", degree=", bs_degree, ")"), backtick(names(lags)), form)
     form <- as.formula(paste0(fBase, paste0(form, collapse=" + ")))
 
-    y <- model.frame(form, x)
+    y <- x[, c(i, "yr_part", names(lags))]
     x[[i]] <- flitSeries
     l <- expand.grid(sapply(lags, function(a) { r <- seq(0, max_lag); if (!is.null(a)) r <- a; r }, simplify=FALSE))
     aic <- apply(l, 1,
       function(a) {
         lr <- as.list(unlist(a))
         z <- shift(y, lr, roll=FALSE)
-        z <- subset(z, z$yr_part >= start & z$yr_part <= end)
-        z <- z[, names(z) %nin% "yr_part"]
+        z <- subset(z, z$yr_part >= startYrPart & z$yr_part <= endYrPart)
 
         ## Test the lag combinations to find the model with the lowest AIC.
-        AIC(lm(z))
+        AIC(lm(form, z))
       }
     )
 
     lagMinAic <- as.list(unlist(l[which.min(aic)[1], ]))
     z <- shift(y, lagMinAic, roll=FALSE)
-    z <- subset(z, z$yr_part >= start & z$yr_part <= end)
+    z <- subset(z, z$yr_part >= startYrPart & z$yr_part <= endYrPart)
     yr_part <- z$yr_part
-    z <- z[, names(z) %nin% "yr_part"]
     ## Interpolate exogenous variables back in time a little for long lags.
     for (j in names(lagMinAic))
       z[[j]] <- drop(interpNA(z[[j]], type="tail"))
-    m <- lm(z)
+    m <- lm(form, z)
+    mf <- model.frame(m)
 
     ## Check the fit:
-    # plot(yr_part, z[[1]], type="l"); lines(yr_part, m$fitted, type="l", col="red"); plot(m$residuals)
+    # plot(yr_part, mf[[1]], type="l"); lines(yr_part, m$fitted, type="l", col="red"); plot(m$residuals)
 
-    #adj <- m$residuals + coef(m)["yr_part"] * z$yr_part + coef(m)["(Intercept)"]
     yrPartCoefs <- coef(m)[grep("bs\\(yr_part", names(coef(m)))]
-    yrPartValues <- z[[grep("bs\\(yr_part", names(z), value=TRUE)]]
+    yrPartValues <- mf[[grep("bs\\(yr_part", names(mf), value=TRUE)]]
     adj <- m$residuals + (yrPartValues %*% yrPartCoefs)[, , drop=TRUE] + coef(m)["(Intercept)"]
     adj <- adj - mean(adj)
 
@@ -470,21 +481,68 @@ remove_exogenous_influences <- function(x, series,
 }
 
 ## usage:
-# e <- get_climate_data(download=FALSE, baseline=FALSE)
-# series1 <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global")
-# g <- remove_exogenous_influences(e, series=series1, 1979, 2011, bs_degree=3) # 'bs_degree=3' is the default.
-# series2 <- c("RSS TLT 3.3 -70.0/82.5", "UAH TLT 5.6 Global") # Series with different B-spline degrees must run separately.
-# g <- remove_exogenous_influences(g, series=series2, end=2011, bs_degree=1)
-# series <- c(series1, series2); series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
-# h <- g[, c(climeseries:::commonColumns, series_all)]
-# plot_climate_data(h, series_all, 1979, 2011, lwd=2, baseline=TRUE, show_trend=TRUE)
-#
-## Or, if you can use all the same 'bs()' degrees:
 # series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 5.6 Global")
-# g <- remove_exogenous_influences(series=series, start=1979, end=2011, bs_degree=1)
+# start <- 1979; end <- 2011
+# g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
 # series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
-# plot_climate_data(g, series_all, 1979, 2011, lwd=2, baseline=TRUE, show_trend=TRUE)
-# plot_climate_data(g, paste(series, "(adj.)"), 1979, 2011, ma=12, lwd=2, baseline=TRUE, show_trend=TRUE) # Adjusted series only.
+# h <- make_yearly_data(g[, c(climeseries:::commonColumns, series_all)])
+# h <- h[year >= start & year < end]
+# ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
+# main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
+# if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
+#   dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
+# for (i in series) {
+#   year_range <- paste0(min(h$year), "\u2013", max(h$year))
+#   plot(h$year, h[[i]], lwd=2, pch=19, type="o", main=paste(i, year_range), xlab="year", ylab=ylab)
+#   plot(h$year, h[[i %_% " (adj.)"]], lwd=2, pch=19, type="o", main=paste(i, year_range, main), xlab="year", ylab=ylab)
+# }
+
+
+#' @export
+easy_exogenous_plot <- function(series, start=NULL, end=NULL, bs_df=NULL, tamino_style=FALSE, ...)
+{
+  g <- remove_exogenous_influences(series=series, start=start, end=end, bs_df=bs_df)
+  series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
+  if (!tamino_style)
+    plot_climate_data(g, paste(series, "(adj.)"), start, end, ...)
+  else {
+    h <- make_yearly_data(g[, c(climeseries:::commonColumns, series_all)])
+    if (!is.null(start)) h <- h[year >= start]
+    if (!is.null(end)) h <- h[year < end]
+    ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
+    main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
+    if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
+      dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
+    for (i in series) {
+      keepRows <- na_unwrap(h[[i %_% " (adj.)"]])
+      year_range <- paste0(min(h$year[keepRows]), "\u2013", max(h$year[keepRows]))
+      plot(h$year[keepRows], h[[i]][keepRows], lwd=2, pch=19, type="o", main=paste(i, year_range), xlab="year", ylab=ylab)
+      plot(h$year[keepRows], h[[i %_% " (adj.)"]][keepRows], lwd=2, pch=19, type="o", main=paste(i, year_range, main), xlab="year", ylab=ylab)
+    }
+
+    return (h) # Return the data set for reuse.
+  }
+
+  return (g) # Return the data set for reuse.
+}
+
+## usage:
+# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global")
+## N.B. Each of these will likely take a minute or two to run.
+# g <- easy_exogenous_plot(series[c(1:3, 7:8)], 1979, 2011, ma=12, lwd=2, show_trend=TRUE, baseline=TRUE)
+# g <- easy_exogenous_plot(series, ma=12, lwd=2, baseline=TRUE)
+## Similar to Foster & Rahmstorf 2011:
+# h <- easy_exogenous_plot(series[c(1:3, 7:8)], 1979, 2011, tamino=TRUE)
+# ## Make and save some plots:
+# setwd(".") # Set to desired storage location.
+# png(filename="tamino-style_%03d.png", width=12.5, height=7.3, units="in", res=600)
+# h <- easy_exogenous_plot(series, tamino=TRUE)
+# dev.off()
+## Similar to plots here: https://tamino.wordpress.com/2017/01/18/global-temperature-the-big-3/.
+# setwd(".") # Set to desired storage location.
+# png(filename="tamino-big-3/tamino-big-3_%03d.png", width=12.5, height=7.3, units="in", res=600)
+# h <- easy_exogenous_plot(series, 1950, tamino=TRUE)
+# dev.off()
 
 
 ## Convert Fahrenheit temperatures to Kelvin.
