@@ -874,10 +874,10 @@ get_yearly_difference <- function(series, start, end=current_year - 1, data, uni
   h <- g[year %in% c(start, end), series, with=FALSE]
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
-  cat("Difference in ", unit ," from ", start, "\u2014", end, sep="", fill=TRUE)
+  cat("Difference in ", unit ," from ", start, "\u2013", end, sep="", fill=TRUE)
   print(t(h[2] - h[1]), digits=3, row.names=FALSE)
   cat(fill=TRUE)
-  cat("Decadal rate in ", unit ,"/dec. from ", start, "\u2014", end, sep="", fill=TRUE)
+  cat("Decadal rate in ", unit ,"/dec. from ", start, "\u2013", end, sep="", fill=TRUE)
   print(10 * t(h[2] - h[1]) / (end - start), digits=3, row.names=FALSE)
 
   attr(h, "range") <- c(start=start, end=end)
@@ -934,8 +934,7 @@ make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=0.2)
 
 ## usage:
 # series <- c("BEST Global (Water Ice Temp.)", "UAH TLT 6.0 Global")
-# g <- remove_exogenous_influences(series=series[1], bs_degree=5)
-# g <- remove_exogenous_influences(g, series=series[2], bs_degree=3)
+# g <- remove_exogenous_influences(series=series)
 # make_vv_cranberry_plot(g, series[1], start=1880, span=0.3)
 # make_vv_cranberry_plot(g, series[1] %_% " (adj.)", start=1880, span=0.3)
 # make_vv_cranberry_plot(g, series[2], span=0.9)
@@ -973,3 +972,122 @@ show_single_value <- function(series, baseline=TRUE, data, fun=which.max, ..., v
 ## usage:
 # series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global")
 # hottest <- show_single_value(series)
+
+
+## Crudely based on Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888.
+#' @export
+create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=FALSE)
+{
+  data_dir <- system.file("extdata", package="climeseries")
+  ensemble <- "cmip5"
+  subdir <- "tas + tos"
+  path <- paste(data_dir, ensemble, subdir, sep="/")
+
+  ff <- list.files(path, "^.*?\\.dat$", recursive=TRUE, ignore.case=TRUE, full.names=TRUE)
+  modelSummary <- sapply(ff,
+    function(a) {
+      modelVariable <- str_match(a, "\\S(tas|tas land|tos)\\S")[2L]
+      pathway <- str_match(a, "rcp(\\d{2})")[2L]
+      modelType <- str_match(a, "\\S(all models|all members|one member per model)\\S")[2L]
+      l <- readLines(a)
+      re <- "^#.*?from\\s+(.*?),?\\s+(RCP|experiment|model).*$"
+      modelLine <- grep(re, l, value=TRUE)
+      model <- str_match(modelLine, re)[2L]
+
+      r <- data.frame(model=model, type=tolower(modelType), variable=tolower(modelVariable), RCP=as.numeric(pathway)/10, path=a,
+        check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
+
+      r
+    }, simplify = FALSE
+  )
+  modelSummary <- Reduce(rbind, modelSummary)
+  modelSummary <- subset(modelSummary, modelSummary$variable %in% c("tas land", "tos")) # Not necessary here, but for genericness.
+  #xtabs(~ model + variable + type + RCP, modelSummary)
+
+  l <- dlply(modelSummary, ~ model + type + RCP,
+    function(a)
+    {
+      if (is.null(a) || length(unique(a$variable)) < 2)
+        return (NULL)
+
+      ## Earth is approx. 72% water, 28% land.
+      weightMap <- c(`tas land`=0.28, tos=0.72)
+      w <- weightMap[a$variable]
+      w <- w / table(a$variable)[names(w)]
+
+      ## Now read in the files to be averaged together. Returns a list of the separate time series.
+      weightedValues <- mapply(a$model, w, a$path, seq(nrow(a)),
+        FUN = function (model, weight, path, n)
+        {
+          tab <- read.table(path)
+          flit <- melt(tab[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
+          for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+          flit <- arrange(flit, V1, month)
+          x <- data.frame(year=flit$V1, met_year=NA, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+
+          modelDesignation <- "m" %_% sprintf("%04d", n)
+          x[[modelDesignation]] <- x$temp
+
+          if (!is.null(baseline)) {
+            flit <- subset(x, x$year %in% baseline)
+            bma <- tapply(flit$temp, flit$month, mean, na.rm=TRUE)
+            x$base <- NA
+            l_ply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; x$base[x$month == s] <<- v })
+
+            ## Center anomalies on average baseline-period temperatures.
+            x[[modelDesignation]] <- round(x$temp - x$base, 3L)
+          }
+          x <- x[, c(commonColumns, modelDesignation)]
+          ## Weight the series.
+          x[[modelDesignation]] <- x[[modelDesignation]] * weight
+          attr(x, "weight") <- weight
+          attr(x, "model") <- model
+
+          x
+        }, SIMPLIFY = FALSE
+      )
+
+      m <- Reduce(merge_fun_factory(all=TRUE, by=commonColumns), weightedValues)
+      modelDesignation <- paste0(unique(a$model), "_", unique(a$RCP))
+      m[[modelDesignation]] <- rowSums(m[, colnames(m) %nin% commonColumns])
+
+      m[, c(names(m)[names(m) %in% commonColumns], modelDesignation)]
+    }
+  )
+
+  keepElements <- !sapply(l, is.null)
+  modelDetails <- subset(attr(l,"split_labels"), keepElements)
+  m <- l[keepElements]
+
+  m <- Reduce(merge_fun_factory(all=TRUE, by=commonColumns), m)
+  m <- recenter_anomalies(m, baseline=baseline) # Is this necessary?
+
+  ## Make similar to previously made model objects.
+  colNames <- colnames(m)
+  colnames(m)[colNames %nin% commonColumns] <- "m" %_% sprintf("%04d", seq(sum(colNames %nin% commonColumns)))
+
+  attr(m, "ensemble") <- "CMIP5"
+
+  attr(m, "model") <- modelDetails$model
+
+  scenario <- "RCP " %_% sprintf(modelDetails$RCP, fmt="%.1f")
+  names(scenario) <- colnames(m)[colNames %nin% commonColumns]
+  attr(m, "scenario") <- factor(scenario)
+
+  cmip5 <- m
+  if (save_to_package) {
+    save(cmip5, file=paste(path, "cmip5.RData", sep="/"))
+    save(cmip5, file=paste(path, "cmip5_raw.RData", sep="/")) # Not really "raw," but oh well.
+  }
+  ## To create the package data set:
+  # m <- create_cmip5_tas_tos_data(save_to_package=TRUE)
+
+  cmip5
+}
+
+## usage:
+# inst <- get_climate_data(download=FALSE, baseline=TRUE)
+# cmip5 <- get_models_data(ensemble="cmip5", subdir="tas + tos")
+# series <- c("HadCRUT4 Global")
+## Like Fig. 4(b) of Cowtan et al. 2015:
+# plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020, ma=12, ma_i=12, baseline=1961:1990, center_fun="mean", smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
