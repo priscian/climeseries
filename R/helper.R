@@ -1,8 +1,10 @@
 #' @export
-correlate_co2_temperature <- function(series, start_year=1880, end_year=current_year - 1, text_x=380, text_y=-0.4, baseline=TRUE, download=FALSE)
+correlate_co2_temperature <- function(series, start_year=1880, end_year=current_year - 1, data, ylab, main_base="Temperature", text_x=380, text_y=-0.4, baseline=FALSE, download=FALSE)
 {
-  d <- get_climate_data(download=download, baseline=baseline)
-  e <- get_climate_data(download=download, baseline=FALSE)
+  if (missing(data))
+    e <- get_climate_data(download=download, baseline=baseline)
+  else
+    e <- data
 
   dm1 <- data.matrix(e[e$year %in% ifelse(start_year < 1958, 1958, start_year):end_year, c(series, "CO2 Mauna Loa")])
 
@@ -29,8 +31,9 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
   plot(as.numeric(row.names(dm)), dm[, 2])
 
   xlab <- eval(substitute(expression(paste("Atmospheric CO", phantom()[2], " (PPM)", sep=""))))
-  ylab <- eval(substitute(expression(paste(series, " Temp. Anomaly (", phantom(l) * degree, "C) w.r.t. ", b, sep="")), list(b="1981" %_% "\u2013" %_% "2010", series=as.symbol(series))))
-  main <- eval(substitute(expression(paste("Temperature vs. CO", phantom()[2], " (", startYear, "\u2013", endYear, ")", sep="")), list(endYear=as.symbol(end_year), startYear=as.symbol(start_year))))
+  if (missing(ylab))
+    ylab <- eval(substitute(expression(paste(series, " Temp. Anomaly (", phantom(l) * degree, "C)", sep="")), list(series=as.symbol(series))))
+  main <- eval(substitute(expression(paste(main_base, " vs. CO", phantom()[2], " (", startYear, "\u2013", endYear, ")", sep="")), list(endYear=as.symbol(end_year), startYear=as.symbol(start_year), main_base=as.symbol(main_base))))
 
   plot(dm[, 2], dm[, 1], ylab=ylab, xlab=xlab, main=main)
   m <- lm(dm[, 1] ~ dm[, 2])
