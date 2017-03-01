@@ -533,6 +533,37 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `CO2 NOAA ESRL` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V4, check.names=FALSE, stringsAsFactors=FALSE)
+      ## Missing values are given as "-99.99".
+      is.na(d$temp) <- d$temp == -99.99
+
+      return (d)
+    })(path),
+
+    `CO2 Cape Grim` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        flit <- readLines(p)
+        flit <- flit[trimws(flit) != ""]
+        flit <- flit[grep("^\\d{4}", flit, perl=TRUE)]
+        x <- read.table(header=FALSE, skip=0L, text=flit, fill=TRUE, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V5, check.names=FALSE, stringsAsFactors=FALSE)
+      ## 'x$V3' is 1 × sigma, so 1.96 × sigma is a 95% CI, I think.
+      d[[series %_% "_uncertainty"]] <- 1.96 * x$V6
+
+      return (d)
+    })(path),
+
     `PIOMAS Arctic Sea Ice Volume` = (function(p) {
       x <- NULL
 
