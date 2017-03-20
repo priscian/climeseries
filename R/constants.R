@@ -175,8 +175,9 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   ## CSIRO GMSL
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"),
   `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
-  ## TODO: Ocean heat content.
+  ## TODO: Ocean heat content. More snow and ice?
   # http://www.esrl.noaa.gov/psd/data/timeseries/AMO/
+  # https://www.ncdc.noaa.gov/snow-and-ice/
   ## Some aggregate data sets for modeling.
 )
 
