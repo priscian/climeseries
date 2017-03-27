@@ -358,7 +358,8 @@ create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_va
     d <- interpNA(d, method="fmm", unwrap=TRUE)
 
   r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r })
-  r <- drop(interpNA(r, method="linear", unwrap=TRUE, ...))
+  if (interpolate)
+    r <- drop(interpNA(r, method="linear", unwrap=TRUE, ...))
 
   if (!add) return (r)
 
@@ -373,35 +374,54 @@ create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_va
 
 
 #' @export
-create_aggregate_co2_variable <- function(x, co2_var_name, ...)
+create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...)
 {
   lawPath <- system.file("extdata/co2/law2006.txt", package="climeseries")
   l <- read.table(lawPath, header=TRUE, skip=182, nrow=2004)
   law <- data.frame(year=l$YearAD, month=6, `CO2 Law Dome`=l$CO2spl, check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
+  law <- base::merge(expand.grid(month=1:12, year=law$year), law, by=c("year", "month"), all=TRUE)
   yearlyInstrumentalCo2 <- as.data.frame(make_yearly_data(x[, c(commonColumns, co2_var_name)]))
   instrumentalStartYear <- head(yearlyInstrumentalCo2[na_unwrap(yearlyInstrumentalCo2[[co2_var_name]]), ]$year, 1)
 
-  x <- merge(x, law[law$year < instrumentalStartYear, ], by=intersect(commonColumns, names(law)), all.x=TRUE)
+  mergeArgs = list(
+    x = x,
+    y = law[law$year < instrumentalStartYear, ],
+    by = intersect(commonColumns, names(law)),
+    all.x = TRUE
+  )
+  mergeArgs <- modifyList(mergeArgs, merge...)
+
+  ## Unlike the other aggregate variables, which use overlap means, the CO2 aggregate series has a distinct cutpoint between paleo and instrumental.
+  x <- do.call("merge", mergeArgs)
 
   r <- create_aggregate_variable(x, c("CO2 Law Dome", co2_var_name), ...)
   ## Replace truncated Law Dome series with the full one.
   r$`CO2 Law Dome` <- NULL
-  r <- merge(r, law, by=intersect(commonColumns, names(law)), all.x=TRUE)
+
+  mergeArgs$x <- r
+  mergeArgs$y <- law
+  r <- do.call("merge", mergeArgs)
 
   r
 }
 ## usage:
 # e <- get_climate_data(download=FALSE, baseline=FALSE)
-# g <- create_aggregate_co2_variable(e, "CO2 Mauna Loa", aggregate_name="CO2 Aggregate Global", type="head")
+# e <- create_aggregate_co2_variable(e, "CO2 Mauna Loa", aggregate_name="CO2 Aggregate Global", type="head") # With interpolation.
+## Create a yearly aggregate CO2 variable without any monthly interpolation.
+# e <- get_climate_data(download=FALSE, baseline=FALSE)
+# e <- create_aggregate_co2_variable(e, "CO2 Mauna Loa", aggregate_name="CO2 Aggregate Global", merge...=list(all=TRUE), interpolate=FALSE)
+# g <- make_yearly_data(e[, c(climeseries:::commonColumns, "CO2 Aggregate Global")])
 
 
 #' @export
-add_default_aggregate_variables <- function(x)
+add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Mauna Loa")
 {
   x <- create_aggregate_variable(x, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index"), "MEI Aggregate Global", type="head")
   x <- create_aggregate_variable(x, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global"), "SAOD Aggregate Global", type="head")
   x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO)"), "TSI Aggregate Global", type="head")
-  x <- create_aggregate_co2_variable(x, "CO2 Mauna Loa", aggregate_name="CO2 Aggregate Global", type="head")
+  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global (Interp.)", type="head")
+  x$`CO2 Law Dome` <- NULL
+  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global", interpolate=FALSE)
 
   x
 }

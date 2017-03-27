@@ -147,13 +147,16 @@ MA <- moving_average
 
 
 #' @export
-interpNA <- function (x, method=c("linear", "before", "after"), unwrap=TRUE, ...)
+interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=TRUE, ...)
 {
   if (!inherits(x, "matrix") && !inherits(x, "timeSeries"))
     x <- as(x, "matrix")
 
+  if (method == "none")
+    return (x)
+
   fun <- stats::approx
-  if (method[1] %nin% c("linear", "before", "after")) # '?stats::spline' for available "method"s.
+  if (method[1] %nin% c("linear", "before", "after", "none")) # '?stats::spline' for available "method"s.
     ## The following code removes any unmatched arguments from a call to 'FUN()';
     ## e.g. 'stats::spline()' doesn't have a formal argument 'f', which is nonetheless passed in below.
     fun <- function(...) { FUN <- stats::spline; d <- get_dots(...); a <- d$arguments[trimws(names(d$arguments)) %in% c("", formalArgs(FUN))]; do.call(FUN, a, quote=FALSE, envir=parent.frame()) }
@@ -242,9 +245,13 @@ get_dots <- function(..., evaluate=FALSE)
 
 
 #' @export
-merge_fun_factory <- function(...)
+merge_fun_factory <- function(FUN=base::merge, SETDIFF=TRUE, ...)
 {
-  function(x, y) base::merge(x, y[, c(eval(get_dots(..., evaluate=TRUE)$evaluated$by), setdiff(colnames(y), colnames(x)))], ...)
+  if (SETDIFF)
+    ## N.B. Note how '...' is NOT in 'function(x, y)'.
+    function(x, y) FUN(x, y[, c(eval(get_dots(..., evaluate=TRUE)$evaluated$by), setdiff(colnames(y), colnames(x)))], ...)
+  else
+    function(x, y) FUN(x, y, ...)
 }
 
 
