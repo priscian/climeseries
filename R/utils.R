@@ -152,7 +152,7 @@ interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=T
   if (!inherits(x, "matrix") && !inherits(x, "timeSeries"))
     x <- as(x, "matrix")
 
-  if (method == "none")
+  if (method[1] == "none")
     return (x)
 
   fun <- stats::approx

@@ -610,7 +610,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       re <- "^(extent|area)"
       for (i in names(y)) {
         n <- names(y[[i]])
-        names(y[[i]])[grep(re, n, perl=TRUE)] <- paste(series, capwords(sub(re, i %_% " \\1", n[grep(re, n, perl=TRUE)])))
+        names(y[[i]])[grep(re, n, perl=TRUE)] <- paste(series, trimws(capwords(sub(re, i %_% " \\1", n[grep(re, n, perl=TRUE)]))))
       }
       d <- base::merge(y[[1]][, -3], y[[2]][, -3], by=c("year", "month"), all=TRUE) # -3 means leave out column "region".
       globalColumns <- paste(series, "Global", c("Extent", "Area"))
