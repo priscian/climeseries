@@ -991,7 +991,10 @@ DownloadInstrumentalData <- function(paths, baseline, verbose, dataDir, filename
     attr(d, "baseline") <- attr(e[[ls(e)[1L]]], "baseline")
 
   d$met_year <- shift(d$year, -1L, roll=FALSE)
-  d$met_year[is.na(d$met_year)] <- max(d$year, na.rm=TRUE) + 1
+  metRow <- which(is.na(d$met_year))
+  d$met_year[metRow] <- max(d$year, na.rm=TRUE)
+  if (d$month[metRow] == 12)
+    d$met_year[metRow] <- d$met_year[metRow] + 1
 
   suffix <- format(Sys.Date(), "%Y%m%d")
 
@@ -1147,12 +1150,11 @@ get_climate_data <- function(download, data_dir, filename_base, urls=climeseries
 #' @return A character vector of column names.
 #'
 #' @export
-get_climate_series_names <- function(x, conf_int=FALSE)
+get_climate_series_names <- function(x, conf_int=FALSE, invert=TRUE)
 {
-  colNames <- names(x)
-  if (is.null(colNames)) colNames <- colnames(x)
+  colNames <- colnames(x)
 
-  return (colNames[!grepl("(^yr_|^met_|^year|^month" %_% ifelse(conf_int, "", "|_uncertainty$") %_% ")", colNames)])
+  return (colNames[grep("(^yr_|^met_|^year|^month" %_% ifelse(conf_int, "", "|_uncertainty$") %_% ")", colNames, invert=invert)])
 }
 
 
@@ -1228,7 +1230,7 @@ make_time_series_from_anomalies <- function(x, frequency=12L, ...)
   if (is.ts(x))
     return (x)
 
-  d <- x[, get_climate_series_names(x, ...), drop=FALSE]
+  d <- x[, c(commonColumns, get_climate_series_names(x, ...)), drop=FALSE]
 
   startTime <- unlist(x[1L, c("year", "month")])
 

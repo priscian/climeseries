@@ -74,45 +74,36 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, baseline=NULL, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, omit_series=climeseries:::omit_series, conf_int=FALSE, ci_alpha=0.3, show_trend=FALSE, trend_legend_inset=c(0.2, 0.2), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit="\u00b0C", main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
 
-  baselineSaved <- attr(x, "baseline")
+  savedBaseline <- attr(x, "baseline")
 
-  if (!is.null(series))
-    x <- x[, c(names(x)[grepl("^yr_|^met_|^year|^month|_uncertainty$", names(x))], series)]
-  else {
-    if (!is.null(omit_series)) {
-      series <- setdiff(get_climate_series_names(x), omit_series)
-      x <- x[, c(names(x)[grepl("^yr_|^met_|^year|^month|_uncertainty$", names(x))], series)]
-    }
-  }
-  x <- subset(x, na_unwrap(x[, !grepl("^yr_|^met_|^year|^month|_uncertainty$", names(x), x)])) # Remove trailing NAs.
-  attr(x, "baseline") <- baselineSaved
+  allNames <- c(get_climate_series_names(x, conf_int=!conf_int, invert=FALSE), series)
+  allNames <- intersect(c(commonColumns, series, series %_% "_uncertainty"), allNames)
+  x <- x[, allNames]
+  x <- subset(x, na_unwrap(x[, get_climate_series_names(x, conf_int=TRUE)])) # Remove trailing NAs.
+  attr(x, "baseline") <- savedBaseline
 
   if (!is.null(baseline))
     x <- recenter_anomalies(x, baseline, conf_int=FALSE)
 
-  startYear <- start
-  if (is.null(startYear)) startYear <- as.vector(data.matrix(head(x[, c("year")], 1)))
+  y <- make_time_series_from_anomalies(x, conf_int=TRUE)
+  if (yearly) {
+    y <- make_yearly_data(y)
+    y$yr_part <- y$year
+    y <- ts(y, min(y$year, na.rm=TRUE), frequency=1)
+    ma <- NULL
+  }
+  y <- window(y, start, end, extend=TRUE)
+  w <- interpNA(y, "linear", unwrap=TRUE)
 
-  s <- make_time_series_from_anomalies(x, conf_int=TRUE)
-  s_yr_part <- ts(x[, "yr_part"], unlist(x[1L, c("year", "month")]), frequency=12)
-  w <- window(s[, get_climate_series_names(s)], startYear, end, extend=TRUE)
-  w_yr_part <- window(s_yr_part, startYear, end, extend=TRUE)
-
-  s_raw <- s
-  ## We must interpolate missing values in the time series.
-  #s <- timeSeries::interpNA(s_raw, "linear")
-  s <- interpNA(s_raw, "linear", unwrap=TRUE)
-  #s <- na.approx(s_raw)
-  sma <- MA(s[, get_climate_series_names(s)], ma)
+  climateSeriesNames <- setdiff(allNames, commonColumns)
+  w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma)
   maText <- ""
   if (!is.null(ma))
     maText <- "(" %_% ma %_% "-month moving average)"
-
-  w_ma <- window(sma, startYear, end, extend=TRUE)
 
   baselineText <- ""
   baseline <- attr(x, "baseline")
@@ -120,13 +111,16 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
 
   if (is.null(ylab))
-    ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
+    ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l), unit, ")", b, sep="")), list(b=baselineText, unit=unit)))
   if (is.null(main))
     main <- "Average Temperature"
-  startTS <- start(w_ma); endTS <- end(w_ma)
-  if (is.null(start)) startTS <- as.vector(data.matrix(head(x[, c("year", "month")], 1)))
-  if (is.null(end)) endTS <- as.vector(data.matrix(tail(x[, c("year", "month")], 1)))
-  main <- paste(main, " (", MOS[startTS[2L]], ". ", startTS[1L], "\u2013", MOS[endTS[2L]], ". ", endTS[1L], ")", sep="")
+
+  startTS <- start(w); endTS <- end(w)
+
+  if (yearly)
+    main <- paste(main, " (", startTS[1L], "\u2013", endTS[1L], ")", sep="")
+  else
+    main <- paste(main, " (", MOS[startTS[2L]], ". ", startTS[1L], "\u2013", MOS[endTS[2L]], ". ", endTS[1L], ")", sep="")
 
   if (is.null(col)) {
     col <- seq_along(series)
@@ -149,10 +143,8 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   GetXAxisTicks <- function(min=1500, max=3000, by=10)
   {
     yearGroups <- seq(min, max, by=by)
-    plotStart <- startYear
-    if (is.null(plotStart)) plotStart <- min(x$year)
-    plotEnd <- end
-    if (is.null(plotEnd)) plotEnd <- max(x$year)
+    plotStart <- startTS[1]
+    plotEnd <- endTS[1]
 
     plotStart <- nearest_below(yearGroups, plotStart, TRUE); plotEnd <- nearest_above(yearGroups, plotEnd, TRUE)
     xaxisTicks <- seq(plotStart, plotEnd, by=by)
@@ -164,11 +156,11 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   if (length(xaxisTicks) < 8L)
     xaxisTicks <- GetXAxisTicks(by=5)
 
-  ## TODO: Some of the following could be done with the default 'plot()' arguments 'panel.first' and 'panel.last'.
   xaxt <- "n"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
-  plot(w_ma, plot.type=plot_type, type="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, frame.plot=FALSE, ...) # I.e. 'plot.ts()'.
+
+  plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, frame.plot=FALSE, ...) # I.e. 'plot.ts()'.
   if (xaxt == "n")
     axis(1, xaxisTicks)
   else
@@ -178,39 +170,54 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
   grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
   abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
 
-  cis <- s[, grepl("_uncertainty$", colnames(s))]
   if (conf_int) { # Plot confidence bands for temp series that have them.
-    confintNames <- intersect(series %_% "_uncertainty", colnames(cis))
+    confintNames <- intersect(series %_% "_uncertainty", colnames(w))
     if (length(confintNames) != 0L) {
       seriesNames <- str_match(confintNames, "^(.*?)_uncertainty$")[, 2L]
       for (i in seq_along(confintNames)) {
-        value <- s[, seriesNames[i]]
-        ci <- cis[, confintNames[i]]
-        upper <- window(MA(value + ci/2, ma), startYear, end, extend=TRUE); lower <- window(MA(value - ci/2, ma), startYear, end, extend=TRUE)
+        value <- w[, seriesNames[i]]
+        ci <- w[, confintNames[i]]
+        upper <- value + ci/2; lower <- value - ci/2
         ciCol <- alpha(col[seriesNames[i]], ci_alpha)
-        cidf <- data.frame(yr_part=w_yr_part, lower=lower, upper=upper); cidf <- cidf[complete.cases(cidf), ]
+        cidf <- data.frame(yr_part=y[, "yr_part"], lower=lower, upper=upper); cidf <- cidf[complete.cases(cidf), ]
         polygon(x=c(cidf$yr_part, rev(cidf$yr_part)), y=c(cidf$upper, rev(cidf$lower)), col=ciCol, border=NA)
       }
     }
   }
 
   par(new=TRUE)
-  plot(w_ma, plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.ts()'.
+  plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.ts()'.
 
-  legend(x="topleft", legend=series, col=col, lwd=lwd, bty="n", cex=0.8)
+  legend(x="topleft", legend=series %_% ifelse(loess, " (+ LOESS)", ""), col=col, lwd=lwd, bty="n", cex=0.8)
 
-  ## Decadal linear trends. Simple, but can be extended later for more control.
-  if (show_trend) {
+  ## LOESS smooth.
+  if (loess) {
+    for (s in series) {
+      loessArgs = list(
+        formula = eval(substitute(s ~ yr_part, list(s=as.name(s)))),
+        data = y,
+        span = 0.2
+      )
+      loessArgs <- modifyList(loessArgs, loess...)
+
+      l <- do.call("loess", loessArgs)
+
+      lines(l$x, l$fit, col=col[s], lwd=2)
+    }
+  }
+
+  ## Decadal linear trends.
+  if (trend) {
     m <- list()
     m$series <- series
-    m$range <- list(start=startYear, end=end)
+    m$range <- list(start=startTS, end=endTS)
     m$col <- col
-    m$data <- x[x$year >= ifelse(!is.null(m$range$start), m$range$start, -Inf) & x$year <= ifelse(!is.null(m$range$end), m$range$end, Inf), c(climeseries:::commonColumns, series)]
+    m$data <- y[, c(intersect(commonColumns, colnames(y)), series)]
     for (s in m$series) {
       m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data)
       m[[s]]$warming <- coef(m[[s]]$lm)[2] * diff(range(m[[s]]$lm$model[, 2]))
       m[[s]]$rate <- coef(m[[s]]$lm)[2] * 10
-      m[[s]]$rateText <- eval(substitute(expression(paste(Delta, "T = ", r, phantom(l) * degree, "C/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="%+1.3f"))))
+      m[[s]]$rateText <- eval(substitute(expression(paste(Delta, " = ", r, phantom(l), unit, "/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="%+1.3f"), unit=unit)))
       m[[s]]$col <- m$col[s]
     }
 
@@ -228,8 +235,6 @@ plot_climate_data <- function(x, series=NULL, start=NULL, end=NULL, ma=NULL, bas
 
   return (nop())
 }
-
-omit_series <- c("CO2 Mauna Loa", "NCEI US Palmer Z-Index", "NCEI US PDSI", "NCEI US PHDI", "NCEI US PMDI", "NCEI US Precip." )
 
 
 ##  Plot sequential global annual mean surface-temp. trend with confidence intervals (via Chris Colose).
@@ -394,15 +399,26 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, ylim=c(-1.0, 1.0), center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, omit_series=c("Keeling"), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit="\u00b0C", col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, omit_series=NULL, ...)
 {
   envelope_type <- match.arg(envelope_type)
 
   plotInstrumental <- TRUE
-  if (length(series) == 1L && is.na(series))
+  if (is.null(series))
     plotInstrumental <- FALSE
 
-  instrumental <- recenter_anomalies(instrumental, baseline)
+  if (plotInstrumental) {
+    savedBaseline <- attr(instrumental, "baseline")
+
+    allNames <- c(get_climate_series_names(instrumental, conf_int=!conf_int_i, invert=FALSE), series)
+    allNames <- intersect(c(commonColumns, series, series %_% "_uncertainty"), allNames)
+    instrumental <- instrumental[, allNames]
+    instrumental <- subset(instrumental, na_unwrap(instrumental[, get_climate_series_names(instrumental, conf_int=TRUE)])) # Remove trailing NAs.
+    attr(instrumental, "baseline") <- savedBaseline
+
+    instrumental <- recenter_anomalies(instrumental, baseline)
+  }
+
   models <- recenter_anomalies(models, baseline)
 
   ensemble <- attr(models, "ensemble")
@@ -423,25 +439,38 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   else
     scenario <- levels(attr(models, "scenario"))
 
-  i <- make_time_series_from_anomalies(instrumental, conf_int=TRUE)
   m <- make_time_series_from_anomalies(models)
+  i <- make_time_series_from_anomalies(instrumental, conf_int=TRUE)
 
-  i_yr_part <- ts(instrumental[, "yr_part"], unlist(instrumental[1, c("year", "month")]), frequency=12)
-  i_yr_part <- window(i_yr_part, start, end, extend=TRUE)
-  m_yr_part <- ts(models[, "yr_part"], unlist(models[1L, c("year", "month")]), frequency=12)
-  m_yr_part <- window(m_yr_part, start, end, extend=TRUE)
+  if (yearly) {
+    i <- make_yearly_data(i)
+    i$yr_part <- i$year
+    i <- ts(i, min(i$year, na.rm=TRUE), frequency=1)
+    ma_i <- NULL
 
-  maText <- ma_iText <- ""
-  if (!is.null(ma)) {
-    m <- MA(m, ma)
-    maText <- "(" %_% ma %_% "-month moving average)"
+    m <- make_yearly_data(m)
+    m$yr_part <- m$year
+    m <- ts(m, min(m$year, na.rm=TRUE), frequency=1)
+    ma <- NULL
   }
 
-  i_raw <- i
-  ## We must interpolate missing values in the time series.
-  #i <- timeSeries::interpNA(i_raw, "linear")
-  i <- interpNA(i_raw, "linear", unwrap=TRUE)
-  ima <- MA(i[, get_climate_series_names(i)], ma_i)
+  m <- window(m, start[1], end[1], extend=TRUE)
+  startTS <- start(m); endTS <- end(m)
+  i <- window(i, startTS, endTS, extend=TRUE)
+
+  wi <- interpNA(i, "linear", unwrap=TRUE)
+  wm <- interpNA(m, "linear", unwrap=TRUE)
+
+  if (plotInstrumental) {
+    climateSeriesNames <- setdiff(allNames, commonColumns)
+    wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames], ma_i)
+  }
+  wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm)], ma)
+
+  maText <- ma_iText <- ""
+  if (!is.null(ma))
+    maText <- "(" %_% ma %_% "-month moving average)"
+
   if (!is.null(ma_i)) {
     if (ma_i != ma)
       ma_iText <- " (" %_% ma_i %_% "-mo. m.a.)"
@@ -451,12 +480,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
       ma_iText <- " (no m.a.)"
   }
 
-  ima <- window(ima, start, end, extend=TRUE)
-  m <- window(m, start, end, extend=TRUE)
-
   ## Convert to 'zoo' objects for plotting.
-  ima <- as.zoo(ima); colnames(ima) <- get_climate_series_names(instrumental)
-  m <- as.zoo(m)
+  wiz <- as.zoo(wi)
+  wmz <- as.zoo(wm)
 
   baselineText <- ""
   baselineAttribute <- attr(instrumental, "baseline")
@@ -464,16 +490,14 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
 
   xlab <- "Year"
-  ylab <- eval(substitute(expression(paste("Global Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
-  main <- paste(ensemble," Scenario Realizations (", start, "\u2013", end, ")", sep="")
+  ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l), unit, ")", b, sep="")), list(b=baselineText, unit=unit)))
+  main <- paste(ensemble," Scenario Realizations (", startTS[1], "\u2013", endTS[1], ")", sep="")
 
   GetXAxisTicks <- function(min=1800, max=3000, by=10)
   {
     yearGroups <- seq(min, max, by=by)
-    plotStart <- start
-    if (is.null(plotStart)) plotStart <- min(x$year)
-    plotEnd <- end
-    if (is.null(plotEnd)) plotEnd <- max(x$year)
+    plotStart <- startTS[1]
+    plotEnd <- endTS[1]
 
     plotStart <- nearest_below(yearGroups, plotStart, TRUE); plotEnd <- nearest_above(yearGroups, plotEnd, TRUE)
     xaxisTicks <- seq(plotStart, plotEnd, by=by)
@@ -485,11 +509,10 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   if (length(xaxisTicks) < 8L)
     xaxisTicks <- GetXAxisTicks(by=5)
 
-  ## TODO: Some of the following could be done with the default 'plot()' arguments 'panel.first' and 'panel.last'.
   xaxt <- "n"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
-  plot(ima, screens=1L, bty="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
+  plot(wiz[, get_climate_series_names(wiz, conf_int=FALSE)], screens=1L, bty="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
   if (xaxt == "n")
     axis(1, xaxisTicks)
   else
@@ -506,14 +529,14 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     modelColors <- rep(modelColors, length.out=length(scenario))
   eachModelColor <- as.vector(unlist(tapply(as.numeric(attr(models, "scenario")), attr(models, "scenario"), function (a) modelColors[a])))
   par(new=TRUE)
-  plot(m, screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ylim=ylim, col=eachModelColor, ...) # I.e. 'plot.zoo()'.
+  plot(wmz[, get_climate_series_names(wmz)], screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ylim=ylim, col=eachModelColor, ...) # I.e. 'plot.zoo()'.
 
   grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
   abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
 
   ## Plot model averages.
-  year <- attr(m, "index")
-  modelsMiddle <- by(t(m), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv) }) })
+  year <- attr(wmz, "index")
+  modelsMiddle <- by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv) }) })
   if (smooth_center)
     modelsMiddle <- sapply(modelsMiddle, function(m) predict(loess(m ~ year), data.frame(year=year)), simplify=FALSE)
   meanColor <- col_m_mean
@@ -529,11 +552,11 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   ecd <- (1.0 - envelope_coverage) / 2
   modelsRange <- switch(envelope_type,
-    range = by(t(m), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) { rv <- range(x, na.rm=TRUE); margin <- diff(rv) * ecd; rv <- rv + c(margin, -margin) }; return (rv) }) }),
+    range = by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) { rv <- range(x, na.rm=TRUE); margin <- diff(rv) * ecd; rv <- rv + c(margin, -margin) }; return (rv) }) }),
 
-    quantiles = by(t(m), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- quantile(x, c(ecd, 1.0 - ecd), na.rm=TRUE); return (rv) }) }),
+    quantiles = by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- quantile(x, c(ecd, 1.0 - ecd), na.rm=TRUE); return (rv) }) }),
 
-    normal =  by(t(m), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf_int; return (rv) }) })
+    normal =  by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf_int; return (rv) }) })
   )
 
   lowerEnvelope <- sapply(modelsRange, function(x) x[1L, ], simplify=FALSE); upperEnvelope <- sapply(modelsRange, function(x) x[2L, ], simplify=FALSE)
@@ -550,7 +573,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
     if (!is.null(alpha_envelope)) {
       mapply(function(le, ue, color) {
-        cidf <- data.frame(yr_part=m_yr_part, lower=le, upper=ue); cidf <- cidf[complete.cases(cidf), ]
+        cidf <- data.frame(yr_part=wmz[, "yr_part"], lower=le, upper=ue); cidf <- cidf[complete.cases(cidf), ]
         ciCol <- alpha(color, alpha_envelope)
         polygon(x=c(cidf$yr_part, rev(cidf$yr_part)), y=c(cidf$upper, rev(cidf$lower)), col=ciCol, border=NA)
       }, lowerEnvelope, upperEnvelope, meanColor)
@@ -570,7 +593,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     names(instrumentalColors) <- series
 
     plot_iArgs <- list(
-      x = ima[, series],
+      x = wiz[, get_climate_series_names(wiz, conf_int=FALSE)],
       screens = 1L,
       bty = "n",
       xaxt = "n",
@@ -591,9 +614,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
         for (j in seq_along(confintNames)) {
           value <- i[, seriesNames[j]]
           ci <- cis[, confintNames[j]]
-          upper <- window(MA(value + ci/2, ma_i), start, end, extend=TRUE); lower <- window(MA(value - ci/2, ma_i), start, end, extend=TRUE)
+          upper <- value + ci/2; lower <- value - ci/2
           ciCol <- alpha(instrumentalColors[seriesNames[j]], ci_alpha_i)
-          cidf <- data.frame(yr_part=i_yr_part, lower=lower, upper=upper); cidf <- cidf[complete.cases(cidf), ]
+          cidf <- data.frame(yr_part=wiz[, "yr_part"], lower=lower, upper=upper); cidf <- cidf[complete.cases(cidf), ]
           polygon(x=c(cidf$yr_part, rev(cidf$yr_part)), y=c(cidf$upper, rev(cidf$lower)), col=ciCol, border=NA)
         }
       }
@@ -642,4 +665,6 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   )
   legendArgs <- modifyList(legendArgs, legend...)
   do.call("legend", legendArgs)
+
+  return (nop())
 }

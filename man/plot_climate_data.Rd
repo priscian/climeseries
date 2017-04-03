@@ -4,13 +4,13 @@
 \alias{plot_climate_data}
 \title{Plot Climatological Time Series}
 \usage{
-plot_climate_data(x, series = NULL, start = NULL, end = NULL, ma = NULL,
-  baseline = NULL, plot_type = c("single", "multiple"), type = "l",
-  xlab = "Year", ylab = NULL, main = NULL, col = NULL,
-  col_fun = RColorBrewer::brewer.pal, col_fun... = list(name = "Paired"),
-  alpha = 0.5, lwd = 2, omit_series = climeseries:::omit_series,
-  conf_int = FALSE, ci_alpha = 0.3, show_trend = FALSE,
-  trend_legend_inset = c(0.2, 0.2), ...)
+plot_climate_data(x, series, start = NULL, end = NULL, ma = NULL,
+  baseline = NULL, yearly = FALSE, plot_type = c("single", "multiple"),
+  type = "l", xlab = "Year", ylab = NULL, unit = "<U+00B0>C", main = NULL,
+  col = NULL, col_fun = RColorBrewer::brewer.pal, col_fun... = list(name =
+  "Paired"), alpha = 0.5, lwd = 2, conf_int = FALSE, ci_alpha = 0.3,
+  trend = FALSE, trend_legend_inset = c(0.2, 0.2), loess = FALSE,
+  loess... = list(), ...)
 }
 \arguments{
 \item{x}{A data set (down)loaded by function \code{\link{get_climate_data}}.}
@@ -37,13 +37,13 @@ plot_climate_data(x, series = NULL, start = NULL, end = NULL, ma = NULL,
 
 \item{lwd}{A vector of line widths, each for plotting a member of \code{series}, which is passed to \code{\link[stats]{plot.ts}}.}
 
-\item{omit_series}{A vector containing the column names of the climate series NOT to be plotted if \code{series = NULL}. This has been added to leave out the Keeling Curve data, but it could later include other regularly updated time-series data, related to climate, which wouldn't normally be plotted in the same window.}
-
 \item{conf_int}{Logical; if \code{TRUE}, plot 95\% confidence intervals for those series with CI data.}
 
 \item{ci_alpha}{Sets the color transparency of the temperature-series CIs to a new level in [0, 1]. If \code{ci_alpha} is \code{NA}, existing alpha values are preserved.}
 
 \item{...}{Passed to \code{\link[stats]{plot.ts}}.}
+
+\item{omit_series}{A vector containing the column names of the climate series NOT to be plotted if \code{series = NULL}. This has been added to leave out the Keeling Curve data, but it could later include other regularly updated time-series data, related to climate, which wouldn't normally be plotted in the same window.}
 }
 \description{
 Readily displays annotated climate time series on a common plot with many configurable options.

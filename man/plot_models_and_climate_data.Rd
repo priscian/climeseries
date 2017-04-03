@@ -6,15 +6,15 @@
 \usage{
 plot_models_and_climate_data(instrumental, models, series = NULL,
   scenario = NULL, start = 1880, end = NULL, ma = NULL, ma_i = ma,
-  baseline = NULL, ylim = c(-1, 1), center_fun = "mean",
+  baseline = NULL, yearly = FALSE, ylim = c(-1, 1), center_fun = "mean",
   smooth_center = FALSE, envelope_coverage = 0.95,
   envelope_type = c("quantiles", "range", "normal"), plot_envelope = TRUE,
-  smooth_envelope = TRUE, col_m = NULL, col_m_mean = NULL,
+  smooth_envelope = TRUE, unit = "<U+00B0>C", col_m = NULL, col_m_mean = NULL,
   alpha_envelope = 0.2, envelope_text = "model coverage",
   legend... = list(), plot_i... = list(),
   col_i_fun = RColorBrewer::brewer.pal, col_i_fun... = list(name =
   "Paired"), alpha_i = 0.5, conf_int_i = FALSE, ci_alpha_i = 0.3,
-  omit_series = c("Keeling"), ...)
+  omit_series = NULL, ...)
 }
 \arguments{
 \item{instrumental}{An instrumental-temperature dataset (down)loaded by function \code{\link{get_climate_data}}.}

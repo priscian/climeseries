@@ -893,14 +893,16 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 
 
 #' @export
-make_yearly_data <- function(x, na_rm=TRUE)
+make_yearly_data <- function(x, na_rm=TRUE, unwrap=TRUE)
 {
   if (missing(x))
     x <- get_climate_data(download=FALSE, baseline=FALSE)
 
-  #tbl_dt(x)[, -commonColumns[commonColumns %nin% "year"], with=FALSE][, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r }), by=year]
-  ## ... but I can do this in one step:
-  tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-commonColumns[commonColumns %nin% "year"], by=year]
+  r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-commonColumns[commonColumns %nin% "year"], by=year]
+  if (unwrap)
+    r <- r[na_unwrap(r), ]
+
+  r
 }
 
 ## usage:
