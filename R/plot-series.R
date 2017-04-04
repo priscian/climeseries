@@ -399,7 +399,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit="\u00b0C", col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, omit_series=NULL, ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit="\u00b0C", col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -491,7 +491,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   xlab <- "Year"
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l), unit, ")", b, sep="")), list(b=baselineText, unit=unit)))
-  main <- paste(ensemble," Scenario Realizations (", startTS[1], "\u2013", endTS[1], ")", sep="")
+  main <- paste(ensemble, " ", scenario_text, " (", startTS[1], "\u2013", endTS[1], ")", sep="")
 
   GetXAxisTicks <- function(min=1800, max=3000, by=10)
   {
@@ -582,8 +582,6 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   ## Plot instrumental series.
   if (plotInstrumental) {
-    if (is.null(series))
-      series <- setdiff(get_climate_series_names(instrumental), omit_series)
     col_i_funArgs <- list(
       n = length(series)
     )

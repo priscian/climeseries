@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Geez, okay, [here](inst/extdata/latest/climate-series_20170329.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20170404.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -47,7 +47,7 @@ series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Kr
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
 
-![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-2016.8_ma12_baseline1981-2010.png)
+![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-recent_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -59,7 +59,7 @@ series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
 plot_climate_data(inst, series=series, 1850, ma=12, lwd=2, conf_int=TRUE, col=c("red", "blue"))
 ```
 
-![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1850.1-2016.7_ma12_baseline1981-2010.png)
+![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1850.1-recent_ma12_baseline1981-2010.png)
 
 ```
 ########################################
@@ -68,7 +68,7 @@ plot_climate_data(inst, series=series, 1850, ma=12, lwd=2, conf_int=TRUE, col=c(
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 cmip5 <- get_models_data(ensemble="cmip5")
-plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, end=2100, ma=12, baseline=1981:2010,
+plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950, end=2100, ma=12, baseline=1981:2010,
   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
 ```
 
@@ -76,18 +76,36 @@ plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, 
 
 ```
 ########################################
-## CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.
+## CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the HadCRUT4 land+SST series.
+## Cf. Fig. 4(b) of Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
-cmip5 <- get_models_data(ensemble="cmip5")
-series <- c("GISTEMP Global")
-plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12,
-  ma_i=12, baseline=1951:1980, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles",
-  envelope_text="quantiles", ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
+cmip5 <- get_models_data(ensemble="cmip5", subdir="tas + tos")
+series <- c("HadCRUT4 Global")
+plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020, ma=12,
+  ma_i=12, baseline=1961:1990, yearly=TRUE, scenario_text="Scenario TAS + TOS Realizations", center_fun="mean",
+  smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE,
+  col_i_fun="topo.colors", col_i_fun...=list())
 ```
 
-![CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.](inst/images/cmip5-rcp45-realizations~GISTEMP_1880-2020_ma12_mai12_baseline1951-1980.png)
+![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the HadCRUT4 land+SST series.](inst/images/cmip5-tas+tos-rcp85-realizations.range+HadCRUT4_1880-2020_ma12_mai12_baseline1961-1990_yearly.png)
+
+```
+########################################
+## Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.
+## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
+########################################
+
+series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global")
+start <- 1970; end <- 2017
+g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
+series_adj <- paste(series, "(adj.)")
+main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
+plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19)
+```
+
+![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1970-2016_yearly.png)
 
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
@@ -97,7 +115,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170329.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170404.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:

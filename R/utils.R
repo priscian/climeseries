@@ -147,7 +147,7 @@ MA <- moving_average
 
 
 #' @export
-interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=TRUE, ...)
+interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=TRUE, skip_all_is_na=TRUE, ...)
 {
   if (!inherits(x, "matrix") && !inherits(x, "timeSeries"))
     x <- as(x, "matrix")
@@ -192,6 +192,10 @@ interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=T
     f <- 1
   }
   for (i in 1:ncol(x)) {
+    if (skip_all_is_na) {
+      if (all(is.na(x[, i])))
+        next
+    }
     x[, i] <- interpVectorNA(x[, i], method, f, ...)
   }
 
