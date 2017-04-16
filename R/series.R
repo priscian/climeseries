@@ -908,6 +908,29 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
 
       return (d)
+    })(path),
+
+    ##
+    `ESRL AMO` = (function(p) {
+      x <- NULL
+
+      skip <- 1L
+
+      tryCatch({
+        flit <- trimws(readLines(p))
+        flit <- flit[flit != ""]
+        flit <- flit[grep("^\\d{4}\\s", flit, perl=TRUE)]
+        x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
+      for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+      flit <- dplyr::arrange(flit, V1, month)
+
+      d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+      is.na(d$temp) <- d$temp == -99.990
+
+      return (d)
     })(path)
   )
 

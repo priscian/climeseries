@@ -6,15 +6,15 @@
 \usage{
 plot_models_and_climate_data(instrumental, models, series = NULL,
   scenario = NULL, start = 1880, end = NULL, ma = NULL, ma_i = ma,
-  baseline = NULL, yearly = FALSE, ylim = c(-1, 1), center_fun = "mean",
+  baseline = NULL, yearly = FALSE, ylim = c(-1, 1),
+  scenario_text = "Scenario Realizations", center_fun = "mean",
   smooth_center = FALSE, envelope_coverage = 0.95,
   envelope_type = c("quantiles", "range", "normal"), plot_envelope = TRUE,
   smooth_envelope = TRUE, unit = "<U+00B0>C", col_m = NULL, col_m_mean = NULL,
   alpha_envelope = 0.2, envelope_text = "model coverage",
   legend... = list(), plot_i... = list(),
   col_i_fun = RColorBrewer::brewer.pal, col_i_fun... = list(name =
-  "Paired"), alpha_i = 0.5, conf_int_i = FALSE, ci_alpha_i = 0.3,
-  omit_series = NULL, ...)
+  "Paired"), alpha_i = 0.5, conf_int_i = FALSE, ci_alpha_i = 0.3, ...)
 }
 \arguments{
 \item{instrumental}{An instrumental-temperature dataset (down)loaded by function \code{\link{get_climate_data}}.}
@@ -65,9 +65,9 @@ plot_models_and_climate_data(instrumental, models, series = NULL,
 
 \item{ci_alpha_i}{Sets the color transparency of the temperature-series CIs to a new level in [0, 1]. If \code{ci_alpha_i} is \code{NA}, existing alpha values are preserved.}
 
-\item{omit_series}{A vector containing the column names of the climate series NOT to be plotted if \code{series = NULL}. This has been added to leave out the Keeling Curve data, but it could later include other regularly updated time-series data, related to climate, which wouldn't normally be plotted in the same window.}
-
 \item{...}{Passed to \code{\link[zoo]{plot.zoo}} for the models.}
+
+\item{omit_series}{A vector containing the column names of the climate series NOT to be plotted if \code{series = NULL}. This has been added to leave out the Keeling Curve data, but it could later include other regularly updated time-series data, related to climate, which wouldn't normally be plotted in the same window.}
 }
 \description{
 Readily displays annotated climate time series (usually temperature) on a common plot along with CMIP Phase 3 or Phase 5 model projections.

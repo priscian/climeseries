@@ -148,21 +148,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
 1. CSIRO Global Mean Sea Level
-1. ERSSTv4 Land + Ocean 90S-60S
-1. ERSSTv4 Land + Ocean 90S-90N
-1. ERSSTv4 Ocean 00N-30N
-1. ERSSTv4 Ocean 00N-90N
-1. ERSSTv4 Ocean 20N-90N
-1. ERSSTv4 Ocean 20S-20N
-1. ERSSTv4 Ocean 30N-60N
-1. ERSSTv4 Ocean 30S-00N
-1. ERSSTv4 Ocean 60N-90N
-1. ERSSTv4 Ocean 60S-30S
-1. ERSSTv4 Ocean 60S-60N
-1. ERSSTv4 Ocean 90S-00N
-1. ERSSTv4 Ocean 90S-20S
-1. ERSSTv4 Ocean 90S-60S
-1. ERSSTv4 Ocean 90S-90N
 1. ERSSTv4 Land 00N-30N
 1. ERSSTv4 Land 00N-90N
 1. ERSSTv4 Land 20N-90N
@@ -187,21 +172,21 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60S-60N
 1. ERSSTv4 Land + Ocean 90S-00N
 1. ERSSTv4 Land + Ocean 90S-20S
-1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
-1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
-1. ERSSTv4 Ocean 00N-30N_uncertainty
-1. ERSSTv4 Ocean 00N-90N_uncertainty
-1. ERSSTv4 Ocean 20N-90N_uncertainty
-1. ERSSTv4 Ocean 20S-20N_uncertainty
-1. ERSSTv4 Ocean 30N-60N_uncertainty
-1. ERSSTv4 Ocean 30S-00N_uncertainty
-1. ERSSTv4 Ocean 60N-90N_uncertainty
-1. ERSSTv4 Ocean 60S-30S_uncertainty
-1. ERSSTv4 Ocean 60S-60N_uncertainty
-1. ERSSTv4 Ocean 90S-00N_uncertainty
-1. ERSSTv4 Ocean 90S-20S_uncertainty
-1. ERSSTv4 Ocean 90S-60S_uncertainty
-1. ERSSTv4 Ocean 90S-90N_uncertainty
+1. ERSSTv4 Land + Ocean 90S-60S
+1. ERSSTv4 Land + Ocean 90S-90N
+1. ERSSTv4 Ocean 00N-30N
+1. ERSSTv4 Ocean 00N-90N
+1. ERSSTv4 Ocean 20N-90N
+1. ERSSTv4 Ocean 20S-20N
+1. ERSSTv4 Ocean 30N-60N
+1. ERSSTv4 Ocean 30S-00N
+1. ERSSTv4 Ocean 60N-90N
+1. ERSSTv4 Ocean 60S-30S
+1. ERSSTv4 Ocean 60S-60N
+1. ERSSTv4 Ocean 90S-00N
+1. ERSSTv4 Ocean 90S-20S
+1. ERSSTv4 Ocean 90S-60S
+1. ERSSTv4 Ocean 90S-90N
 1. ERSSTv4 Land 00N-30N_uncertainty
 1. ERSSTv4 Land 00N-90N_uncertainty
 1. ERSSTv4 Land 20N-90N_uncertainty
@@ -226,6 +211,22 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60S-60N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-00N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-20S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
+1. ERSSTv4 Ocean 00N-30N_uncertainty
+1. ERSSTv4 Ocean 00N-90N_uncertainty
+1. ERSSTv4 Ocean 20N-90N_uncertainty
+1. ERSSTv4 Ocean 20S-20N_uncertainty
+1. ERSSTv4 Ocean 30N-60N_uncertainty
+1. ERSSTv4 Ocean 30S-00N_uncertainty
+1. ERSSTv4 Ocean 60N-90N_uncertainty
+1. ERSSTv4 Ocean 60S-30S_uncertainty
+1. ERSSTv4 Ocean 60S-60N_uncertainty
+1. ERSSTv4 Ocean 90S-00N_uncertainty
+1. ERSSTv4 Ocean 90S-20S_uncertainty
+1. ERSSTv4 Ocean 90S-60S_uncertainty
+1. ERSSTv4 Ocean 90S-90N_uncertainty
+1. ESRL AMO
 1. Extended Multivariate ENSO Index
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) Global
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) NH

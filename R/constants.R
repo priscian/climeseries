@@ -63,6 +63,7 @@ rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&service=ArAvTs&starttime=2000-03-01T00:00:00Z&endtime=@@DATE@@T23:59:59Z&data=MOD08_M3_6_Aerosol_Optical_Depth_Land_Ocean_Mean_Mean&portal=GIOVANNI&format=json"
 
 instrumentalUrls <- list( # Last updated 7 Dec. 2016.
+  `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
   `Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei/table.html", type="ENSO"),
@@ -176,9 +177,8 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"),
   `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
   ## TODO: Ocean heat content. More snow and ice?
-  # http://www.esrl.noaa.gov/psd/data/timeseries/AMO/
   # https://www.ncdc.noaa.gov/snow-and-ice/
-  ## Some aggregate data sets for modeling.
+  # https://www.ncdc.noaa.gov/teleconnections/pdo/data.csv
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.
