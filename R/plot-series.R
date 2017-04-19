@@ -429,7 +429,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   keepCols <- names(models)
   if (!is.null(scenario)) {
     keepCols <- c(commonColumns, setdiff(names(models), commonColumns)[originalScenario %in% scenario])
-    models <- models[, keepCols]
+    models <- models[, keepCols, drop=FALSE]
 
     # Restore some attributes.
     attr(models, "ensemble") <- ensemble
@@ -463,9 +463,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   if (plotInstrumental) {
     climateSeriesNames <- setdiff(allNames, commonColumns)
-    wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames], ma_i)
+    wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames, drop=FALSE], ma_i)
   }
-  wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm)], ma)
+  wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm), drop=FALSE], ma)
 
   maText <- ma_iText <- ""
   if (!is.null(ma))
@@ -512,7 +512,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   xaxt <- "n"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
-  plot(wiz[, get_climate_series_names(wiz, conf_int=FALSE)], screens=1L, bty="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
+  plot(wiz[, get_climate_series_names(wiz, conf_int=FALSE), drop=FALSE], screens=1L, bty="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
   if (xaxt == "n")
     axis(1, xaxisTicks)
   else
@@ -529,14 +529,14 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     modelColors <- rep(modelColors, length.out=length(scenario))
   eachModelColor <- as.vector(unlist(tapply(as.numeric(attr(models, "scenario")), attr(models, "scenario"), function (a) modelColors[a])))
   par(new=TRUE)
-  plot(wmz[, get_climate_series_names(wmz)], screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ylim=ylim, col=eachModelColor, ...) # I.e. 'plot.zoo()'.
+  plot(wmz[, get_climate_series_names(wmz), drop=FALSE], screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ylim=ylim, col=eachModelColor, ...) # I.e. 'plot.zoo()'.
 
   grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
   abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
 
   ## Plot model averages.
-  year <- attr(wmz, "index")
-  modelsMiddle <- by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv) }) })
+  year <- as.numeric(attr(wmz, "index"))
+  modelsMiddle <- by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv) }) })
   if (smooth_center)
     modelsMiddle <- sapply(modelsMiddle, function(m) predict(loess(m ~ year), data.frame(year=year)), simplify=FALSE)
   meanColor <- col_m_mean
@@ -552,11 +552,11 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   ecd <- (1.0 - envelope_coverage) / 2
   modelsRange <- switch(envelope_type,
-    range = by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) { rv <- range(x, na.rm=TRUE); margin <- diff(rv) * ecd; rv <- rv + c(margin, -margin) }; return (rv) }) }),
+    range = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) { rv <- range(x, na.rm=TRUE); margin <- diff(rv) * ecd; rv <- rv + c(margin, -margin) }; return (rv) }) }),
 
-    quantiles = by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- quantile(x, c(ecd, 1.0 - ecd), na.rm=TRUE); return (rv) }) }),
+    quantiles = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- quantile(x, c(ecd, 1.0 - ecd), na.rm=TRUE); return (rv) }) }),
 
-    normal =  by(t(wmz[, get_climate_series_names(wmz)]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf_int; return (rv) }) })
+    normal = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf_int; return (rv) }) })
   )
 
   lowerEnvelope <- sapply(modelsRange, function(x) x[1L, ], simplify=FALSE); upperEnvelope <- sapply(modelsRange, function(x) x[2L, ], simplify=FALSE)
@@ -604,7 +604,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     )
     plot_iArgs <- modifyList(plot_iArgs, plot_i...)
 
-    cis <- i[, grepl("_uncertainty$", colnames(i))]
+    cis <- i[, grepl("_uncertainty$", colnames(i)), drop=FALSE]
     if (conf_int_i) { # Plot confidence bands for temp series that have them.
       confintNames <- intersect(series %_% "_uncertainty", colnames(cis))
         if (length(confintNames) != 0) {

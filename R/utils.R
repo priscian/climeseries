@@ -79,23 +79,43 @@ shift <- function(x, ...)
 #' @export
 shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
 {
+  naRm <- function(x, na_rm)
+  {
+    if (!na_rm) return (x)
+
+    x[setdiff(seq_along(x), attr(na.omit(x), "na.action"))]
+  }
+
   n  <- length(x)
-  if (n == 0L) return(x)
+  if (n == 0L) return (x)
 
   j <- i %% n
 
-  if (j == 0L) return(x)
+  if (roll && j == 0L) return (naRm(x, na_rm))
 
-  shifted <- 1L:(n - j)
-  if (i > 0L)
-    shifted <- (n - j + 1L):n
+  if (!roll && j == 0L) {
+    x[seq_along(x)] <- NA
 
-  if (!roll) x[shifted] <- NA
-  if (na_rm) x[shifted] <- NaN
+    return (naRm(x, na_rm))
+  }
 
-  rv <- x[c((n - j + 1L):n, shifted)]
-  if (i > 0L)
-    rv <- x[c(shifted, 1L:(n - j))]
+  if (!roll && i > n) {
+    rv <- x
+    rv[seq_along(rv)] <- NaN
+  }
+  else {
+    shifted <- 1L:(n - j)
+    if (i > 0L)
+      shifted <- (n - j + 1L):n
+
+
+    if (!roll) x[shifted] <- NA
+    if (na_rm) x[shifted] <- NaN
+
+    rv <- x[c((n - j + 1L):n, shifted)]
+    if (i > 0L)
+      rv <- x[c(shifted, 1L:(n - j))]
+  }
 
   if (na_rm)
     rv <- rv[!is.nan(rv)]
