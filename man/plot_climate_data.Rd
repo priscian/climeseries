@@ -6,7 +6,7 @@
 \usage{
 plot_climate_data(x, series, start = NULL, end = NULL, ma = NULL,
   baseline = NULL, yearly = FALSE, plot_type = c("single", "multiple"),
-  type = "l", xlab = "Year", ylab = NULL, unit = "<U+00B0>C", main = NULL,
+  type = "l", xlab = "Year", ylab = NULL, unit = NULL, main = NULL,
   col = NULL, col_fun = RColorBrewer::brewer.pal, col_fun... = list(name =
   "Paired"), alpha = 0.5, lwd = 2, conf_int = FALSE, ci_alpha = 0.3,
   trend = FALSE, trend_legend_inset = c(0.2, 0.2), loess = FALSE,
@@ -103,4 +103,3 @@ for (s in m$series) {
 }
 
 }
-

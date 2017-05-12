@@ -79,6 +79,8 @@ shift <- function(x, ...)
 #' @export
 shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
 {
+  if (i == 0L) return (x)
+
   naRm <- function(x, na_rm)
   {
     if (!na_rm) return (x)
@@ -107,7 +109,6 @@ shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
     shifted <- 1L:(n - j)
     if (i > 0L)
       shifted <- (n - j + 1L):n
-
 
     if (!roll) x[shifted] <- NA
     if (na_rm) x[shifted] <- NaN

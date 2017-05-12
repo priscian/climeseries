@@ -17,4 +17,3 @@ A character vector of column names.
 \description{
 Extracts column names from downloaded climate data that correspond specifically to climatological time series.
 }
-

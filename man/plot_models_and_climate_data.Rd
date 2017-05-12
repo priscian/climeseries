@@ -10,7 +10,7 @@ plot_models_and_climate_data(instrumental, models, series = NULL,
   scenario_text = "Scenario Realizations", center_fun = "mean",
   smooth_center = FALSE, envelope_coverage = 0.95,
   envelope_type = c("quantiles", "range", "normal"), plot_envelope = TRUE,
-  smooth_envelope = TRUE, unit = "<U+00B0>C", col_m = NULL, col_m_mean = NULL,
+  smooth_envelope = TRUE, unit = NULL, col_m = NULL, col_m_mean = NULL,
   alpha_envelope = 0.2, envelope_text = "model coverage",
   legend... = list(), plot_i... = list(),
   col_i_fun = RColorBrewer::brewer.pal, col_i_fun... = list(name =
@@ -93,4 +93,3 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", sta
   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 }
 }
-

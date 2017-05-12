@@ -54,15 +54,22 @@ hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/di
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
 #rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
 rssBase <- "http://data.remss.com/msu/monthly_time_series/"
-rssTlt <- "RSS_Monthly_MSU_AMSU_Channel_TLT_Anomalies_"; rssTmt <- "RSS_Monthly_MSU_AMSU_Channel_TMT_Anomalies_"
-rssTtt <- "RSS_Monthly_MSU_AMSU_Channel_TTT_Anomalies_"
+rssChannel <- "RSS_Monthly_MSU_AMSU_Channel_@@CHANNEL@@_Anomalies_"
+rssTls <- sub("@@CHANNEL@@", "TLS", rssChannel)
+rssTlt <- sub("@@CHANNEL@@", "TLT", rssChannel)
+rssTmt <- sub("@@CHANNEL@@", "TMT", rssChannel)
+rssTts <- sub("@@CHANNEL@@", "TTS", rssChannel)
+rssTtt <- sub("@@CHANNEL@@", "TTT", rssChannel)
+uahBase <- "http://www.nsstc.uah.edu/data/msu/"
 esrlBase <- "https://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&lon1=@@LON1@@&lon2=@@LON2@@&var=@@VAR@@"
 esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 ## Start here: http://www.esrl.noaa.gov/psd/data/timeseries/
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&service=ArAvTs&starttime=2000-03-01T00:00:00Z&endtime=@@DATE@@T23:59:59Z&data=MOD08_M3_6_Aerosol_Optical_Depth_Land_Ocean_Mean_Mean&portal=GIOVANNI&format=json"
 
-instrumentalUrls <- list( # Last updated 7 Dec. 2016.
+#' @rdname constants
+#' @export
+data_urls <- list( # Last updated 7 Dec. 2016.
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
@@ -127,6 +134,9 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   ## JMA
   `JMA Global` = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/grid/gst_mon_1891_last.gz",
   ## RSS
+  `RSS TLS 3.3` = rssBase %_% rssTls %_% "Land_and_Ocean_v03_3.txt",
+  `RSS TLS 3.3 Land` = rssBase %_% rssTls %_% "Land_v03_3.txt",
+  `RSS TLS 3.3 Ocean` = rssBase %_% rssTls %_% "Ocean_v03_3.txt",
   `RSS TLT 3.3` = rssBase %_% rssTlt %_% "Land_and_Ocean_v03_3.txt",
   `RSS TLT 3.3 Land` = rssBase %_% rssTlt %_% "Land_v03_3.txt",
   `RSS TLT 3.3 Ocean` = rssBase %_% rssTlt %_% "Ocean_v03_3.txt",
@@ -136,6 +146,9 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   `RSS TMT 4.0` = rssBase %_% rssTmt %_% "Land_and_Ocean_v04_0.txt",
   `RSS TMT 4.0 Land` = rssBase %_% rssTmt %_% "Land_v04_0.txt",
   `RSS TMT 4.0 Ocean` = rssBase %_% rssTmt %_% "Ocean_v04_0.txt",
+  `RSS TTS 3.3` = rssBase %_% rssTts %_% "Land_and_Ocean_v03_3.txt",
+  `RSS TTS 3.3 Land` = rssBase %_% rssTts %_% "Land_v03_3.txt",
+  `RSS TTS 3.3 Ocean` = rssBase %_% rssTts %_% "Ocean_v03_3.txt",
   `RSS TTT 3.3` = rssBase %_% rssTtt %_% "Land_and_Ocean_v03_3.txt",
   `RSS TTT 3.3 Land` = rssBase %_% rssTtt %_% "Land_v03_3.txt",
   `RSS TTT 3.3 Ocean` = rssBase %_% rssTtt %_% "Ocean_v03_3.txt",
@@ -143,10 +156,13 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   `RSS TTT 4.0 Land` = rssBase %_% rssTtt %_% "Land_v04_0.txt",
   `RSS TTT 4.0 Ocean` = rssBase %_% rssTtt %_% "Ocean_v04_0.txt",
   ## UAH
-  `UAH TLT 5.6` = "http://www.nsstc.uah.edu/data/msu/t2lt/uahncdc_lt_5.6.txt",
-  `UAH TMT 5.6` = "http://www.nsstc.uah.edu/data/msu/t2/uahncdc_mt_5.6.txt",
-  `UAH TLT 6.0` = "http://www.nsstc.uah.edu/data/msu/v6.0/tlt/uahncdc_lt_6.0.txt",
-  `UAH TMT 6.0` = "http://www.nsstc.uah.edu/data/msu/v6.0/tmt/uahncdc_mt_6.0.txt",
+  `UAH TLS 5.6` = uahBase %_% "t4/uahncdc_ls_5.6.txt",
+  `UAH TLT 5.6` = uahBase %_% "t2lt/uahncdc_lt_5.6.txt",
+  `UAH TMT 5.6` = uahBase %_% "t2/uahncdc_mt_5.6.txt",
+  `UAH TLS 6.0` = uahBase %_% "v6.0/tls/uahncdc_ls_6.0.txt",
+  `UAH TLT 6.0` = uahBase %_% "v6.0/tlt/uahncdc_lt_6.0.txt",
+  `UAH TMT 6.0` = uahBase %_% "v6.0/tmt/uahncdc_mt_6.0.txt",
+  `UAH TTP 6.0` = uahBase %_% "v6.0/ttp/uahncdc_tp_6.0.txt",
   ## RATPAC
   `RATPAC-A Seasonal Layers` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt.zip", # Version 2; Version 1 is now deprecated (6 Sep. 2016).
   `RATPAC-A Annual Levels` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-annual-levels.txt.zip",
@@ -160,7 +176,6 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   ## For the US: https://www.quora.com/What-is-the-longitude-and-latitude-of-a-bounding-box-around-the-continental-United-States
   `NCEP Surface Air USA 48` = sub("@@LON1", "-125", sub("@@LON2@@", "-70", sub("@@LAT1@@", "50", sub("@@LAT2@@", "25", sub("@@VAR@@", "Air+Temperature", esrlBase))))),
   ## CO2
-  #`CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/sites/default/files/data/in_situ_co2/monthly_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   `CO2 NOAA ESRL` = list(path="ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt", type="CO2"),
   `CO2 Cape Grim` = list(path="http://www.csiro.au/greenhouse-gases/GreenhouseGas/data/CapeGrim_CO2_data_download.txt", type="CO2"),
@@ -179,12 +194,15 @@ instrumentalUrls <- list( # Last updated 7 Dec. 2016.
   ## TODO: Ocean heat content. More snow and ice?
   # https://www.ncdc.noaa.gov/snow-and-ice/
   # https://www.ncdc.noaa.gov/teleconnections/pdo/data.csv
+  # NINO indices: http://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.
-omitDownloadUrls <- c(
+omitUrlNames <- c(
   "OSIRIS Stratospheric Aerosol Optical Depth (550 nm)"
   #"MODIS Aerosol Optical Thickness (550 nm)"
 )
 
-commonColumns <- c("year", "met_year", "yr_part", "month")
+#' @rdname constants
+#' @export
+common_columns <- c("year", "met_year", "yr_part", "month")

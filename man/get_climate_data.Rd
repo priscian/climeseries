@@ -5,9 +5,8 @@
 \title{Get Monthly Climatological Data from a Local Data Set or from the Internet}
 \usage{
 get_climate_data(download, data_dir, filename_base,
-  urls = climeseries:::instrumentalUrls,
-  omit = climeseries:::omitDownloadUrls, only = NULL, baseline = NULL,
-  annual_mean = FALSE, verbose = TRUE)
+  urls = climeseries::data_urls, omit = omitUrlNames, only = NULL,
+  baseline = TRUE, annual_mean = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{download}{Logical: if \code{TRUE}, download the latest instrumental data from the Internet; if \code{FALSE}, load the most recent instrumental data set from the default data directory.}
@@ -70,7 +69,7 @@ e <- get_climate_data(download=FALSE, baseline=FALSE)
 ## Which year is the warmest?
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
-series <- setdiff(names(inst), c(climeseries:::commonColumns, c("CO2 Mauna Loa")))
+series <- setdiff(names(inst), c(climeseries::common_columns, c("CO2 Mauna Loa")))
 yearType <- "year" # "year" or "met_year" = meteorological year.
 annual <- sapply(series, function(s) { rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv })
 
@@ -86,4 +85,3 @@ mapply(function(x, y) x[y][1L], annualLt, sapply(annualLt, function(s) { order(s
 }
 
 }
-

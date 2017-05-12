@@ -2,11 +2,13 @@
 % Please edit documentation in R/constants.R
 \docType{data}
 \name{constants}
-\alias{MONTHS}
-\alias{MOS}
 \alias{constants}
+\alias{MOS}
+\alias{MONTHS}
 \alias{current_month}
 \alias{current_year}
+\alias{data_urls}
+\alias{common_columns}
 \title{Package Constants}
 \format{Various.}
 \usage{
@@ -17,9 +19,12 @@ MONTHS
 current_month
 
 current_year
+
+data_urls
+
+common_columns
 }
 \description{
 Package Constants
 }
 \keyword{datasets}
-

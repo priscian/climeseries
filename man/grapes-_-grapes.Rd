@@ -27,4 +27,3 @@ who <- "world"
 \seealso{
 \code{\link[base]{paste}}
 }
-

@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20170504.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20170511.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -115,7 +115,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170504.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170511.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -148,6 +148,21 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
 1. CSIRO Global Mean Sea Level
+1. ERSSTv4 Land + Ocean 90S-60S
+1. ERSSTv4 Land + Ocean 90S-90N
+1. ERSSTv4 Ocean 00N-30N
+1. ERSSTv4 Ocean 00N-90N
+1. ERSSTv4 Ocean 20N-90N
+1. ERSSTv4 Ocean 20S-20N
+1. ERSSTv4 Ocean 30N-60N
+1. ERSSTv4 Ocean 30S-00N
+1. ERSSTv4 Ocean 60N-90N
+1. ERSSTv4 Ocean 60S-30S
+1. ERSSTv4 Ocean 60S-60N
+1. ERSSTv4 Ocean 90S-00N
+1. ERSSTv4 Ocean 90S-20S
+1. ERSSTv4 Ocean 90S-60S
+1. ERSSTv4 Ocean 90S-90N
 1. ERSSTv4 Land 00N-30N
 1. ERSSTv4 Land 00N-90N
 1. ERSSTv4 Land 20N-90N
@@ -172,21 +187,21 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60S-60N
 1. ERSSTv4 Land + Ocean 90S-00N
 1. ERSSTv4 Land + Ocean 90S-20S
-1. ERSSTv4 Land + Ocean 90S-60S
-1. ERSSTv4 Land + Ocean 90S-90N
-1. ERSSTv4 Ocean 00N-30N
-1. ERSSTv4 Ocean 00N-90N
-1. ERSSTv4 Ocean 20N-90N
-1. ERSSTv4 Ocean 20S-20N
-1. ERSSTv4 Ocean 30N-60N
-1. ERSSTv4 Ocean 30S-00N
-1. ERSSTv4 Ocean 60N-90N
-1. ERSSTv4 Ocean 60S-30S
-1. ERSSTv4 Ocean 60S-60N
-1. ERSSTv4 Ocean 90S-00N
-1. ERSSTv4 Ocean 90S-20S
-1. ERSSTv4 Ocean 90S-60S
-1. ERSSTv4 Ocean 90S-90N
+1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
+1. ERSSTv4 Ocean 00N-30N_uncertainty
+1. ERSSTv4 Ocean 00N-90N_uncertainty
+1. ERSSTv4 Ocean 20N-90N_uncertainty
+1. ERSSTv4 Ocean 20S-20N_uncertainty
+1. ERSSTv4 Ocean 30N-60N_uncertainty
+1. ERSSTv4 Ocean 30S-00N_uncertainty
+1. ERSSTv4 Ocean 60N-90N_uncertainty
+1. ERSSTv4 Ocean 60S-30S_uncertainty
+1. ERSSTv4 Ocean 60S-60N_uncertainty
+1. ERSSTv4 Ocean 90S-00N_uncertainty
+1. ERSSTv4 Ocean 90S-20S_uncertainty
+1. ERSSTv4 Ocean 90S-60S_uncertainty
+1. ERSSTv4 Ocean 90S-90N_uncertainty
 1. ERSSTv4 Land 00N-30N_uncertainty
 1. ERSSTv4 Land 00N-90N_uncertainty
 1. ERSSTv4 Land 20N-90N_uncertainty
@@ -211,21 +226,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60S-60N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-00N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-20S_uncertainty
-1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
-1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
-1. ERSSTv4 Ocean 00N-30N_uncertainty
-1. ERSSTv4 Ocean 00N-90N_uncertainty
-1. ERSSTv4 Ocean 20N-90N_uncertainty
-1. ERSSTv4 Ocean 20S-20N_uncertainty
-1. ERSSTv4 Ocean 30N-60N_uncertainty
-1. ERSSTv4 Ocean 30S-00N_uncertainty
-1. ERSSTv4 Ocean 60N-90N_uncertainty
-1. ERSSTv4 Ocean 60S-30S_uncertainty
-1. ERSSTv4 Ocean 60S-60N_uncertainty
-1. ERSSTv4 Ocean 90S-00N_uncertainty
-1. ERSSTv4 Ocean 90S-20S_uncertainty
-1. ERSSTv4 Ocean 90S-60S_uncertainty
-1. ERSSTv4 Ocean 90S-90N_uncertainty
 1. ESRL AMO
 1. Extended Multivariate ENSO Index
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) Global
@@ -430,6 +430,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RATPAC-A 100-50 mb NH Extratropics
 1. RATPAC-A 100-50 mb SH Extratropics
 1. RATPAC-A 100-50 mb 20N-S
+1. RSS TLS 3.3 -82.5/82.5
+1. RSS TLS 3.3 -20.0/20.0
+1. RSS TLS 3.3 20.0/82.5
+1. RSS TLS 3.3 -82.5/-20.0
+1. RSS TLS 3.3 60.0/82.5
+1. RSS TLS 3.3 -82.5/-60.0
+1. RSS TLS 3.3 Cont. USA
+1. RSS TLS 3.3 0.0/82.5
+1. RSS TLS 3.3 -82.5/0.0
+1. RSS TLS 3.3 Land -82.5/82.5
+1. RSS TLS 3.3 Land -20.0/20.0
+1. RSS TLS 3.3 Land 20.0/82.5
+1. RSS TLS 3.3 Land -82.5/-20.0
+1. RSS TLS 3.3 Land 60.0/82.5
+1. RSS TLS 3.3 Land -82.5/-60.0
+1. RSS TLS 3.3 Ocean -82.5/82.5
+1. RSS TLS 3.3 Ocean -20.0/20.0
+1. RSS TLS 3.3 Ocean 20.0/82.5
+1. RSS TLS 3.3 Ocean -82.5/-20.0
+1. RSS TLS 3.3 Ocean 60.0/82.5
+1. RSS TLS 3.3 Ocean -82.5/-60.0
 1. RSS TLT 3.3 -70.0/82.5
 1. RSS TLT 3.3 -20.0/20.0
 1. RSS TLT 3.3 20.0/82.5
@@ -493,6 +514,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RSS TMT 4.0 Ocean -82.5/-20.0
 1. RSS TMT 4.0 Ocean 60.0/82.5
 1. RSS TMT 4.0 Ocean -82.5/-60.0
+1. RSS TTS 3.3 -82.5/82.5
+1. RSS TTS 3.3 -20.0/20.0
+1. RSS TTS 3.3 20.0/82.5
+1. RSS TTS 3.3 -82.5/-20.0
+1. RSS TTS 3.3 60.0/82.5
+1. RSS TTS 3.3 -82.5/-60.0
+1. RSS TTS 3.3 Cont. USA
+1. RSS TTS 3.3 0.0/82.5
+1. RSS TTS 3.3 -82.5/0.0
+1. RSS TTS 3.3 Land -82.5/82.5
+1. RSS TTS 3.3 Land -20.0/20.0
+1. RSS TTS 3.3 Land 20.0/82.5
+1. RSS TTS 3.3 Land -82.5/-20.0
+1. RSS TTS 3.3 Land 60.0/82.5
+1. RSS TTS 3.3 Land -82.5/-60.0
+1. RSS TTS 3.3 Ocean -82.5/82.5
+1. RSS TTS 3.3 Ocean -20.0/20.0
+1. RSS TTS 3.3 Ocean 20.0/82.5
+1. RSS TTS 3.3 Ocean -82.5/-20.0
+1. RSS TTS 3.3 Ocean 60.0/82.5
+1. RSS TTS 3.3 Ocean -82.5/-60.0
 1. RSS TTT 3.3 -82.5/82.5
 1. RSS TTT 3.3 -20.0/20.0
 1. RSS TTT 3.3 20.0/82.5
@@ -540,6 +582,60 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Rutgers N. America Snow Cover
 1. Rutgers NH Snow Cover
 1. TSI Reconstructed
+1. UAH TLS 5.6 Global
+1. UAH TLS 5.6 Global Land
+1. UAH TLS 5.6 Global Ocean
+1. UAH TLS 5.6 NH
+1. UAH TLS 5.6 NH Land
+1. UAH TLS 5.6 NH Ocean
+1. UAH TLS 5.6 SH
+1. UAH TLS 5.6 SH Land
+1. UAH TLS 5.6 SH Ocean
+1. UAH TLS 5.6 Tropics
+1. UAH TLS 5.6 Tropics Land
+1. UAH TLS 5.6 Tropics Ocean
+1. UAH TLS 5.6 NH Extratropics
+1. UAH TLS 5.6 NH Extratropics Land
+1. UAH TLS 5.6 NH Extratropics Ocean
+1. UAH TLS 5.6 SH Extratropics
+1. UAH TLS 5.6 SH Extratropics Land
+1. UAH TLS 5.6 SH Extratropics Ocean
+1. UAH TLS 5.6 NH Polar
+1. UAH TLS 5.6 NH Polar Land
+1. UAH TLS 5.6 NH Polar Ocean
+1. UAH TLS 5.6 SH Polar
+1. UAH TLS 5.6 SH Polar Land
+1. UAH TLS 5.6 SH Polar Ocean
+1. UAH TLS 5.6 USA 48
+1. UAH TLS 5.6 USA 48 + Alaska
+1. UAH TLS 5.6 Australia
+1. UAH TLS 6.0 Global
+1. UAH TLS 6.0 Global Land
+1. UAH TLS 6.0 Global Ocean
+1. UAH TLS 6.0 NH
+1. UAH TLS 6.0 NH Land
+1. UAH TLS 6.0 NH Ocean
+1. UAH TLS 6.0 SH
+1. UAH TLS 6.0 SH Land
+1. UAH TLS 6.0 SH Ocean
+1. UAH TLS 6.0 Tropics
+1. UAH TLS 6.0 Tropics Land
+1. UAH TLS 6.0 Tropics Ocean
+1. UAH TLS 6.0 NH Extratropics
+1. UAH TLS 6.0 NH Extratropics Land
+1. UAH TLS 6.0 NH Extratropics Ocean
+1. UAH TLS 6.0 SH Extratropics
+1. UAH TLS 6.0 SH Extratropics Land
+1. UAH TLS 6.0 SH Extratropics Ocean
+1. UAH TLS 6.0 NH Polar
+1. UAH TLS 6.0 NH Polar Land
+1. UAH TLS 6.0 NH Polar Ocean
+1. UAH TLS 6.0 SH Polar
+1. UAH TLS 6.0 SH Polar Land
+1. UAH TLS 6.0 SH Polar Ocean
+1. UAH TLS 6.0 USA 48
+1. UAH TLS 6.0 USA 48 + Alaska
+1. UAH TLS 6.0 Australia
 1. UAH TLT 5.6 Global
 1. UAH TLT 5.6 Global Land
 1. UAH TLT 5.6 Global Ocean
@@ -648,3 +744,30 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. UAH TMT 6.0 USA 48
 1. UAH TMT 6.0 USA 48 + Alaska
 1. UAH TMT 6.0 Australia
+1. UAH TTP 6.0 Global
+1. UAH TTP 6.0 Global Land
+1. UAH TTP 6.0 Global Ocean
+1. UAH TTP 6.0 NH
+1. UAH TTP 6.0 NH Land
+1. UAH TTP 6.0 NH Ocean
+1. UAH TTP 6.0 SH
+1. UAH TTP 6.0 SH Land
+1. UAH TTP 6.0 SH Ocean
+1. UAH TTP 6.0 Tropics
+1. UAH TTP 6.0 Tropics Land
+1. UAH TTP 6.0 Tropics Ocean
+1. UAH TTP 6.0 NH Extratropics
+1. UAH TTP 6.0 NH Extratropics Land
+1. UAH TTP 6.0 NH Extratropics Ocean
+1. UAH TTP 6.0 SH Extratropics
+1. UAH TTP 6.0 SH Extratropics Land
+1. UAH TTP 6.0 SH Extratropics Ocean
+1. UAH TTP 6.0 NH Polar
+1. UAH TTP 6.0 NH Polar Land
+1. UAH TTP 6.0 NH Polar Ocean
+1. UAH TTP 6.0 SH Polar
+1. UAH TTP 6.0 SH Polar Land
+1. UAH TTP 6.0 SH Polar Ocean
+1. UAH TTP 6.0 USA 48
+1. UAH TTP 6.0 USA 48 + Alaska
+1. UAH TTP 6.0 Australia

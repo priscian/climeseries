@@ -156,7 +156,7 @@ get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="ht
 #   get_yearly_gistemp("GISTEMP Global Met. Stations Apr. 2016", "https://web.archive.org/web/20160419081141/http://data.giss.nasa.gov/gistemp/graphs_v3/Fig.A.txt"),
 #   get_yearly_gistemp("GISTEMP Global Met. Stations Current", "http://data.giss.nasa.gov/gistemp/graphs_v3/Fig.A.txt")
 # )
-# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
+# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries::common_columns), lapply(allSeries, names))))), allSeries)
 # d <- recenter_anomalies(d, 1951:1980) # Should be the same baseline, but make sure.
 # series <- sapply(allSeries[-1], get_climate_series_names)
 # plot_climate_data(d, series=series, start=1994, ma=NULL, lwd=2, conf_int=FALSE, show_trend=TRUE)
@@ -207,10 +207,10 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
 # allSeries <- list(
 #   inst,
 #   get_old_monthly_gistemp("GISTEMP Global Nov. 2005", "http://web.archive.org/web/20051227031241/http://data.giss.nasa.gov/gistemp/tabledata/GLB.Ts+dSST.txt"),
-#   env$d[, c(climeseries:::commonColumns, "GISTEMP Global May 2016")],
+#   env$d[, c(climeseries::common_columns, "GISTEMP Global May 2016")],
 #   get_old_monthly_gistemp()
 # )
-# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
+# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries::common_columns), lapply(allSeries, names))))), allSeries)
 # d <- recenter_anomalies(d, 1951:1980) # Should be the same baseline, but make sure.
 # series <- c("GISTEMP Global Nov. 2005", "GISTEMP Global Nov. 2015", "GISTEMP Global May 2016", "GISTEMP Global")
 # plot_climate_data(d, series=series, ma=12, lwd=2, conf_int=FALSE, show_trend=TRUE)
@@ -296,7 +296,7 @@ get_tidegauge_slr <- function(station_id)
 #' @export
 remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmonics=4, loess...=list(), unwrap=TRUE, ...)
 {
-  d <- inst[, c(climeseries:::commonColumns, series)]
+  d <- inst[, c(common_columns, series)]
   if (unwrap)
     d <- subset(d, na_unwrap(d[, series]))
   d[[series %_% " (interpolated)"]] <- interpNA(d[, series], "fmm")
@@ -380,13 +380,13 @@ create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...)
   l <- read.table(lawPath, header=TRUE, skip=182, nrow=2004)
   law <- data.frame(year=l$YearAD, month=6, `CO2 Law Dome`=l$CO2spl, check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
   law <- base::merge(expand.grid(month=1:12, year=law$year), law, by=c("year", "month"), all=TRUE)
-  yearlyInstrumentalCo2 <- as.data.frame(make_yearly_data(x[, c(commonColumns, co2_var_name)]))
+  yearlyInstrumentalCo2 <- as.data.frame(make_yearly_data(x[, c(common_columns, co2_var_name)]))
   instrumentalStartYear <- head(yearlyInstrumentalCo2[na_unwrap(yearlyInstrumentalCo2[[co2_var_name]]), ]$year, 1)
 
   mergeArgs = list(
     x = x,
     y = law[law$year < instrumentalStartYear, ],
-    by = intersect(commonColumns, names(law)),
+    by = intersect(common_columns, names(law)),
     all.x = TRUE
   )
   mergeArgs <- modifyList(mergeArgs, merge...)
@@ -410,7 +410,7 @@ create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...)
 ## Create a yearly aggregate CO2 variable without any monthly interpolation.
 # e <- get_climate_data(download=FALSE, baseline=FALSE)
 # e <- create_aggregate_co2_variable(e, "CO2 Mauna Loa", aggregate_name="CO2 Aggregate Global", merge...=list(all=TRUE), interpolate=FALSE)
-# g <- make_yearly_data(e[, c(climeseries:::commonColumns, "CO2 Aggregate Global")])
+# g <- make_yearly_data(e[, c(climeseries::common_columns, "CO2 Aggregate Global")])
 
 
 #' @export
@@ -532,7 +532,7 @@ remove_exogenous_influences <- function(x, series,
 # start <- 1979; end <- 2011
 # g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
 # series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
-# h <- make_yearly_data(g[, c(climeseries:::commonColumns, series_all)])
+# h <- make_yearly_data(g[, c(climeseries::common_columns, series_all)])
 # h <- h[year >= start & year < end]
 # ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
 # main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
@@ -553,7 +553,7 @@ easy_exogenous_plot <- function(series, start=NULL, end=NULL, bs_df=NULL, tamino
   if (!tamino_style)
     plot_climate_data(g, paste(series, "(adj.)"), start, end, ...)
   else {
-    h <- make_yearly_data(g[, c(climeseries:::commonColumns, series_all)])
+    h <- make_yearly_data(g[, c(common_columns, series_all)])
     if (!is.null(start)) h <- h[year >= start]
     if (!is.null(end)) h <- h[year < end]
     ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
@@ -884,7 +884,7 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 #   inst,
 #   create_osiris_saod_data()
 # )
-# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
+# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries::common_columns), lapply(allSeries, names))))), allSeries)
 # series <- c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global")
 # plot_climate_data(d, series, start=1985, ylab="SAOD", main="Global Mean Stratospheric Aerosol Optical Depth")
 ## Save only OSIRIS data as CSV file.
@@ -898,7 +898,7 @@ make_yearly_data <- function(x, na_rm=TRUE, unwrap=TRUE)
   if (missing(x))
     x <- get_climate_data(download=FALSE, baseline=FALSE)
 
-  r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-commonColumns[commonColumns %nin% "year"], by=year]
+  r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by=year]
   if (unwrap)
     r <- r[na_unwrap(r), ]
 
@@ -1086,7 +1086,7 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
             ## Center anomalies on average baseline-period temperatures.
             x[[modelDesignation]] <- round(x$temp - x$base, 3L)
           }
-          x <- x[, c(commonColumns, modelDesignation)]
+          x <- x[, c(common_columns, modelDesignation)]
           ## Weight the series.
           x[[modelDesignation]] <- x[[modelDesignation]] * weight
           attr(x, "weight") <- weight
@@ -1096,11 +1096,11 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
         }, SIMPLIFY = FALSE
       )
 
-      m <- Reduce(merge_fun_factory(all=TRUE, by=commonColumns), weightedValues)
+      m <- Reduce(merge_fun_factory(all=TRUE, by=common_columns), weightedValues)
       modelDesignation <- paste0(unique(a$model), "_", unique(a$RCP))
-      m[[modelDesignation]] <- rowSums(m[, colnames(m) %nin% commonColumns])
+      m[[modelDesignation]] <- rowSums(m[, colnames(m) %nin% common_columns])
 
-      m[, c(names(m)[names(m) %in% commonColumns], modelDesignation)]
+      m[, c(names(m)[names(m) %in% common_columns], modelDesignation)]
     }
   )
 
@@ -1108,19 +1108,19 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
   modelDetails <- subset(attr(l,"split_labels"), keepElements)
   m <- l[keepElements]
 
-  m <- Reduce(merge_fun_factory(all=TRUE, by=commonColumns), m)
+  m <- Reduce(merge_fun_factory(all=TRUE, by=common_columns), m)
   m <- recenter_anomalies(m, baseline=baseline) # Is this necessary?
 
   ## Make similar to previously made model objects.
   colNames <- colnames(m)
-  colnames(m)[colNames %nin% commonColumns] <- "m" %_% sprintf("%04d", seq(sum(colNames %nin% commonColumns)))
+  colnames(m)[colNames %nin% common_columns] <- "m" %_% sprintf("%04d", seq(sum(colNames %nin% common_columns)))
 
   attr(m, "ensemble") <- "CMIP5"
 
   attr(m, "model") <- modelDetails$model
 
   scenario <- "RCP " %_% sprintf(modelDetails$RCP, fmt="%.1f")
-  names(scenario) <- colnames(m)[colNames %nin% commonColumns]
+  names(scenario) <- colnames(m)[colNames %nin% common_columns]
   attr(m, "scenario") <- factor(scenario)
 
   cmip5 <- m

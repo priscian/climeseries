@@ -100,12 +100,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `NCEI Global` = (function(p) {
       x <- NULL
 
-      #skip <- 4L # Changed from 3 (18 Oct. 2016).
-      #if (type == "drought")
-      #  skip <- 3L
-
+      curl <- getCurlHandle()
+      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
-        flit <- readLines(p)
+        #flit <- readLines(p)
+        flit <- strsplit(getURL(p, curl=curl), "\r*\n")[[1L]]
         flit <- flit[trimws(flit) != ""]
         flit <- flit[grep("^\\d", flit, perl=TRUE)]
         x <- read.csv(header=FALSE, skip=0L, text=flit, check.names=FALSE)
@@ -325,6 +324,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `RSS TLS 3.3 Land` =,
+    `RSS TLS 3.3 Ocean` =,
+    `RSS TLS 3.3` =,
     `RSS TLT 3.3 Land` =,
     `RSS TLT 3.3 Ocean` =,
     `RSS TLT 3.3` =,
@@ -334,6 +336,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `RSS TMT 4.0 Land` =,
     `RSS TMT 4.0 Ocean` =,
     `RSS TMT 4.0` =,
+    `RSS TTS 3.3 Land` =,
+    `RSS TTS 3.3 Ocean` =,
+    `RSS TTS 3.3` =,
     `RSS TTT 3.3 Land` =,
     `RSS TTT 3.3 Ocean` =,
     `RSS TTT 3.3` =,
@@ -363,10 +368,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `UAH TLS 5.6` =,
     `UAH TMT 5.6` =,
     `UAH TLT 5.6` =,
+    `UAH TLS 6.0` =,
     `UAH TMT 6.0` =,
-    `UAH TLT 6.0` = (function(p) {
+    `UAH TLT 6.0` =,
+    `UAH TTP 6.0` = (function(p) {
       x <- NULL
 
       skip <- 1L
@@ -375,6 +383,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         flit <- readLines(p)
         flit <- flit[trimws(flit) != ""]
         flit <- split_at(flit, which(duplicated(flit)))[[1]]
+        flit <- gsub("(\\d)(-\\d)", "\\1 \\2", flit)
         x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
@@ -430,7 +439,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           flit <- data.matrix(flit[, -(1:3)])
           is.na(flit) <- flit == 999.000
           d <- cbind(d, flit)
-          names(d)[!(names(d) %in% commonColumns)] <- paste("RATPAC-A", l, names(d)[!(names(d) %in% commonColumns)])
+          names(d)[!(names(d) %in% common_columns)] <- paste("RATPAC-A", l, names(d)[!(names(d) %in% common_columns)])
 
           d
         }, SIMPLIFY = FALSE
@@ -474,7 +483,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           flit <- data.matrix(flit[, -(1:3)])
           is.na(flit) <- flit == 999.000
           d <- cbind(d, flit)
-          names(d)[!(names(d) %in% commonColumns)] <- paste("RATPAC-A", names(d)[!(names(d) %in% commonColumns)], "mb", l)
+          names(d)[!(names(d) %in% common_columns)] <- paste("RATPAC-A", names(d)[!(names(d) %in% common_columns)], "mb", l)
 
           d
         }, SIMPLIFY = FALSE
@@ -905,7 +914,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       ## Merge.
       allSeries <- list(saod_daily_gl, saod_daily_nh, saod_daily_sh)
-      d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(allSeries, names))))), allSeries)
+      d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(common_columns), lapply(allSeries, names))))), allSeries)
 
       return (d)
     })(path),
@@ -939,7 +948,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
   if (!is.null(d)) {
     if (!is.data.frame(d))
-      d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(climeseries:::commonColumns), lapply(d, names))))), d)
+      d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(common_columns), lapply(d, names))))), d)
 
     if (any(duplicated(d[, c("year", "month"), drop=FALSE]))) stop("Data set has duplicated year/month rows.")
 
@@ -991,27 +1000,29 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
 DownloadInstrumentalData <- function(paths, baseline, verbose, dataDir, filenameBase)
 {
-  e <- new.env()
+  env <- new.env()
 
   for (series in names(paths)) {
-    d <- ReadAndMungeInstrumentalData(series, paths[[series]], baseline=baseline, verbose=verbose)
+    #d <- ReadAndMungeInstrumentalData(series, paths[[series]], baseline=baseline, verbose=verbose)
+    ## Always create a "raw" data set first, then baseline it later.
+    d <- ReadAndMungeInstrumentalData(series, paths[[series]], baseline=FALSE, verbose=verbose)
     if (!is.null(d))
-      e[[series]] <- d
+      env[[series]] <- d
   }
 
   d <- NULL
-  for (i in ls(e)) {
-    uncertainty <- grep("_uncertainty$", names(e[[i]]), value=TRUE)
-    climeNames <- names(e[[i]])[!grepl("^yr_|^met_|^year|^month|_uncertainty$|^temp$", names(e[[i]]))]
+  for (i in ls(env)) {
+    uncertainty <- grep("_uncertainty$", names(env[[i]]), value=TRUE)
+    climeNames <- names(env[[i]])[!grepl("^yr_|^met_|^year|^month|_uncertainty$|^temp$", names(env[[i]]))]
     if (is.null(d))
-      d <- e[[i]][, c(commonColumns, climeNames, uncertainty)]
+      d <- env[[i]][, c(common_columns, climeNames, uncertainty)]
     else
-      d <- merge(d, e[[i]][, c(commonColumns, climeNames, uncertainty)], by=commonColumns, all=TRUE)
+      d <- merge(d, env[[i]][, c(common_columns, climeNames, uncertainty)], by=common_columns, all=TRUE)
   }
 
   attr(d, "baseline") <- NULL
-  if (length(e) > 0L)
-    attr(d, "baseline") <- attr(e[[ls(e)[1L]]], "baseline")
+  if (length(env) > 0L)
+    attr(d, "baseline") <- attr(env[[ls(env)[1L]]], "baseline")
 
   d$met_year <- shift(d$year, -1L, roll=FALSE)
   metRow <- which(is.na(d$met_year))
@@ -1021,9 +1032,14 @@ DownloadInstrumentalData <- function(paths, baseline, verbose, dataDir, filename
 
   suffix <- format(Sys.Date(), "%Y%m%d")
 
-  tempPath <- paste(dataDir, filenameBase %_% ifelse(is.null(baseline) || (is.logical(baseline) && !baseline), "raw_", "") %_% suffix, sep="/")
+  tempPath <- paste(dataDir, filenameBase %_% "raw_" %_% suffix, sep="/")
   save(d, file=tempPath %_% ".RData")
-  dput(d, file=tempPath %_% ".dput")
+  write.csv(d, file=tempPath %_% ".csv", row.names=FALSE)
+
+  d <- recenter_anomalies(d, baseline)
+
+  tempPath <- paste(dataDir, filenameBase %_% suffix, sep="/")
+  save(d, file=tempPath %_% ".RData")
   write.csv(d, file=tempPath %_% ".csv", row.names=FALSE)
 
   return (d)
@@ -1034,12 +1050,42 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 {
   d <- NULL
 
+  getDataFilenames <- function(dataDir, fileExtension)
+  {
+    sort(grep("^.*?" %_% filenameBase %_% ifelse(is.null(baseline) || (is.logical(baseline) && !baseline), "raw_", "") %_% "\\d{8}" %_% "\\." %_% fileExtension %_% "$", list.files(dataDir, full.names=TRUE), value=TRUE), decreasing=TRUE)
+  }
+
   fileExtension <- "RData"
-  filenames <- sort(grep("^.*?" %_% filenameBase %_% ifelse(is.null(baseline) || (is.logical(baseline) && !baseline), "raw_", "") %_% "\\d{8}" %_% "\\." %_% fileExtension %_% "$", list.files(dataDir, full.names=TRUE), value=TRUE), decreasing=TRUE)
+  filenames <- getDataFilenames(dataDir, fileExtension)
+  fileFound <- FALSE
   if (length(filenames) != 0) {
+    cat("Loading file ", basename(filenames[1L]), "...", sep="")
     load(filenames[1L], envir=environment()) # File extension "RData".
+    cat(". Done.", fill=TRUE); flush.console()
     #d <- dget(filenames[1L]) # File extension "dput".
     #d <- read.csv(filenames[1L]) # File extension "csv".
+
+    fileFound <- TRUE
+  }
+  else {
+    testDirs <- "."
+    if (!is.null(getOption("climeseries_data_dir")))
+      testDirs <- c(testDirs, getOption("climeseries_data_dir"))
+    testDirs <- c(testDirs, system.file("extdata", "latest", package="climeseries"))
+
+    for (i in testDirs) {
+      filenames <- getDataFilenames(i, fileExtension)
+      if (length(filenames) != 0) {
+        cat("Loading file ", basename(filenames[1L]), "...", sep="")
+        load(filenames[1L], envir=environment())
+        cat(". Done.", fill=TRUE); flush.console()
+        fileFound <- TRUE
+        break
+      }
+    }
+
+    if (!fileFound)
+      stop("No 'climeseries' data sets found.")
   }
 
   if (!is.null(baseline))
@@ -1094,7 +1140,6 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' ## Download both centered and "raw" data.
 #'
 #' d <- get_climate_data(download=TRUE, baseline=TRUE)
-#' e <- get_climate_data(download=TRUE, baseline=FALSE)
 #'
 #' ## Load both centered and "raw" data.
 #'
@@ -1104,7 +1149,7 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' ## Which year is the warmest?
 #'
 #' inst <- get_climate_data(download=FALSE, baseline=TRUE)
-#' series <- setdiff(names(inst), c(climeseries:::commonColumns, c("CO2 Mauna Loa")))
+#' series <- setdiff(names(inst), c(climeseries::common_columns, c("CO2 Mauna Loa")))
 #' yearType <- "year" # "year" or "met_year" = meteorological year.
 #' annual <- sapply(series, function(s) { rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv })
 #'
@@ -1120,7 +1165,7 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' }
 #'
 #' @export
-get_climate_data <- function(download, data_dir, filename_base, urls=climeseries:::instrumentalUrls, omit=climeseries:::omitDownloadUrls, only=NULL, baseline=NULL, annual_mean=FALSE, verbose=TRUE)
+get_climate_data <- function(download, data_dir, filename_base, urls=climeseries::data_urls, omit=omitUrlNames, only=NULL, baseline=TRUE, annual_mean=FALSE, verbose=TRUE)
 {
   if (missing(data_dir)) {
     if (!is.null(getOption("climeseries_data_dir")))
@@ -1253,7 +1298,7 @@ make_time_series_from_anomalies <- function(x, frequency=12L, ...)
   if (is.ts(x))
     return (x)
 
-  d <- x[, c(commonColumns, get_climate_series_names(x, ...)), drop=FALSE]
+  d <- x[, c(common_columns, get_climate_series_names(x, ...)), drop=FALSE]
 
   startTime <- unlist(x[1L, c("year", "month")])
 

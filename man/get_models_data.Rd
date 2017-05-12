@@ -64,4 +64,3 @@ write.csv(eval(substitute(data.frame(model=names(attr(cmip, "scenario")), scenar
 }
 
 }
-

@@ -24,4 +24,3 @@ The data frame argument \code{x} recentered on \code{baseline}.
 \description{
 Centers or recenters climate time series on a range of baseline years; the data can already have been centered on a baseline, or can be non-centered to start with.
 }
-

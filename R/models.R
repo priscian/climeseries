@@ -135,7 +135,7 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
       ## Center anomalies on average baseline-period temperatures.
       x[[modelDesignation]] <- round(x$temp - x$base, 3L)
     }
-    x <- x[, c(commonColumns, modelDesignation)]
+    x <- x[, c(common_columns, modelDesignation)]
 
     attr(x, "baseline") <- baseline
     attr(x, "member") <- sub("\\.[^.]*$", "", basename(files[i]))
@@ -153,9 +153,9 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
   d <- NULL
   for (i in ls(e)) {
     if (is.null(d))
-      d <- e[[i]][, c(commonColumns, i)]
+      d <- e[[i]][, c(common_columns, i)]
     else
-      d <- merge(d, e[[i]][, c(commonColumns, i)], by=commonColumns, all=TRUE)
+      d <- merge(d, e[[i]][, c(common_columns, i)], by=common_columns, all=TRUE)
   }
 
   met_year <- shift(d$year, -1, roll=FALSE)

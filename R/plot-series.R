@@ -74,14 +74,18 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit="\u00b0C", main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
+
+  ## This is to avoid an roxygen error described here: https://github.com/klutometis/roxygen/issues/592
+  if (is.null(unit))
+    unit <- "\u00b0C"
 
   savedBaseline <- attr(x, "baseline")
 
   allNames <- c(get_climate_series_names(x, conf_int=!conf_int, invert=FALSE), series)
-  allNames <- intersect(c(commonColumns, series, series %_% "_uncertainty"), allNames)
+  allNames <- intersect(c(common_columns, series, series %_% "_uncertainty"), allNames)
   x <- x[, allNames]
   x <- subset(x, na_unwrap(x[, get_climate_series_names(x, conf_int=TRUE)])) # Remove trailing NAs.
   attr(x, "baseline") <- savedBaseline
@@ -99,7 +103,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   y <- window(y, start, end, extend=TRUE)
   w <- interpNA(y, "linear", unwrap=TRUE)
 
-  climateSeriesNames <- setdiff(allNames, commonColumns)
+  climateSeriesNames <- setdiff(allNames, common_columns)
   w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma)
   maText <- ""
   if (!is.null(ma))
@@ -212,7 +216,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     m$series <- series
     m$range <- list(start=startTS, end=endTS)
     m$col <- col
-    m$data <- y[, c(intersect(commonColumns, colnames(y)), series)]
+    m$data <- y[, c(intersect(common_columns, colnames(y)), series)]
     for (s in m$series) {
       m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data)
       m[[s]]$warming <- coef(m[[s]]$lm)[2] * diff(range(m[[s]]$lm$model[, 2]))
@@ -399,9 +403,13 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit="\u00b0C", col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, ...)
 {
   envelope_type <- match.arg(envelope_type)
+
+  ## This is to avoid an roxygen error described here: https://github.com/klutometis/roxygen/issues/592
+  if (is.null(unit))
+    unit <- "\u00b0C"
 
   plotInstrumental <- TRUE
   if (is.null(series))
@@ -411,7 +419,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     savedBaseline <- attr(instrumental, "baseline")
 
     allNames <- c(get_climate_series_names(instrumental, conf_int=!conf_int_i, invert=FALSE), series)
-    allNames <- intersect(c(commonColumns, series, series %_% "_uncertainty"), allNames)
+    allNames <- intersect(c(common_columns, series, series %_% "_uncertainty"), allNames)
     instrumental <- instrumental[, allNames]
     instrumental <- subset(instrumental, na_unwrap(instrumental[, get_climate_series_names(instrumental, conf_int=TRUE)])) # Remove trailing NAs.
     attr(instrumental, "baseline") <- savedBaseline
@@ -428,7 +436,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   originalScenario <- attr(models, "scenario")
   keepCols <- names(models)
   if (!is.null(scenario)) {
-    keepCols <- c(commonColumns, setdiff(names(models), commonColumns)[originalScenario %in% scenario])
+    keepCols <- c(common_columns, setdiff(names(models), common_columns)[originalScenario %in% scenario])
     models <- models[, keepCols, drop=FALSE]
 
     # Restore some attributes.
@@ -462,7 +470,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   wm <- interpNA(m, "linear", unwrap=TRUE)
 
   if (plotInstrumental) {
-    climateSeriesNames <- setdiff(allNames, commonColumns)
+    climateSeriesNames <- setdiff(allNames, common_columns)
     wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames, drop=FALSE], ma_i)
   }
   wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm), drop=FALSE], ma)

@@ -19,4 +19,3 @@ An object of class \code{\link[stats]{ts}}.
 \description{
 Creates \code{ts} objects from downloaded climate data.
 }
-
