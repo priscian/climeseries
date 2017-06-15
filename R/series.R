@@ -919,7 +919,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    ##
     `ESRL AMO` = (function(p) {
       x <- NULL
 
@@ -938,6 +937,42 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
       is.na(d$temp) <- d$temp == -99.990
+
+      return (d)
+    })(path),
+
+    `ERA-Interim 2m` = (function(p) {
+      currentMonth <- current_month; currentYear <- current_year
+      if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
+      else currentMonth <- currentMonth - 1
+
+      uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, p))
+      if (!url.exists(uri)) { ## Does the previous month's data exist?
+        if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
+        else currentMonth <- currentMonth - 1
+        uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, p))
+        if (!url.exists(uri)) ## ... and if not, does the month before that exist?
+          return (NULL)
+      }
+
+      x <- NULL
+
+      skip <- 1
+
+      tryCatch({
+        flit <- trimws(readLines(uri))
+        flit <- flit[flit != ""]
+        x <- read.table(header=TRUE, skip=skip, text=flit, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      re <- "(\\d{4})(\\d{2})"
+      dateMatches <- str_match(x[[1]], re)
+      yearValue <- as.numeric(dateMatches[, 2L])
+      monthValue <- as.numeric(dateMatches[, 3L])
+
+      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
+      flit <- x[, -1]; colnames(flit) <- paste(series, colnames(flit))
+      d <- cbind(d, flit)
 
       return (d)
     })(path)

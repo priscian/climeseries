@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20170602.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20170615.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -43,7 +43,8 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
-  "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global", "RATPAC-A 850-300 mb Global")
+  "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global",
+  "RATPAC-A 850-300 mb Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
 
@@ -102,10 +103,10 @@ start <- 1970; end <- 2017
 g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
 series_adj <- paste(series, "(adj.)")
 main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
-plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19)
+plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, baseline=TRUE)
 ```
 
-![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1970-2016_yearly.png)
+![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1970-recent_yearly.png)
 
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
@@ -115,7 +116,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170602.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170615.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -148,21 +149,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
 1. CSIRO Global Mean Sea Level
-1. ERSSTv4 Land + Ocean 90S-60S
-1. ERSSTv4 Land + Ocean 90S-90N
-1. ERSSTv4 Ocean 00N-30N
-1. ERSSTv4 Ocean 00N-90N
-1. ERSSTv4 Ocean 20N-90N
-1. ERSSTv4 Ocean 20S-20N
-1. ERSSTv4 Ocean 30N-60N
-1. ERSSTv4 Ocean 30S-00N
-1. ERSSTv4 Ocean 60N-90N
-1. ERSSTv4 Ocean 60S-30S
-1. ERSSTv4 Ocean 60S-60N
-1. ERSSTv4 Ocean 90S-00N
-1. ERSSTv4 Ocean 90S-20S
-1. ERSSTv4 Ocean 90S-60S
-1. ERSSTv4 Ocean 90S-90N
+1. ERA-Interim 2m Global
+1. ERA-Interim 2m European
 1. ERSSTv4 Land 00N-30N
 1. ERSSTv4 Land 00N-90N
 1. ERSSTv4 Land 20N-90N
@@ -187,21 +175,21 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60S-60N
 1. ERSSTv4 Land + Ocean 90S-00N
 1. ERSSTv4 Land + Ocean 90S-20S
-1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
-1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
-1. ERSSTv4 Ocean 00N-30N_uncertainty
-1. ERSSTv4 Ocean 00N-90N_uncertainty
-1. ERSSTv4 Ocean 20N-90N_uncertainty
-1. ERSSTv4 Ocean 20S-20N_uncertainty
-1. ERSSTv4 Ocean 30N-60N_uncertainty
-1. ERSSTv4 Ocean 30S-00N_uncertainty
-1. ERSSTv4 Ocean 60N-90N_uncertainty
-1. ERSSTv4 Ocean 60S-30S_uncertainty
-1. ERSSTv4 Ocean 60S-60N_uncertainty
-1. ERSSTv4 Ocean 90S-00N_uncertainty
-1. ERSSTv4 Ocean 90S-20S_uncertainty
-1. ERSSTv4 Ocean 90S-60S_uncertainty
-1. ERSSTv4 Ocean 90S-90N_uncertainty
+1. ERSSTv4 Land + Ocean 90S-60S
+1. ERSSTv4 Land + Ocean 90S-90N
+1. ERSSTv4 Ocean 00N-30N
+1. ERSSTv4 Ocean 00N-90N
+1. ERSSTv4 Ocean 20N-90N
+1. ERSSTv4 Ocean 20S-20N
+1. ERSSTv4 Ocean 30N-60N
+1. ERSSTv4 Ocean 30S-00N
+1. ERSSTv4 Ocean 60N-90N
+1. ERSSTv4 Ocean 60S-30S
+1. ERSSTv4 Ocean 60S-60N
+1. ERSSTv4 Ocean 90S-00N
+1. ERSSTv4 Ocean 90S-20S
+1. ERSSTv4 Ocean 90S-60S
+1. ERSSTv4 Ocean 90S-90N
 1. ERSSTv4 Land 00N-30N_uncertainty
 1. ERSSTv4 Land 00N-90N_uncertainty
 1. ERSSTv4 Land 20N-90N_uncertainty
@@ -226,6 +214,21 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60S-60N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-00N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-20S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
+1. ERSSTv4 Ocean 00N-30N_uncertainty
+1. ERSSTv4 Ocean 00N-90N_uncertainty
+1. ERSSTv4 Ocean 20N-90N_uncertainty
+1. ERSSTv4 Ocean 20S-20N_uncertainty
+1. ERSSTv4 Ocean 30N-60N_uncertainty
+1. ERSSTv4 Ocean 30S-00N_uncertainty
+1. ERSSTv4 Ocean 60N-90N_uncertainty
+1. ERSSTv4 Ocean 60S-30S_uncertainty
+1. ERSSTv4 Ocean 60S-60N_uncertainty
+1. ERSSTv4 Ocean 90S-00N_uncertainty
+1. ERSSTv4 Ocean 90S-20S_uncertainty
+1. ERSSTv4 Ocean 90S-60S_uncertainty
+1. ERSSTv4 Ocean 90S-90N_uncertainty
 1. ESRL AMO
 1. Extended Multivariate ENSO Index
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) Global
