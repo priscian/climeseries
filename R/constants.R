@@ -67,6 +67,7 @@ esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&service=ArAvTs&starttime=2000-03-01T00:00:00Z&endtime=@@DATE@@T23:59:59Z&data=MOD08_M3_6_Aerosol_Optical_Depth_Land_Ocean_Mean_Mean&portal=GIOVANNI&format=json"
 ## ERA-Interim 2m temperature
+## http://climate.copernicus.eu/resources/data-analysis/average-surface-air-temperature-analysis/monthly-maps/
 eraInterim2mTempBase <- "http://climate.copernicus.eu/sites/default/files/repository/Temp_maps/Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt"
 
 #' @rdname constants
