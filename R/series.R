@@ -975,6 +975,95 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- cbind(d, flit)
 
       return (d)
+    })(path),
+
+    `NCEI Ocean Heat Content` = (function(p) {
+      ma <- c("3month", "pentad")
+      basins <- c(a="Atlantic", i="Indian", p="Pacific", w="Global")
+      depths <- "0-" %_% c(700, 2000) %_% "m"
+      quarts <- c("1-3", "4-6", "7-9", "10-12")
+
+      threeMonthCombs <- expand.grid(ma[1] %_% "/h22-", names(basins), depths, quarts, stringsAsFactors=FALSE)
+      threeMonthFiles <- apply(cbind(p, as.matrix(threeMonthCombs), ".dat"), 1, paste0, collapse="")
+      flit <- threeMonthCombs[, 2:3]; colnames(flit) <- c("basin", "depth"); flit$basin <- basins[flit$basin]
+      threeMonthFiles <- cbind(url=threeMonthFiles, flit, stringsAsFactors=FALSE)
+
+      pentadCombs <- expand.grid(ma[2] %_% "/pent_h22-", names(basins), depths, stringsAsFactors=FALSE)
+      pentadFiles <- apply(cbind(p, as.matrix(pentadCombs), ".dat"), 1, paste0, collapse="")
+      flit <- pentadCombs[, 2:3]; colnames(flit) <- c("basin", "depth"); flit$basin <- basins[flit$basin]
+      pentadFiles <- cbind(url=pentadFiles, flit, stringsAsFactors=FALSE)
+
+      skip <- 0
+
+      ## Quarterly OHC
+      l1 <- plyr::dlply(threeMonthFiles, .(basin, depth),
+        function(a) {
+          l <- alply(a, 1,
+            function(aa) {
+              tryCatch({
+                x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
+              }, error=Error, warning=Error)
+
+              x
+            }
+          )
+
+          l <- plyr::arrange(Reduce(rbind, l), YEAR)
+          ## Columns 3, 5, 7 are 1 × sigma, so 1.96 × sigma is a 95% CI.
+          l_ply(c(3, 5, 7), function(a) l[[a]] <<- 1.96 * l[[a]])
+          flit1 <- paste("NCEI", a$basin[1], "Ocean Heat Content", a$depth[1]) %_% c("", " NH", " SH")
+          flit2 <- flit1 %_% "_uncertainty"
+          colNames <- c("yr_part", c(flit1, flit2)[order(c(seq_along(flit1), seq_along(flit2) + 0.5))])
+          colnames(l) <- colNames
+
+          r <- range(trunc(l$yr_part))
+          flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
+          flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+
+          l <- merge(flit, l, by="yr_part", all=TRUE)
+
+          l
+        }
+      )
+
+      ## Pentadal OHC
+      l2 <- plyr::dlply(pentadFiles, .(basin, depth),
+        function(a) {
+          l <- alply(a, 1,
+            function(aa) {
+              tryCatch({
+                x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
+              }, error=Error, warning=Error)
+
+              x
+            }
+          )
+
+          l <- plyr::arrange(Reduce(rbind, l), YEAR)
+          ## Columns 3, 5, 7 are 1 × sigma, so 1.96 × sigma is a 95% CI.
+          l_ply(c(3, 5, 7), function(a) l[[a]] <<- 1.96 * l[[a]])
+          flit1 <- paste("NCEI", a$basin[1], "Ocean Heat Content", a$depth[1]) %_% c("", " NH", " SH") %_% " (Pentadal)"
+          flit2 <- flit1 %_% "_uncertainty"
+          colNames <- c("yr_part", c(flit1, flit2)[order(c(seq_along(flit1), seq_along(flit2) + 0.5))])
+          colnames(l) <- colNames
+
+          r <- range(trunc(l$yr_part))
+          flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
+          flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+          flit <- tbl_dt(flit)
+          data.table::setkey(flit, yr_part)
+
+          m <- tbl_dt(l)
+          m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
+          m <- dplyr::full_join(flit, m, by=c("year", "month"))
+
+          as.data.frame(m)
+        }
+      )
+
+      d <- c(l1, l2)
+
+      return (d)
     })(path)
   )
 
@@ -982,8 +1071,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
   else if (verbose) { cat("Done.", fill=TRUE); flush.console() }
 
   if (!is.null(d)) {
-    if (!is.data.frame(d))
-      d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(common_columns), lapply(d, names))))), d)
+    if (!is.data.frame(d)) {
+      d <- Reduce(merge_fun_factory(by=c(Reduce(intersect, c(list(common_columns), lapply(d, names)))), all=TRUE), d)
+    }
 
     if (any(duplicated(d[, c("year", "month"), drop=FALSE]))) stop("Data set has duplicated year/month rows.")
 

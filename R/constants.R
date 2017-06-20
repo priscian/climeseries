@@ -69,10 +69,12 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 ## ERA-Interim 2m temperature
 ## http://climate.copernicus.eu/resources/data-analysis/average-surface-air-temperature-analysis/monthly-maps/
 eraInterim2mTempBase <- "http://climate.copernicus.eu/sites/default/files/repository/Temp_maps/Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt"
+noaaOhcBase <- "http://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 
 #' @rdname constants
 #' @export
 data_urls <- list( # Last updated 7 Dec. 2016.
+  `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   `ERA-Interim 2m` = eraInterim2mTempBase,
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
@@ -196,6 +198,8 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"),
   `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
   ## TODO: Ocean heat content. More snow and ice?
+  # https://www.nodc.noaa.gov/OC5/3M_HEAT_CONTENT/basin_data.html (Need pentadal data for 0–2000 m.)
+  # https://climatedataguide.ucar.edu/climate-data/ocean-temperature-analysis-and-heat-content-estimate-institute-atmospheric-physics
   # https://www.ncdc.noaa.gov/snow-and-ice/
   # https://www.ncdc.noaa.gov/teleconnections/pdo/data.csv
   # NINO indices: http://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices
