@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20170620.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20170630.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -32,7 +32,7 @@ inst <- get_climate_data(download=FALSE, baseline=TRUE)
 ## Description of the data set returned by 'get_climate_data()'.
 ?get_climate_data
 ```
-Note that `get_climate_data()` saves the current climatological data set, in the default directory, as three different file types: `.RData`, `.dput`, and `.csv`; the `.csv` file is the most portable type and can be imported into other data-management software such as Microsoft Excel for plotting or further processing.
+Note that `get_climate_data()` saves the current climatological data set, in the default directory, as two different file types: `.RData` and `.csv`; the `.csv` file is the most portable type and can be imported into other data-management software such as Microsoft Excel for plotting or further processing.
 
 ### Making plots
 *climeseries* has pair of functions, `plot_climate_data()` and `plot_models_and_climate_data()`, to simplify plotting climate time series. Some examples follow.
@@ -43,7 +43,7 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
-  "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global",
+  "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global",
   "RATPAC-A 850-300 mb Global")
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 ```
@@ -116,7 +116,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170620.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20170630.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -571,6 +571,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RSS TLT 3.3 Ocean -70.0/-20.0
 1. RSS TLT 3.3 Ocean 60.0/82.5
 1. RSS TLT 3.3 Ocean -70.0/-60.0
+1. RSS TLT 4.0 -70.0/82.5
+1. RSS TLT 4.0 -20.0/20.0
+1. RSS TLT 4.0 20.0/82.5
+1. RSS TLT 4.0 -70.0/-20.0
+1. RSS TLT 4.0 60.0/82.5
+1. RSS TLT 4.0 -70.0/-60.0
+1. RSS TLT 4.0 Cont. USA
+1. RSS TLT 4.0 0.0/82.5
+1. RSS TLT 4.0 -70.0/0.0
+1. RSS TLT 4.0 Land -70.0/82.5
+1. RSS TLT 4.0 Land -20.0/20.0
+1. RSS TLT 4.0 Land 20.0/82.5
+1. RSS TLT 4.0 Land -70.0/-20.0
+1. RSS TLT 4.0 Land 60.0/82.5
+1. RSS TLT 4.0 Land -70.0/-60.0
+1. RSS TLT 4.0 Ocean -70.0/82.5
+1. RSS TLT 4.0 Ocean -20.0/20.0
+1. RSS TLT 4.0 Ocean 20.0/82.5
+1. RSS TLT 4.0 Ocean -70.0/-20.0
+1. RSS TLT 4.0 Ocean 60.0/82.5
+1. RSS TLT 4.0 Ocean -70.0/-60.0
 1. RSS TMT 3.3 -82.5/82.5
 1. RSS TMT 3.3 -20.0/20.0
 1. RSS TMT 3.3 20.0/82.5

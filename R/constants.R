@@ -52,8 +52,8 @@ nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-210
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
-#rssBase <- "ftp://ftp.remss.com/msu/monthly_time_series/"
-rssBase <- "http://data.remss.com/msu/monthly_time_series/"
+#rssBase <- "http://data.remss.com/msu/monthly_time_series/"
+rssBase <- "ftp://priscian%40gmail.com:priscian%40gmail.com@ftp.remss.com/msu/monthly_time_series/"
 rssChannel <- "RSS_Monthly_MSU_AMSU_Channel_@@CHANNEL@@_Anomalies_"
 rssTls <- sub("@@CHANNEL@@", "TLS", rssChannel)
 rssTlt <- sub("@@CHANNEL@@", "TLT", rssChannel)
@@ -146,6 +146,9 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   `RSS TLT 3.3` = rssBase %_% rssTlt %_% "Land_and_Ocean_v03_3.txt",
   `RSS TLT 3.3 Land` = rssBase %_% rssTlt %_% "Land_v03_3.txt",
   `RSS TLT 3.3 Ocean` = rssBase %_% rssTlt %_% "Ocean_v03_3.txt",
+  `RSS TLT 4.0` = rssBase %_% rssTlt %_% "Land_and_Ocean_v04_0.txt",
+  `RSS TLT 4.0 Land` = rssBase %_% rssTlt %_% "Land_v04_0.txt",
+  `RSS TLT 4.0 Ocean` = rssBase %_% rssTlt %_% "Ocean_v04_0.txt",
   `RSS TMT 3.3` = rssBase %_% rssTmt %_% "Land_and_Ocean_v03_3.txt",
   `RSS TMT 3.3 Land` = rssBase %_% rssTmt %_% "Land_v03_3.txt",
   `RSS TMT 3.3 Ocean` = rssBase %_% rssTmt %_% "Ocean_v03_3.txt",
@@ -198,11 +201,11 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"),
   `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
   ## TODO: Ocean heat content. More snow and ice?
-  # https://www.nodc.noaa.gov/OC5/3M_HEAT_CONTENT/basin_data.html (Need pentadal data for 0–2000 m.)
   # https://climatedataguide.ucar.edu/climate-data/ocean-temperature-analysis-and-heat-content-estimate-institute-atmospheric-physics
   # https://www.ncdc.noaa.gov/snow-and-ice/
   # https://www.ncdc.noaa.gov/teleconnections/pdo/data.csv
   # NINO indices: http://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices
+  # CONUS tornadoes: http://www.spc.noaa.gov/wcm/data/1950-2016_all_tornadoes.csv
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.

@@ -330,6 +330,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `RSS TLT 3.3 Land` =,
     `RSS TLT 3.3 Ocean` =,
     `RSS TLT 3.3` =,
+    `RSS TLT 4.0 Land` =,
+    `RSS TLT 4.0 Ocean` =,
+    `RSS TLT 4.0` =,
     `RSS TMT 3.3 Land` =,
     `RSS TMT 3.3 Ocean` =,
     `RSS TMT 3.3` =,
@@ -1330,7 +1333,9 @@ get_climate_data <- function(download, data_dir, filename_base, urls=climeseries
 }
 
 ## Get column names for including in the README file:
-# cat("1. " %_% names(d), sep="\n")
+# cat("1. " %_% names(e), sep="\n")
+## Get count of individual data sets:
+# length(get_climate_series_names(e))
 
 
 #' Get Names of Climate Time Series from Data Set
