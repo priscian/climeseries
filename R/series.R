@@ -1126,13 +1126,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 }
 
 
-DownloadInstrumentalData <- function(paths, baseline, verbose, dataDir, filenameBase)
+DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, filenameBase)
 {
   env <- new.env()
 
   for (series in names(paths)) {
-    #d <- ReadAndMungeInstrumentalData(series, paths[[series]], baseline=baseline, verbose=verbose)
-    ## Always create a "raw" data set first, then baseline it later.
     d <- ReadAndMungeInstrumentalData(series, paths[[series]], baseline=FALSE, verbose=verbose)
     if (!is.null(d))
       env[[series]] <- d
@@ -1148,9 +1146,9 @@ DownloadInstrumentalData <- function(paths, baseline, verbose, dataDir, filename
       d <- merge(d, env[[i]][, c(common_columns, climeNames, uncertainty)], by=common_columns, all=TRUE)
   }
 
-  attr(d, "baseline") <- NULL
-  if (length(env) > 0L)
-    attr(d, "baseline") <- attr(env[[ls(env)[1L]]], "baseline")
+  # attr(d, "baseline") <- NULL
+  # if (length(env) > 0L)
+  #   attr(d, "baseline") <- attr(env[[ls(env)[1L]]], "baseline")
 
   d$met_year <- shift(d$year, -1L, roll=FALSE)
   metRow <- which(is.na(d$met_year))
@@ -1164,7 +1162,7 @@ DownloadInstrumentalData <- function(paths, baseline, verbose, dataDir, filename
   save(d, file=tempPath %_% ".RData")
   write.csv(d, file=tempPath %_% ".csv", row.names=FALSE)
 
-  d <- recenter_anomalies(d, baseline)
+  d <- recenter_anomalies(d, defaultBaseline)
 
   tempPath <- paste(dataDir, filenameBase %_% suffix, sep="/")
   save(d, file=tempPath %_% ".RData")
