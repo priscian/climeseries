@@ -300,7 +300,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
   d <- inst[, c(common_columns, series)]
   if (unwrap)
     d <- subset(d, na_unwrap(d[, series]))
-  d[[series %_% " (interpolated)"]] <- interpNA(d[, series], "fmm")
+  d[[series %_% " (interpolated)"]] <- drop(interpNA(d[, series], "fmm"))
 
   if (is.null(period)) { # Estimate period from data.
     spectralDensity <- spectrum(y)
@@ -936,7 +936,7 @@ get_yearly_difference <- function(series, start, end=current_year - 1, data, uni
 }
 
 ## usage:
-# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "BEST Global (Water Ice Temp.)")
+# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "BEST Global (Air Ice Temp.)")
 # ytd <- get_yearly_difference(series, 1880)
 # ytd <- get_yearly_difference(series, 1970)
 
@@ -1141,3 +1141,44 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
 # series <- c("HadCRUT4 Global")
 ## Like Fig. 4(b) of Cowtan et al. 2015:
 # plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020, ma=12, ma_i=12, baseline=1961:1990, center_fun="mean", smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
+
+
+#' @export
+create_loess_variables <- function(inst, series, loess...=list(), unwrap=TRUE, ...)
+{
+  d <- inst[, c(common_columns, series)]
+  if (unwrap)
+    d <- subset(d, na_unwrap(d[, series]))
+
+  for (i in series) {
+    d[[i %_% " (interpolated)"]] <- drop(interpNA(d[, i], "fmm"))
+
+    loessArgs = list(
+      formula = eval(substitute(s ~ yr_part, list(s=as.name(i %_% " (interpolated)")))),
+      data = d,
+      span = 0.2
+    )
+    loessArgs <- modifyList(loessArgs, loess...)
+
+    l <- do.call("loess", loessArgs)
+    d[[i %_% " (LOESS fit)"]] <- l$fit
+  }
+
+  d
+}
+
+
+#' @export
+add_loess_variables <- function(inst, series, ...)
+{
+  d <- create_loess_variables(inst, series, ...)
+  r <- base::merge(inst, d[, setdiff(names(d), series)], by=common_columns, all.x=TRUE)
+
+  r
+}
+
+## usage:
+# series <- c("GISTEMP Zonal 64N-90N", "GISTEMP Zonal 44N-64N", "GISTEMP Zonal 24N-44N", "GISTEMP Zonal EQU-24N", "GISTEMP Zonal 24S-EQU", "GISTEMP Zonal 44S-24S", "GISTEMP Zonal 64S-44S", "GISTEMP Zonal 90S-64S")
+# d <- get_climate_data(download=FALSE, baseline=TRUE)
+# g <- add_loess_variables(d, series, loess...=list(span=0.4))
+# plot_climate_data(g, series %_% " (LOESS fit)")

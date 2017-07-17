@@ -59,7 +59,6 @@ Loads climatological data from a saved data set or downloads and saves it direct
 ## Download both centered and "raw" data.
 
 d <- get_climate_data(download=TRUE, baseline=TRUE)
-e <- get_climate_data(download=TRUE, baseline=FALSE)
 
 ## Load both centered and "raw" data.
 

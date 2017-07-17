@@ -345,7 +345,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
   return (rates)
 }
 ## usage:
-# rates <- plot_sequential_trend("RSS TLT 3.3 -70.0/82.5")
+# rates <- plot_sequential_trend("RSS TLT 4.0 -70.0/82.5")
 # rates <- plot_sequential_trend("GISTEMP Global", use_polygon=TRUE)
 # rates <- plot_sequential_trend("GISTEMP Global", use_polygon=FALSE, mark_years=c(1998))
 # rates <- plot_sequential_trend("GISTEMP Global", use_polygon=FALSE, mark_years=c(1998), use_current_year=TRUE)
