@@ -116,6 +116,8 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   `NCEI US Palmer Z-Index` = list(path=nceiBase %_% "us/110/00/zndx" %_% nceiUsMonthly, type="drought"),
   ## ERSSTv4
   ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
+  ## ERSSTv5
+  ## https://www.ncdc.noaa.gov/data-access/marineocean-data/extended-reconstructed-sea-surface-temperature-ersst-v5
   ## Hadley
   `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_ns_avg.txt",
   `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_sh.txt",
@@ -192,6 +194,7 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
   `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),
   `TSI Reconstructed` = list(path="http://spot.colorado.edu/~koppg/TSI/TIM_TSI_Reconstruction.txt", type="solar"),
+  `SORCE TSI` = list(path="http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt", type="solar"),
   `Rutgers NH Snow Cover` = list(path=rutgerssnowBase %_% "nhland.txt", type="snow"),
   `Rutgers Eurasia Snow Cover` = list(path=rutgerssnowBase %_% "eurasia.txt", type="snow"),
   `Rutgers N. America Snow Cover` = list(path=rutgerssnowBase %_% "namgnld.txt", type="snow"),
@@ -206,6 +209,8 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   # https://www.ncdc.noaa.gov/teleconnections/pdo/data.csv
   # NINO indices: http://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices
   # CONUS tornadoes: http://www.spc.noaa.gov/wcm/data/1950-2016_all_tornadoes.csv
+  # Methane: https://www.esrl.noaa.gov/gmd/ccgg/trends_ch4/
+  # Latest TSI: http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.

@@ -415,11 +415,25 @@ create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...)
 
 
 #' @export
-add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Mauna Loa")
+add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Mauna Loa", use_adjusted_tsi=TRUE)
 {
   x <- create_aggregate_variable(x, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index"), "MEI Aggregate Global", type="head")
   x <- create_aggregate_variable(x, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global"), "SAOD Aggregate Global", type="head")
-  x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO)"), "TSI Aggregate Global", type="head")
+
+  ## TSI
+  if (use_adjusted_tsi) {
+    ## "PMOD TSI (new VIRGO)" is shaped very much like SORCE but shifted downwards a bit;
+    ## so, shift it up and fill in the monthly details missing from "TSI Reconstructed".
+    flit <- make_yearly_data(x[, c(common_columns, "PMOD TSI (new VIRGO)", "SORCE TSI")])
+    tsiDifference <- flit$`PMOD TSI (new VIRGO)` - flit$`SORCE TSI`
+    x$`PMOD TSI (new VIRGO adj.)` <- x$`PMOD TSI (new VIRGO)` - mean(tsiDifference, na.rm=TRUE)
+    #x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO)", "SORCE TSI"), "TSI Aggregate Global", type="head")
+    x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO adj.)", "SORCE TSI"), "TSI Aggregate Global", type="head")
+  }
+  else { # Otherwise, for less monthly detail and less interpolation, just use "Reconstructed" and SORCE.
+    x <- create_aggregate_variable(x, c("TSI Reconstructed", "SORCE TSI"), "TSI Aggregate Global", type="head")
+  }
+
   x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global (Interp.)", type="head")
   x$`CO2 Law Dome` <- NULL
   x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global", interpolate=FALSE)

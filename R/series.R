@@ -656,6 +656,33 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `SORCE TSI` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, skip=0L, comment.char=";", check.names=FALSE, stringsAsFactors=FALSE)
+      }, error=Error, warning=Error)
+
+      re <- "(\\d{4})(\\d{2})(\\d{2})"
+      yearMatches <- str_match(trunc(x$V1), re)
+      yearValue <- as.numeric(yearMatches[, 2L])
+      monthValue <- as.numeric(factor(yearMatches[, 3L]))
+
+      d <- data.frame(year=yearValue, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
+      flit <- data.frame(x$V5, x$V9, check.names=FALSE, stringsAsFactors=FALSE)
+      names(flit) <- c(series, series %_% "_uncertainty")
+      flit <- data.matrix(flit)
+      is.na(flit) <- flit == 0.0
+      d <- cbind(d, flit)
+
+      ## This data is daily, so it needs to be turned into monthly averages.
+      d <- cbind(d[!duplicated(d[, 1:2]), 1:2], Reduce(rbind, by(d[, -(1:2)], list(d$month, d$year), colMeans, na.rm=TRUE, simplify=FALSE)))
+
+      d$yr_part <- d$year + (2 * d$month - 1)/24
+
+      return (d)
+    })(path),
+
     `TSI Reconstructed` = (function(p) {
       x <- NULL
 
