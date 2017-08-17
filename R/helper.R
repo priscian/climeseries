@@ -295,7 +295,7 @@ get_tidegauge_slr <- function(station_id)
 
 ## Based on the technique described at https://tamino.wordpress.com/2012/01/08/trend-and-cycle-together/.
 #' @export
-remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmonics=4, loess...=list(), unwrap=TRUE, ...)
+remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmonics=4, loess...=list(), unwrap=TRUE, keep_series=TRUE, keep_interpolated=FALSE, keep_loess=FALSE, ...)
 {
   d <- inst[, c(common_columns, series)]
   if (unwrap)
@@ -316,7 +316,8 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
   loessArgs <- modifyList(loessArgs, loess...)
 
   l <- do.call("loess", loessArgs)
-  d[[series %_% " (LOESS fit)"]] <- l$fit
+  if (keep_loess)
+    d[[series %_% " (LOESS fit)"]] <- l$fit
   r <- l$resid
 
   ## Construct model formula for given no. of harmonics.
@@ -332,6 +333,12 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
     d[[series %_% " (anomalies)"]] <- scale(uncycled, center=center, scale=FALSE)
   else
     d[[series %_% " (anomalies)"]] <- uncycled - mean(uncycled[d$year %in% center], na.rm=TRUE)
+
+  if (!keep_series)
+    d[[series]] <- NULL
+
+  if (!keep_interpolated)
+    d[[series %_% " (interpolated)"]] <- NULL
 
   d
 }
@@ -434,7 +441,7 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Ma
     x <- create_aggregate_variable(x, c("TSI Reconstructed", "SORCE TSI"), "TSI Aggregate Global", type="head")
   }
 
-  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global (Interp.)", type="head")
+  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global (interp.)", type="head")
   x$`CO2 Law Dome` <- NULL
   x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global", interpolate=FALSE)
 
@@ -929,13 +936,16 @@ make_yearly_data <- function(x, na_rm=TRUE, unwrap=TRUE)
 
 
 #' @export
-get_yearly_difference <- function(series, start, end=current_year - 1, data, unit="\u00b0C")
+get_yearly_difference <- function(series, start, end=current_year - 1, data, unit="\u00b0C", loess=FALSE, ...)
 {
   if (missing(data))
     data <- get_climate_data(download=FALSE, baseline=FALSE)
 
+  if (loess)
+    data <- add_loess_variables(data, series, ...)
+
   g <- make_yearly_data(data)
-  h <- g[year %in% c(start, end), series, with=FALSE]
+  h <- g[year %in% c(start, end), series %_% ifelse(loess, " (LOESS fit)", ""), with=FALSE]
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
   cat("Difference in ", unit ," from ", start, "\u2013", end, sep="", fill=TRUE)
@@ -952,6 +962,8 @@ get_yearly_difference <- function(series, start, end=current_year - 1, data, uni
 ## usage:
 # series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "BEST Global (Air Ice Temp.)")
 # ytd <- get_yearly_difference(series, 1880)
+# ytd <- get_yearly_difference(series, 1880, loess=TRUE)
+# ytd <- get_yearly_difference(series, 1880, loess=TRUE, loess...=list(span=0.4))
 # ytd <- get_yearly_difference(series, 1970)
 
 
@@ -1158,7 +1170,7 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
 
 
 #' @export
-create_loess_variables <- function(inst, series, loess...=list(), unwrap=TRUE, ...)
+create_loess_variables <- function(inst, series, loess...=list(), unwrap=TRUE, keep_interpolated=FALSE, ...)
 {
   d <- inst[, c(common_columns, series)]
   if (unwrap)
@@ -1174,8 +1186,13 @@ create_loess_variables <- function(inst, series, loess...=list(), unwrap=TRUE, .
     )
     loessArgs <- modifyList(loessArgs, loess...)
 
-    l <- do.call("loess", loessArgs)
-    d[[i %_% " (LOESS fit)"]] <- l$fit
+    l <- do.call("loess", loessArgs) # Removes NAs, so attend to it.
+    lContext <- d[[i %_% " (interpolated)"]]
+    lContext[!is.na(lContext)] <- l$fit
+    d[[i %_% " (LOESS fit)"]] <- lContext
+
+    if (!keep_interpolated)
+      d[[i %_% " (interpolated)"]] <- NULL
   }
 
   d
