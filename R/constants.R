@@ -52,8 +52,8 @@ nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-210
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
-#rssBase <- "http://data.remss.com/msu/monthly_time_series/"
-rssBase <- "ftp://priscian%40gmail.com:priscian%40gmail.com@ftp.remss.com/msu/monthly_time_series/"
+rssBase <- "http://data.remss.com/msu/monthly_time_series/"
+#rssBase <- "ftp://priscian%40gmail.com:priscian%40gmail.com@ftp.remss.com/msu/monthly_time_series/"
 rssChannel <- "RSS_Monthly_MSU_AMSU_Channel_@@CHANNEL@@_Anomalies_"
 rssTls <- sub("@@CHANNEL@@", "TLS", rssChannel)
 rssTlt <- sub("@@CHANNEL@@", "TLT", rssChannel)
@@ -119,10 +119,10 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   ## ERSSTv5
   ## https://www.ncdc.noaa.gov/data-access/marineocean-data/extended-reconstructed-sea-surface-temperature-ersst-v5
   ## Hadley
-  `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_ns_avg.txt",
-  `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_sh.txt",
-  `HadCRUT4 NH` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_nh.txt",
-  `HadCRUT4 Tropics` = hadcrutBase %_% "HadCRUT.4.5.0.0.monthly_30S_30N.txt",
+  `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_ns_avg.txt",
+  `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_sh.txt",
+  `HadCRUT4 NH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_nh.txt",
+  `HadCRUT4 Tropics` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_30S_30N.txt",
   `HadSST3 Global` = hadsstBase %_% "HadSST.3.1.1.0_monthly_globe_ts.txt",
   `HadSST3 SH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
   `HadSST3 NH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
