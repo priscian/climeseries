@@ -100,11 +100,13 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     y <- ts(y, min(y$year, na.rm=TRUE), frequency=1)
     ma <- NULL
   }
-  y <- window(y, start, end, extend=TRUE)
   w <- interpNA(y, "linear", unwrap=TRUE)
 
   climateSeriesNames <- setdiff(allNames, common_columns)
   w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma)
+  ## [13 Oct. 2017] Make sure to window the time series only AFTER applying the moving average.
+  y <- window(y, start, end, extend=TRUE)
+  w <- window(w, start, end, extend=TRUE)
   maText <- ""
   if (!is.null(ma))
     maText <- "(" %_% ma %_% "-month moving average)"
@@ -462,10 +464,6 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     ma <- NULL
   }
 
-  m <- window(m, start[1], end[1], extend=TRUE)
-  startTS <- start(m); endTS <- end(m)
-  i <- window(i, startTS, endTS, extend=TRUE)
-
   wi <- interpNA(i, "linear", unwrap=TRUE)
   wm <- interpNA(m, "linear", unwrap=TRUE)
 
@@ -474,6 +472,12 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames, drop=FALSE], ma_i)
   }
   wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm), drop=FALSE], ma)
+
+  m <- window(m, start[1], end[1], extend=TRUE) # Not necessary?
+  wm <- window(wm, start[1], end[1], extend=TRUE)
+  startTS <- start(m); endTS <- end(m)
+  i <- window(i, startTS, endTS, extend=TRUE) # Not necessary?
+  wi <- window(wi, startTS, endTS, extend=TRUE)
 
   maText <- ma_iText <- ""
   if (!is.null(ma))

@@ -78,7 +78,7 @@ plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950
 ```
 ########################################
 ## CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the HadCRUT4 land+SST series.
-## Cf. Fig. 4(b) of Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888
+## Cf. Fig. 4(a) of Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)

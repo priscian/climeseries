@@ -860,7 +860,6 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", daily_f
 
       d <- data.matrix(Reduce(rbind, d))
       saodToday <- stats::weighted.mean(d[, "value"], d[, "weight"], na.rm=TRUE)
-      ## TODO: I might also want to weight these by sample size...? Or otherwise account for sparseness.
       is.na(saodToday) <- is.nan(saodToday)
       saodTodayDf <- saodDailyTemplate
       saodTodayDf$day <- dayValue

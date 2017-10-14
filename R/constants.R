@@ -141,6 +141,7 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   # http://berkeleyearth.org/data/
   ## JMA
   `JMA Global` = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/grid/gst_mon_1891_last.gz",
+  ## NOAA STAR? https://www.star.nesdis.noaa.gov/smcd/emb/mscat/products.php
   ## RSS
   `RSS TLS 3.3` = rssBase %_% rssTls %_% "Land_and_Ocean_v03_3.txt",
   `RSS TLS 3.3 Land` = rssBase %_% rssTls %_% "Land_v03_3.txt",
