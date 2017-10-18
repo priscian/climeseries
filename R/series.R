@@ -747,6 +747,71 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `NOAA Global Mean Sea Level` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE, comment.char="#")
+      }, error=Error, warning=Error)
+
+      l <- na.omit(tbl_dt(melt(x, id="year")), cols="value")
+      setnames(l, c("yr_part", "source", "temp"))
+      setcolorder(l, c(1, 3, 2))
+
+      r <- range(trunc(l$yr_part))
+      flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
+      flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+      flit <- tbl_dt(flit)
+      data.table::setkey(flit, yr_part)
+
+      m <- copy(l)
+      m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
+      m <- dplyr::full_join(flit, m, by=c("year", "month"))
+
+      ## Don't use, but keep available. I may have to switch entirely to data tables to add it as a column attribute to the final data set.
+      satSources <- m[!duplicated(m, by=c("year", "month")), .(year, month, source)]
+
+      d <- m[, !"source", with=FALSE][, .(temp = mean(temp, na.rm=TRUE)), by=.(year, month)]
+      set(d, i=which(is.nan(d$temp)), j="temp", value=NA)
+      d[, yr_part := year + (2 * month - 1)/24]
+
+      return (as.data.frame(d))
+    })(path),
+
+    `CSIRO Reconstructed Global Mean Sea Level` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        flit <- tempfile()
+        download.file(p, flit, quiet=TRUE)
+        con <- unz(flit, "church_white_gmsl_2011_up/CSIRO_Recons_gmsl_mo_2015.csv")
+        x <- read.csv(con, header=TRUE, as.is=TRUE, skip=skip, check.names=FALSE)
+        unlink(flit)
+      }, error=Error, warning=Error)
+
+      colnames(x) <- c("yr_part", series, "_uncertainty")
+
+      r <- range(trunc(x$yr_part))
+      flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
+      flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+      flit <- tbl_dt(flit)
+      data.table::setkey(flit, yr_part)
+
+      m <- copy(x)
+      m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
+      m <- dplyr::full_join(flit, m, by=c("year", "month"))
+      ## Uncertainties are 1 × sigma (Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1), so 1.96 × sigma is a 95% CI.
+      m[, `_uncertainty` := 1.96 * `_uncertainty`]
+      setnames(m, "_uncertainty", series %_% "_uncertainty")
+      d <- as.data.frame(m)
+
+      return (d)
+    })(path),
+
     `Antarctica Land Ice Mass Variation` =,
     `Greenland Land Ice Mass Variation` = (function(p) {
       ## N.B. This is very hacky, scraping the JSON from NASA's Web page, but it will eventually be replaced by averaged gridded data.

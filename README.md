@@ -142,13 +142,13 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. BEST SH Land_uncertainty
 1. BEST US
 1. BEST US_uncertainty
-1. CO2 Cape Grim
-1. CO2 Cape Grim_uncertainty
 1. CO2 Mauna Loa
 1. CO2 NOAA ESRL
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
 1. CSIRO Global Mean Sea Level
+1. CSIRO Reconstructed Global Mean Sea Level
+1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
 1. ERA-Interim 2m Global
 1. ERA-Interim 2m European
 1. ERSSTv4 Land 00N-30N
@@ -411,6 +411,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEP Surface Air SH Polar
 1. NCEP Surface Air Tropics
 1. NCEP Surface Air USA 48
+1. NOAA Global Mean Sea Level
 1. NOAA Sunspot No.
 1. NSIDC Sea Ice NH Extent
 1. NSIDC Sea Ice NH Area

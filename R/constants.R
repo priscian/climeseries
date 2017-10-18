@@ -73,7 +73,7 @@ noaaOhcBase <- "http://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA
 
 #' @rdname constants
 #' @export
-data_urls <- list( # Last updated 7 Dec. 2016.
+data_urls <- list( # Last updated 17 Oct. 2017.
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   `ERA-Interim 2m` = eraInterim2mTempBase,
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
@@ -190,7 +190,8 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   ## CO2
   `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   `CO2 NOAA ESRL` = list(path="ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt", type="CO2"),
-  `CO2 Cape Grim` = list(path="http://www.csiro.au/greenhouse-gases/GreenhouseGas/data/CapeGrim_CO2_data_download.txt", type="CO2"),
+  ## TODO: This is currently offline, but keep a lookout for a new link:
+  #`CO2 Cape Grim` = list(path="http://www.csiro.au/greenhouse-gases/GreenhouseGas/data/CapeGrim_CO2_data_download.txt", type="CO2"),
   `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
   `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),
@@ -203,11 +204,13 @@ data_urls <- list( # Last updated 7 Dec. 2016.
   `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar"),
   # http://www.sidc.be/silso/datafiles
   # https://www.ngdc.noaa.gov/stp/solar/ssndata.html
-  ## CSIRO GMSL
-  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"), # Not updated monthly! So try:
+  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"), # Not updated monthly!
+  ## Use this one (which however includes multiple satellites and some repeated dates):
+  # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv
+  `NOAA Global Mean Sea Level` = list(path="https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv", type="sea level"),
+  `CSIRO Reconstructed Global Mean Sea Level` = list(path="http://www.cmar.csiro.au/sealevel/downloads/church_white_gmsl_2011_up.zip", type="sea level"),
   # ftp://podaac.jpl.nasa.gov/allData/merged_alt/L2/TP_J1_OSTM/global_mean_sea_level/GMSL_TPJAOS_V4_199209_201704.txt
   # ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt
-  # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv # Or:
   # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_all_66.csv
   `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
   ## TODO: Ocean heat content. More snow and ice?
