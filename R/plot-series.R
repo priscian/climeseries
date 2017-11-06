@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -124,9 +124,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   startTS <- start(w); endTS <- end(w)
 
   if (yearly)
-    main <- paste(main, " (", startTS[1L], "\u2013", endTS[1L], ")", sep="")
+    main <- paste(main, " (", sprintf("%04d", startTS[1L]), "\u2013", sprintf("%04d", endTS[1L]), ")", sep="")
   else
-    main <- paste(main, " (", MOS[startTS[2L]], ". ", startTS[1L], "\u2013", MOS[endTS[2L]], ". ", endTS[1L], ")", sep="")
+    main <- paste(main, " (", MOS[startTS[2L]], ". ", sprintf("%04d", startTS[1L]), "\u2013", MOS[endTS[2L]], ". ", sprintf("%04d", endTS[1L]), ")", sep="")
 
   if (is.null(col)) {
     col <- seq_along(series)
@@ -146,7 +146,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   col <- alpha(col, alpha)
   names(col) <- series
 
-  GetXAxisTicks <- function(min=1500, max=3000, by=10)
+  get_x_axis_ticks <- function(min, max, by)
   {
     yearGroups <- seq(min, max, by=by)
     plotStart <- startTS[1]
@@ -158,9 +158,19 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     return (xaxisTicks)
   }
 
-  xaxisTicks <- GetXAxisTicks()
-  if (length(xaxisTicks) < 8L)
-    xaxisTicks <- GetXAxisTicks(by=5)
+  get_x_axis_ticksArgs <- list(
+    min = 1500,
+    max = 3000,
+    by = 10
+  )
+  get_x_axis_ticksArgs <- modifyList(get_x_axis_ticksArgs, get_x_axis_ticks...)
+
+  xaxisTicks <- do.call("get_x_axis_ticks", get_x_axis_ticksArgs)
+  if (length(xaxisTicks) < 8L) {
+    get_x_axis_ticksArgs$by = 5
+    get_x_axis_ticksArgs <- modifyList(get_x_axis_ticksArgs, get_x_axis_ticks...)
+    xaxisTicks <- do.call("get_x_axis_ticks", get_x_axis_ticksArgs)
+  }
 
   xaxt <- "n"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.

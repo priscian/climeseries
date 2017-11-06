@@ -10,7 +10,7 @@ plot_climate_data(x, series, start = NULL, end = NULL, ma = NULL,
   col = NULL, col_fun = RColorBrewer::brewer.pal, col_fun... = list(name =
   "Paired"), alpha = 0.5, lwd = 2, conf_int = FALSE, ci_alpha = 0.3,
   trend = FALSE, trend_legend_inset = c(0.2, 0.2), loess = FALSE,
-  loess... = list(), ...)
+  loess... = list(), get_x_axis_ticks... = list(), ...)
 }
 \arguments{
 \item{x}{A data set (down)loaded by function \code{\link{get_climate_data}}.}

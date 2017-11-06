@@ -70,6 +70,7 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 ## http://climate.copernicus.eu/resources/data-analysis/average-surface-air-temperature-analysis/monthly-maps/
 eraInterim2mTempBase <- "http://climate.copernicus.eu/sites/default/files/repository/Temp_maps/Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt"
 noaaOhcBase <- "http://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
+nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
 
 #' @rdname constants
 #' @export
@@ -81,12 +82,10 @@ data_urls <- list( # Last updated 17 Oct. 2017.
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
   `Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei/table.html", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
-  ## Land Ice Mass
-  #`Greenland Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Greenland", type="land ice"),
-  #`Antarctica Land Ice Mass Variation` = list(path="http://climate.nasa.gov/vital-signs/land-ice/?Antarctica", type="land ice"),
-  `Land Ice Mass Variation` = list(path="https://sealevel-nexus.jpl.nasa.gov/data/ANT_mass_changes_Watkins053116.csv", type="land ice"),
-  #https://sealevel-nexus.jpl.nasa.gov/data/ANT_mass_changes_Watkins053116.csv
-  #https://sealevel-nexus.jpl.nasa.gov/data/GRN_mass_changes_Watkins053116.csv
+  ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
+  ## TODO: These files names have dates in them, so I'll need to eventually get the name dynamically.
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_201701.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_201701.txt", type="land ice"),
   ## GISTEMP
   `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.csv",
   `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.csv",
@@ -190,8 +189,8 @@ data_urls <- list( # Last updated 17 Oct. 2017.
   ## CO2
   `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   `CO2 NOAA ESRL` = list(path="ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt", type="CO2"),
-  ## TODO: This is currently offline, but keep a lookout for a new link:
-  #`CO2 Cape Grim` = list(path="http://www.csiro.au/greenhouse-gases/GreenhouseGas/data/CapeGrim_CO2_data_download.txt", type="CO2"),
+  ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
+  `CO2 Cape Grim` = list(path="http://capegrim.csiro.au/GreenhouseGas/data/CapeGrim_CO2_data_download.csv", type="CO2"),
   `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
   `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),

@@ -566,7 +566,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         flit <- readLines(p)
         flit <- flit[trimws(flit) != ""]
         flit <- flit[grep("^\\d{4}", flit, perl=TRUE)]
-        x <- read.table(header=FALSE, skip=0L, text=flit, fill=TRUE, check.names=FALSE)
+        x <- read.csv(header=FALSE, skip=0L, text=flit, fill=TRUE, check.names=FALSE)
       }, error=Error, warning=Error)
 
       d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V5, check.names=FALSE, stringsAsFactors=FALSE)
@@ -602,7 +602,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           {
             r <- data.frame()
             for (i in c("north", "south")) {
-              flit <- readLines(paste(p, i, "monthly", "data", paste(toupper(substr(i, 1, 1)), y, "extent_v2.1.csv", sep="_"), sep="/"))
+              flit <- readLines(paste(p, i, "monthly", "data", paste(toupper(substr(i, 1, 1)), y, "extent_v3.0.csv", sep="_"), sep="/"))
               flit <- read.csv(text=flit[!grepl("^\\s+", flit)], header=TRUE, check.names=FALSE)
               r <- rbind(r, flit)
             }
@@ -814,52 +814,30 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
     `Antarctica Land Ice Mass Variation` =,
     `Greenland Land Ice Mass Variation` = (function(p) {
-      ## N.B. This is very hacky, scraping the JSON from NASA's Web page, but it will eventually be replaced by averaged gridded data.
-      parsedUrl <- strsplit(p, "\\?")[[1]]
-      p <- parsedUrl[1]; land <- parsedUrl[2]
-
-      curl <- getCurlHandle()
-      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
-      tryCatch({
-        r <- getURLContent(p, curl=curl)
-        x <- grep("createData\\(\"LandIce" %_% land, strsplit(r, "\n")[[1]], value=TRUE, perl=TRUE)
-        flit <- fromJSON(sub("^.+?createData\\(\"LandIce" %_% land %_% "\",(\\[.+?\\]).+?$", "\\1", x, perl=TRUE))
-      }, error=Error, warning=Error)
-
-      flit <- as.data.frame(data.matrix(flit[, c("year", "month", "y", "y_margin_max", "y_margin_min")]))
-
-      d <- data.frame(year=flit$year, yr_part=flit$year + (2 * flit$month - 1)/24, month=flit$month, temp=flit$y, check.names=FALSE, stringsAsFactors=FALSE)
-      d[[series %_% "_uncertainty"]] <- flit$y_margin_max - flit$y_margin_min
-
-      ## For multiple readings in a single month, keep only the first reading. (I have to sacrifice either the value or the error.)
-      d <- subset(d, !duplicated(d[, c("year", "month")]))
-
-      return (d)
-    })(path),
-
-    `Land Ice Mass Variation` = (function(p) {
       x <- NULL
 
-      skip <- 13L
+      skip <- 0L
 
       tryCatch({
-        x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE)
+        x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="H")
       }, error=Error, warning=Error)
 
-      x$year <- trunc(x[[1]])
-      d <- expand.grid(month=1:12, year=sort(unique(x$year))); d$yr_part <- d$year + (2 * d$month - 1)/24
-      x$yr_part <- sapply(x[[1]], function(x) { d$yr_part[which.min(abs(x - d$yr_part))[1]] }, simplify=TRUE)
-      y <- subset(x, !duplicated(x$yr_part))
+      colnames(x) <- c("yr_part", series, "_uncertainty")
 
-      temp <- Reduce(rbind, by(x[, 2:4], x$yr_part, colMeans, na.rm=TRUE, simplify=FALSE)); rownames(temp) <- NULL
-      temp <- apply(temp, 2, function(x) x - x[1])
-      colNames <- paste(c("Greenland Land Ice", "Antarctica Land Ice", "Ocean"), "Mass Variation")
-      colnames(temp) <- colNames
-      temp <- as.data.frame(temp)
-      temp[[colNames[2] %_% "_uncertainty"]] <- 79.0 * 2 # V. http://climate.nasa.gov/vital-signs/land-ice/ for values.
-      temp[[colNames[1] %_% "_uncertainty"]] <- 29.0 * 2
+      r <- range(trunc(x$yr_part))
+      flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
+      flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+      flit <- tbl_dt(flit)
+      data.table::setkey(flit, yr_part)
 
-      d <- base::merge(d, data.frame(yr_part=y$yr_part, temp, check.names=FALSE, stringsAsFactors=FALSE), by=c("yr_part"), all.x=TRUE)
+      m <- copy(x)
+      m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
+      m <- m[, lapply(.SD, mean, na.rm=TRUE), by=.(year, month), .SDcols=c(series, "_uncertainty")] # Remove year/month duplicates by averaging.
+      m <- dplyr::full_join(flit, m, by=c("year", "month"))
+      ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
+      m[, `_uncertainty` := 1.96 * `_uncertainty`]
+      setnames(m, "_uncertainty", series %_% "_uncertainty")
+      d <- as.data.frame(m)
 
       return (d)
     })(path),
@@ -1057,7 +1035,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       tryCatch({
         flit <- trimws(readLines(uri))
         flit <- flit[flit != ""]
-        x <- read.table(header=TRUE, skip=skip, text=flit, check.names=FALSE)
+        x <- read.csv(header=TRUE, skip=skip, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
