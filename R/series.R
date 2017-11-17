@@ -1044,7 +1044,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       monthValue <- as.numeric(dateMatches[, 3L])
 
       d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
-      flit <- x[, -1]; colnames(flit) <- paste(series, colnames(flit))
+      flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
       d <- cbind(d, flit)
 
       return (d)
