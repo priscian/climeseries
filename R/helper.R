@@ -1171,6 +1171,8 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
 #' @export
 create_loess_variables <- function(inst, series, loess...=list(), unwrap=TRUE, keep_interpolated=FALSE, ...)
 {
+  baselineAttribute <- attr(inst, "baseline")
+
   d <- inst[, c(common_columns, series)]
   if (unwrap)
     d <- subset(d, na_unwrap(d[, series]))
@@ -1194,6 +1196,7 @@ create_loess_variables <- function(inst, series, loess...=list(), unwrap=TRUE, k
       d[[i %_% " (interpolated)"]] <- NULL
   }
 
+  attr(d, "baseline") <- baselineAttribute
   d
 }
 
@@ -1202,8 +1205,10 @@ create_loess_variables <- function(inst, series, loess...=list(), unwrap=TRUE, k
 add_loess_variables <- function(inst, series, ...)
 {
   d <- create_loess_variables(inst, series, ...)
+  baselineAttribute <- attr(inst, "baseline")
   r <- base::merge(inst, d[, setdiff(names(d), series)], by=common_columns, all.x=TRUE)
 
+  attr(r, "baseline") <- baselineAttribute
   r
 }
 

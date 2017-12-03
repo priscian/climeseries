@@ -230,7 +230,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     m$col <- col
     m$data <- y[, c(intersect(common_columns, colnames(y)), series)]
     for (s in m$series) {
-      m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data)
+      m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data, x=TRUE)
       m[[s]]$warming <- coef(m[[s]]$lm)[2] * diff(range(m[[s]]$lm$model[, 2]))
       m[[s]]$rate <- coef(m[[s]]$lm)[2] * 10
       m[[s]]$rateText <- eval(substitute(expression(paste(Delta, " = ", r, phantom(l), unit, "/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="%+1.3f"), unit=unit)))
