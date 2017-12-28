@@ -74,7 +74,7 @@ nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/R
 
 #' @rdname constants
 #' @export
-data_urls <- list( # Last updated 17 Oct. 2017.
+data_urls <- list(
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   `ERA-Interim 2m` = eraInterim2mTempBase,
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),

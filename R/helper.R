@@ -128,12 +128,8 @@ get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="ht
 
   gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
 
-  ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
-  ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
-  curl <- getCurlHandle()
-  curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
   tryCatch({
-    r <- getURL(uri, curl=curl)
+    r <- httr::content(httr::GET(uri), "text", encoding="ISO-8859-1")
     tab <- gsub("^(?!\\s*\\d{4}\\s+).*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
     x <- read.table(text=tab, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
   }, error=Error, warning=Error)
@@ -176,12 +172,8 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
   skip <- skip # Skip over notes at start of data.
   gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
 
-  ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
-  ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
-  curl <- getCurlHandle()
-  curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
   #tryCatch({
-    r <- getURL(uri, curl=curl)
+    r <- httr::content(httr::GET(uri), "text", encoding="ISO-8859-1")
     r <- gsub("*****", " ****", r, fixed=TRUE)
     r <- gsub("^\\D+.*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
     x <- read.table(text=r, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
@@ -238,7 +230,7 @@ get_satellite_slr <- function(lat, lon) # +lat N of the equator, -lon W of the p
 
   tryCatch({
     ## Scrape Web page for data.
-    webPage <- getURL(uri)
+    webPage <- httr::content(httr::GET(uri), "text", encoding="ISO-8859-1")
     webPage <- readLines(tc <- textConnection(webPage)); close(tc)
     pageTree <- htmlTreeParse(webPage, useInternalNodes=TRUE)
     ## The data table is in a PRE node (the only one, hopefully).

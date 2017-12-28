@@ -100,11 +100,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `NCEI Global` = (function(p) {
       x <- NULL
 
-      curl <- getCurlHandle()
-      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
-        #flit <- readLines(p)
-        flit <- strsplit(getURL(p, curl=curl), "\r*\n")[[1L]]
+        flit <- strsplit(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"), "\r*\n")[[1L]]
         flit <- flit[trimws(flit) != ""]
         flit <- flit[grep("^\\d", flit, perl=TRUE)]
         x <- read.csv(header=FALSE, skip=0L, text=flit, check.names=FALSE)
@@ -302,7 +299,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       e <- data.frame()
       tryCatch({
         for (i in seq_along(surl)) {
-          y <- readLines(tc <- textConnection(getURL(surl[i]))); close(tc)
+          y <- readLines(tc <- textConnection(httr::content(httr::GET(surl[i]), "text", encoding="Shift_JIS"))); close(tc)
           if (any(grepl("\\s*in " %_% MONTHS[i] %_% " " %_% syear, y))) {
             tempRe <- "\\s*was\\s+((?:\\+|-)\\d+\\.\\d+)"
             lineNo <- grep(tempRe, y)
@@ -508,8 +505,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         ## Scrape Web page for data.
-        webPage <- getURL(p)
-        webPage <- readLines(tc <- textConnection(webPage)); close(tc)
+        webPage <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
         pageTree <- htmlTreeParse(webPage, useInternalNodes=TRUE)
         ## The data table is in a PRE node (the only one, hopefully).
         pre <- XML::xpathSApply(pageTree, "//*/pre", xmlValue)
