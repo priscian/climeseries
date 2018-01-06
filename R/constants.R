@@ -68,7 +68,7 @@ rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&service=ArAvTs&starttime=2000-03-01T00:00:00Z&endtime=@@DATE@@T23:59:59Z&data=MOD08_M3_6_Aerosol_Optical_Depth_Land_Ocean_Mean_Mean&portal=GIOVANNI&format=json"
 ## ERA-Interim 2m temperature
 ## http://climate.copernicus.eu/resources/data-analysis/average-surface-air-temperature-analysis/monthly-maps/
-eraInterim2mTempBase <- "http://climate.copernicus.eu/sites/default/files/repository/Temp_maps/Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt"
+eraInterim2mTempBase <- "http://climate.copernicus.eu/sites/default/files/repository/Temp_maps/"
 noaaOhcBase <- "http://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
 
@@ -76,7 +76,7 @@ nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/R
 #' @export
 data_urls <- list(
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
-  `ERA-Interim 2m` = eraInterim2mTempBase,
+  `ERA-Interim 2m` = list(path=list(`1-11`=eraInterim2mTempBase %_% "Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt", `12`=eraInterim2mTempBase %_% "ts_1month_anom_ei_T2_197901-@@YEARNUM@@12.txt"), type="temperature"),
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),

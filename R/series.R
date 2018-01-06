@@ -1015,11 +1015,15 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
       else currentMonth <- currentMonth - 1
 
-      uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, p))
+      if (currentMonth != 12) pp <- p$`1-11` else pp <- p$`12`
+
+      uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, pp))
       if (!url.exists(uri)) { ## Does the previous month's data exist?
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
         else currentMonth <- currentMonth - 1
-        uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, p))
+
+        if (currentMonth != 12) pp <- p$`1-11` else pp <- p$`12`
+        uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, pp))
         if (!url.exists(uri)) ## ... and if not, does the month before that exist?
           return (NULL)
       }
