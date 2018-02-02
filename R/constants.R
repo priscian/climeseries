@@ -84,8 +84,9 @@ data_urls <- list(
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
   ## TODO: These files names have dates in them, so I'll need to eventually get the name dynamically.
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_201701.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_201701.txt", type="land ice"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaLandIceMassBase %_% "ocean_mass_", type="ocean mass"),
   ## GISTEMP
   `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.csv",
   `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.csv",

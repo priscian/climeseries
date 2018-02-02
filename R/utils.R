@@ -359,3 +359,32 @@ dataframe <- function (..., row.names=NULL, check.rows=FALSE, check.names=FALSE,
 {
   data.frame(..., row.names=row.names, check.rows=check.rows, check.names=check.names, fix.empty.names=fix.empty.names, stringsAsFactors=stringsAsFactors)
 }
+
+
+#' @export
+only_selected_series <- function(x, series, ...)
+{
+  x[, c(intersect(names(x), c(common_columns, series))), ...]
+}
+
+#' @export
+oss <- only_selected_series
+
+
+#' @export
+view_only_selected_series <- function(..., fun = View)
+{
+  fun(only_selected_series(...))
+}
+
+#' @export
+vss <- view_only_selected_series
+
+## usage:
+# e <- get_climate_data(download=FALSE, baseline=FALSE) # Or full update: e <- get_climate_data(download=TRUE, omit=NULL)
+# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
+#   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global",
+#   "RATPAC-A 850-300 mb Global")
+# vss(e, series)
+# g <- make_yearly_data(e)
+# vss(g, series, with=FALSE)

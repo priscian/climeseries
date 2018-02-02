@@ -809,15 +809,21 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     })(path),
 
     `Antarctica Land Ice Mass Variation` =,
-    `Greenland Land Ice Mass Variation` = (function(p) {
+    `Greenland Land Ice Mass Variation` =,
+    `Ocean Mass Variation` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
       tryCatch({
-        x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="H")
+        fileNames <- strsplit(getURL(dirname(p) %_% "/", dirlistonly=TRUE), "\r*\n")[[1L]]
+        ## The second date embedded in the file names will probably change, so find the correct file:
+        p1 <- paste(dirname(p), head(sort(grep(basename(p), fileNames, value=TRUE), decreasing=TRUE), 1), sep="/")
+
+        x <- read.table(p1, header=FALSE, skip=skip, check.names=FALSE, comment.char="H")
       }, error=Error, warning=Error)
 
+      x <- x[, 1:3] # Ocean mass has more than 3 columns.
       colnames(x) <- c("yr_part", series, "_uncertainty")
 
       r <- range(trunc(x$yr_part))

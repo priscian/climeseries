@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20180110.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20180202.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -24,7 +24,7 @@ options(climeseries_data_dir="C:/common/data/climate/climeseries")
 Now you're ready to go:
 ```
 ## Download a current climatological data set from the Internet.
-inst <- get_climate_data(download=TRUE, baseline=TRUE)
+inst <- get_climate_data(download=TRUE)
 
 ## Try loading this most recent data set from the default directory.
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
@@ -44,11 +44,11 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global",
-  "RATPAC-A 850-300 mb Global")
-plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
+  "NCEP Surface Air Global")
+plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.0))
 ```
 
-![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-recent_ma12_baseline1981-2010.png)
+![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-recent_yearly_baseline1981-2010.png)
 
 ```
 ########################################
@@ -57,7 +57,8 @@ plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
-plot_climate_data(inst, series=series, 1850, ma=12, lwd=2, conf_int=TRUE, col=c("red", "blue"))
+plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, col=c("red", "blue"), alpha=0.2,
+  ci_alpha=0.1)
 ```
 
 ![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/CW14.ci-HadCRUT4.ci_1850.1-recent_ma12_baseline1981-2010.png)
@@ -88,9 +89,17 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", sta
   ma_i=12, baseline=1961:1990, yearly=TRUE, scenario_text="Scenario TAS + TOS Realizations", center_fun="mean",
   smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE,
   col_i_fun="topo.colors", col_i_fun...=list())
+
+inst <- get_climate_data(download=FALSE, baseline=TRUE)
+cmip5 <- get_models_data(ensemble="cmip5", subdir="tas + tos")
+series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
+  "BEST Global (Air Ice Temp.)", "JMA Global")
+plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020, yearly=TRUE,
+  ma_i=12, baseline=1970:2000, scenario_text="Scenario TAS + TOS Realizations", center_fun="mean",
+  smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE)
 ```
 
-![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the HadCRUT4 land+SST series.](inst/images/cmip5-tas+tos-rcp85-realizations.range+HadCRUT4_1880-2020_ma12_mai12_baseline1961-1990_yearly.png)
+![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp85-realizations.range+land-sst_1880-2020_yearly_mai12_baseline1970-2000.png)
 
 ```
 ########################################
@@ -98,8 +107,9 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", sta
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
 ########################################
 
-series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global")
-start <- 1970; end <- 2017
+series <- c("RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global", "JMA Global",
+  "GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global")
+start <- 1970; end <- 2018
 g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
 series_adj <- paste(series, "(adj.)")
 main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
@@ -116,7 +126,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20180118.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20180202.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -124,6 +134,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 ?get_climate_data
 ```
 
+> cat("1. " %_% names(e), sep="\n")
 1. year
 1. met_year
 1. yr_part
@@ -153,23 +164,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. CSIRO Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
-1. ERA-Interim 2m global
+1. ERA-Interim 2m Global
 1. ERA-Interim 2m European
-1. ERSSTv4 Land + Ocean 90S-60S
-1. ERSSTv4 Land + Ocean 90S-90N
-1. ERSSTv4 Ocean 00N-30N
-1. ERSSTv4 Ocean 00N-90N
-1. ERSSTv4 Ocean 20N-90N
-1. ERSSTv4 Ocean 20S-20N
-1. ERSSTv4 Ocean 30N-60N
-1. ERSSTv4 Ocean 30S-00N
-1. ERSSTv4 Ocean 60N-90N
-1. ERSSTv4 Ocean 60S-30S
-1. ERSSTv4 Ocean 60S-60N
-1. ERSSTv4 Ocean 90S-00N
-1. ERSSTv4 Ocean 90S-20S
-1. ERSSTv4 Ocean 90S-60S
-1. ERSSTv4 Ocean 90S-90N
 1. ERSSTv4 Land 00N-30N
 1. ERSSTv4 Land 00N-90N
 1. ERSSTv4 Land 20N-90N
@@ -192,23 +188,23 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60N-90N
 1. ERSSTv4 Land + Ocean 60S-30S
 1. ERSSTv4 Land + Ocean 60S-60N
+1. ERSSTv4 Ocean 00N-30N
 1. ERSSTv4 Land + Ocean 90S-00N
 1. ERSSTv4 Land + Ocean 90S-20S
-1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
-1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
-1. ERSSTv4 Ocean 00N-30N_uncertainty
-1. ERSSTv4 Ocean 00N-90N_uncertainty
-1. ERSSTv4 Ocean 20N-90N_uncertainty
-1. ERSSTv4 Ocean 20S-20N_uncertainty
-1. ERSSTv4 Ocean 30N-60N_uncertainty
-1. ERSSTv4 Ocean 30S-00N_uncertainty
-1. ERSSTv4 Ocean 60N-90N_uncertainty
-1. ERSSTv4 Ocean 60S-30S_uncertainty
-1. ERSSTv4 Ocean 60S-60N_uncertainty
-1. ERSSTv4 Ocean 90S-00N_uncertainty
-1. ERSSTv4 Ocean 90S-20S_uncertainty
-1. ERSSTv4 Ocean 90S-60S_uncertainty
-1. ERSSTv4 Ocean 90S-90N_uncertainty
+1. ERSSTv4 Land + Ocean 90S-60S
+1. ERSSTv4 Land + Ocean 90S-90N
+1. ERSSTv4 Ocean 00N-90N
+1. ERSSTv4 Ocean 20N-90N
+1. ERSSTv4 Ocean 20S-20N
+1. ERSSTv4 Ocean 30N-60N
+1. ERSSTv4 Ocean 30S-00N
+1. ERSSTv4 Ocean 60N-90N
+1. ERSSTv4 Ocean 60S-30S
+1. ERSSTv4 Ocean 60S-60N
+1. ERSSTv4 Ocean 90S-00N
+1. ERSSTv4 Ocean 90S-20S
+1. ERSSTv4 Ocean 90S-60S
+1. ERSSTv4 Ocean 90S-90N
 1. ERSSTv4 Land 00N-30N_uncertainty
 1. ERSSTv4 Land 00N-90N_uncertainty
 1. ERSSTv4 Land 20N-90N_uncertainty
@@ -231,8 +227,23 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERSSTv4 Land + Ocean 60N-90N_uncertainty
 1. ERSSTv4 Land + Ocean 60S-30S_uncertainty
 1. ERSSTv4 Land + Ocean 60S-60N_uncertainty
+1. ERSSTv4 Ocean 00N-30N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-00N_uncertainty
 1. ERSSTv4 Land + Ocean 90S-20S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
+1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
+1. ERSSTv4 Ocean 00N-90N_uncertainty
+1. ERSSTv4 Ocean 20N-90N_uncertainty
+1. ERSSTv4 Ocean 20S-20N_uncertainty
+1. ERSSTv4 Ocean 30N-60N_uncertainty
+1. ERSSTv4 Ocean 30S-00N_uncertainty
+1. ERSSTv4 Ocean 60N-90N_uncertainty
+1. ERSSTv4 Ocean 60S-30S_uncertainty
+1. ERSSTv4 Ocean 60S-60N_uncertainty
+1. ERSSTv4 Ocean 90S-00N_uncertainty
+1. ERSSTv4 Ocean 90S-20S_uncertainty
+1. ERSSTv4 Ocean 90S-60S_uncertainty
+1. ERSSTv4 Ocean 90S-90N_uncertainty
 1. ESRL AMO
 1. Extended Multivariate ENSO Index
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) Global
@@ -420,6 +431,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NSIDC Sea Ice SH Area
 1. NSIDC Sea Ice Global Extent
 1. NSIDC Sea Ice Global Area
+1. Ocean Mass Variation
+1. Ocean Mass Variation_uncertainty
 1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global
 1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) NH
 1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) SH
