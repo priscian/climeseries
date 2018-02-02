@@ -43,8 +43,8 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
-  "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global",
-  "NCEP Surface Air Global")
+  "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
+  "ERA-Interim 2m Global", "NCEP Surface Air Global")
 plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.0))
 ```
 
@@ -70,8 +70,8 @@ plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, 
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 cmip5 <- get_models_data(ensemble="cmip5")
-plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950, end=2100, ma=12, baseline=1981:2010,
-  center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
+plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950, end=2100, ma=12,
+  baseline=1981:2010, center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
 ```
 
 ![CMIP5 scenario realizations.](inst/images/cmip5-realizations_1950-2100_ma12_baseline1981-2010.png)
@@ -81,14 +81,6 @@ plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950
 ## CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the HadCRUT4 land+SST series.
 ## Cf. Fig. 4(a) of Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888
 ########################################
-
-inst <- get_climate_data(download=FALSE, baseline=TRUE)
-cmip5 <- get_models_data(ensemble="cmip5", subdir="tas + tos")
-series <- c("HadCRUT4 Global")
-plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020, ma=12,
-  ma_i=12, baseline=1961:1990, yearly=TRUE, scenario_text="Scenario TAS + TOS Realizations", center_fun="mean",
-  smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE,
-  col_i_fun="topo.colors", col_i_fun...=list())
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 cmip5 <- get_models_data(ensemble="cmip5", subdir="tas + tos")
