@@ -63,7 +63,7 @@ plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, 
   save_png_dir=save_png_dir)
 ```
 
-![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/Cowtan & Way Krig. Global.ci+HadCRUT4 Global.ci_1850.1-2017.12_yearly_baseline1981-2010.png)
+![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.]("inst/images/Cowtan & Way Krig. Global.ci+HadCRUT4 Global.ci_1850.1-2017.12_yearly_baseline1981-2010.png")
 
 ```
 ########################################
