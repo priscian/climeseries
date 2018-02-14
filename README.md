@@ -49,7 +49,7 @@ plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.
   save_png_dir=save_png_dir)
 ```
 
-![Some major monthly global average temperature time series.](inst/images/GISTEMP Global+NCEI Global+HadCRUT4 Global+Cowtan & Way Krig. Global+&c_1880.1-2018.1_yearly_baseline1981-2010.png)
+![Some major monthly global average temperature time series.](inst/images/GISTEMP&#32;Global+NCEI&#32;Global+HadCRUT4&#32;Global+Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global+&c_1880.1-2018.1_yearly_baseline1981-2010.png)
 
 ```
 ########################################
@@ -63,7 +63,7 @@ plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, 
   save_png_dir=save_png_dir)
 ```
 
-![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.]("inst/images/Cowtan & Way Krig. Global.ci+HadCRUT4 Global.ci_1850.1-2017.12_yearly_baseline1981-2010.png")
+![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global.ci+HadCRUT4&#32;Global.ci_1850.1-2017.12_yearly_baseline1981-2010.png)
 
 ```
 ########################################
@@ -96,7 +96,7 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", sta
   save_png_dir=save_png_dir)
 ```
 
-![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp8.5-realizations.range_GISTEMP Global+NCEI Global+HadCRUT4 Global+Cowtan & Way Krig. Global+&c_1880.1-2020.1_yearly_baseline1970-2000.png)
+![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp8.5-realizations.range_GISTEMP&#32;Global+NCEI&#32;Global+HadCRUT4&#32;Global+Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global+&c_1880.1-2020.1_yearly_baseline1970-2000.png)
 
 ```
 ########################################
@@ -114,7 +114,7 @@ plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, basel
   save_png_dir=save_png_dir)
 ```
 
-![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/RSS TLT 4.0 -70.0-82.5 (adj.)+UAH TLT 6.0 Global (adj.)+&c_1970.1-2017.12_yearly_baseline1981-2010.png)
+![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/RSS&#32;TLT&#32;4.0&#32;-70.0-82.5&#32;(adj.)+UAH&#32;TLT&#32;6.0&#32;Global&#32;(adj.)+&c_1970.1-2017.12_yearly_baseline1981-2010.png)
 
 ```
 ########################################
@@ -130,7 +130,7 @@ plot_climate_data(inst, series, yearly=TRUE, col=c("red", "purple", "blue", "gre
 
 ```
 
-![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/HadCRUT4 Global+NCEI Global+GISTEMP Global+Cowtan & Way Krig. Global_1850.1-2017.12_yearly_baseline1981-2010_seg.png)
+![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/HadCRUT4&#32;Global+NCEI&#32;Global+GISTEMP&#32;Global+Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global_1850.1-2017.12_yearly_baseline1981-2010_seg.png)
 
 ```
 ########################################
@@ -151,7 +151,7 @@ plot_climate_data(g, series_adj, ylab=ylab, main=main, col="blue", segmented=TRU
 
 ```
 
-![Has recent sea-level rise accelerated?](inst/images/NOAA Global Mean Sea Level (anomalies)_1993.1-2017.12_ma0_seg.png)
+![Has recent sea-level rise accelerated?](inst/images/NOAA&#32;Global&#32;Mean&#32;Sea&#32;Level&#32;(anomalies)_1993.1-2017.12_ma0_seg.png)
 
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
