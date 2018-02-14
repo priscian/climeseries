@@ -55,6 +55,7 @@ cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=TRUE, subdir
 cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="1 member per model")
 cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=TRUE, subdir="all members")
 cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="all members")
+cmip5 <- create_cmip5_tas_tos_data(save_to_package=TRUE)
 
 ## Create "meta" files to match up model runs with emissions scenarios. In each model-set directory, double-click on file "cmip(3|5).RData" and run the following code:
 x <- "cmip3" # Or:

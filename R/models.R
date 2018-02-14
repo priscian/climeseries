@@ -39,6 +39,7 @@
 #' cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="1 member per model")
 #' cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=TRUE, subdir="all members")
 #' cmip5 <- get_models_data(ensemble="cmip5", baseline=NULL, save=TRUE, subdir="all members")
+#' cmip5 <- create_cmip5_tas_tos_data(save_to_package=TRUE)
 #'
 #' ## Create "meta" files to match up model runs with emissions scenarios. In each model-set directory, double-click on file "cmip(3|5).RData" and run the following code:
 #' x <- "cmip3" # Or:
@@ -141,7 +142,7 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
     attr(x, "member") <- sub("\\.[^.]*$", "", basename(files[i]))
 
     rm_ <- str_match(attr(x, "member"), "(20c3m|sres|rcp)([ab]\\db?|\\d)?(\\d)?")
-    flit <- rm_[1L, 2L:ncol(rm)]; flit <- flit[flit != ""]
+    flit <- rm_[1L, 2L:ncol(rm_)]; flit <- flit[flit != ""]
     scenario <- toupper(paste(flit, collapse=" "))
     if (flit[1L] == "rcp") # For the CMIP5 scenarios.
       scenario <- toupper(flit[1] %_% " " %_% paste(flit[2:3], collapse="."))
@@ -164,6 +165,8 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
 
   attr(d, "ensemble") <- ifelse(ensemble == "cmip3", "CMIP3+", "CMIP5")
 
+  attr(d, "model_type") <- subdir
+
   attr(d, "scenario") <- factor(sapply(ls(e), function(s) { attr(e[[s]], "scenario") }))
 
   attr(d, "baseline") <- NULL
@@ -176,7 +179,7 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
       cmipPath <- paste(path, ensemble %_% ifelse(is.null(baseline), "_raw", ""), sep="/")
 
       eval(substitute(save(o, file=cmipPath %_% ".RData"), list(o=as.symbol(ensemble))))
-      dput(get(ensemble), file=cmipPath %_% ".dput")
+      #dput(get(ensemble), file=cmipPath %_% ".dput")
       write.csv(get(ensemble), file=cmipPath %_% ".csv", row.names=FALSE)
     })
   }

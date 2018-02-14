@@ -75,6 +75,7 @@ nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/R
 #' @rdname constants
 #' @export
 data_urls <- list(
+  `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   `ERA-Interim 2m` = list(path=list(`1-11`=eraInterim2mTempBase %_% "Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt", `12`=eraInterim2mTempBase %_% "ts_1month_anom_ei_T2_197901-@@YEARNUM@@12.txt"), type="temperature"),
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
@@ -222,6 +223,7 @@ data_urls <- list(
   # CONUS tornadoes: http://www.spc.noaa.gov/wcm/data/1950-2016_all_tornadoes.csv
   # Methane: https://www.esrl.noaa.gov/gmd/ccgg/trends_ch4/
   # Latest TSI: http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt
+  # NOAA STAR: ftp://ftp.star.nesdis.noaa.gov/pub/smcd/emb/mscat/data/MSU_AMSU_v4.0/Monthly_Atmospheric_Layer_Mean_Temperature/
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.

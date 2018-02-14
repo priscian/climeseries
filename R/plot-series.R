@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, make_standardized_plot_filename...=list(), save_png=FALSE, save_png_dir, ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -94,6 +94,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     x <- recenter_anomalies(x, baseline, conf_int=FALSE)
 
   y <- make_time_series_from_anomalies(x, conf_int=TRUE)
+  ## Get date range of 'y' before it's converted to a yearly time series.
+  flit <- window(y, start, end, extend=TRUE)
+  textRange <- paste(paste(start(flit), collapse="."), paste(end(flit), collapse="."), sep="-"); flit <- NULL
   if (yearly) {
     y <- make_yearly_data(y)
     y$yr_part <- y$year
@@ -172,6 +175,33 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     xaxisTicks <- do.call("get_x_axis_ticks", get_x_axis_ticksArgs)
   }
 
+  make_standardized_plot_filenameArgs <- list(
+    x = w,
+    ma = ma,
+    range = textRange,
+    yearly = yearly,
+    conf_int = conf_int,
+    baseline = baseline,
+    loess = loess,
+    trend = trend,
+    segmented = segmented,
+    series_max_length = 75L
+  )
+  make_standardized_plot_filenameArgs <- modifyList(make_standardized_plot_filenameArgs, make_standardized_plot_filename...)
+  filename <- do.call(make_standardized_plot_filename, make_standardized_plot_filenameArgs)
+
+  if (missing(save_png_dir)) {
+    if (!is.null(getOption("climeseries_image_dir")))
+      imageDir <- getOption("climeseries_image_dir")
+    else
+      imageDir <- "."
+  }
+  else
+    imageDir <- save_png_dir
+
+  if (save_png)
+    png(filename=paste(imageDir, filename, sep="/"), width=12.5, height=7.3, units="in", res=600)
+
   xaxt <- "n"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
@@ -245,12 +275,129 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
     if (!is.null(trend_legend_inset))
       legend("bottomright", inset=trend_legend_inset, legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
-
-    return (invisible(m))
   }
+
+  if (segmented) {
+    segmentedArgs <- list(
+      x = x,
+      series = series,
+      col = col,
+      start = start,
+      end = end
+    )
+    segmentedArgs <- modifyList(segmentedArgs, segmented...)
+    sm <- do.call("fit_segmented_model", segmentedArgs)
+    # sapply(sm$piecewise, function(a) a$sm$psi, simplify=FALSE)
+
+    for (i in names(sm$piecewise)) {
+      plot.segmentedArgs <- list(
+        x = sm$piecewise[[i]]$sm,
+        add = TRUE,
+        rug = FALSE,
+        lwd = 2,
+        #lty = "longdash",
+        col = col[i],
+        alpha = alpha
+      )
+      plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
+      dev_null <- do.call("plot", plot.segmentedArgs)
+
+      if (mark_segments)
+        vline(sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f"))
+    }
+  }
+
+  if (save_png)
+    dev.off()
+
+  cat("Standardized file name:", filename, fill=TRUE); flush.console()
+
+  if (trend)
+    return (invisible(m))
 
   return (nop())
 }
+
+
+## Make a standardized file name. Primarily for internal use in 'plot_climate_data()' and 'plot_models_and_climate_data()'.
+make_standardized_plot_filename <- function(x, conf_int, ma, ma_i, yearly, range, baseline, loess, trend, segmented, series_max_length=Inf, series_override, series_sep="+", sep="_", conf_int_id=".ci", loess_id="loess", trend_id="trend", segmented_id="seg", ext="png", model_details)
+{
+  modelString <- NULL
+  if (!missing(model_details))
+    modelString <- paste(model_details, collapse="-")
+
+  if (missing(ma)) ma <- NULL
+  if (missing(yearly)) yearly <- FALSE
+  if (missing(baseline)) baseline <- NULL
+  if (missing(conf_int)) conf_int <- FALSE
+  if (missing(loess)) loess <- FALSE
+  if (missing(trend)) trend <- FALSE
+  if (missing(segmented)) segmented <- FALSE
+
+  seriesString <- NULL
+  if (!missing(x)) {
+    series <- get_climate_series_names(x)
+    if (conf_int) {
+      confintNames <- intersect(series %_% "_uncertainty", colnames(x))
+      if (length(confintNames) > 0L) {
+        index <- unlist(sapply(series, function(a) any(grepl(a, confintNames, fixed=TRUE)), simplify=TRUE))
+        series[index] <- series[index] %_% conf_int_id
+      }
+    }
+
+    for (i in rev(seq_along(series))) {
+      seriesString <- paste(series[seq(i)], collapse=series_sep)
+      if (nchar(seriesString) < series_max_length) {
+        if (i < length(series))
+          seriesString <- paste(seriesString, "&c", sep=series_sep)
+        break
+      }
+    }
+
+    ## Replace character incompatible with the OS file system.
+    seriesString <- gsub("\\/", "\\-", seriesString)
+  }
+
+  parts <- list()
+  if (!is.null(modelString)) parts$models <- modelString
+  if (!is.null(seriesString)) parts$series <- seriesString
+
+  if (!missing(series_override))
+    parts$series <- series_override
+
+  if (missing(range))
+    parts$range <- paste(paste(start(x), collapse="."), paste(end(x), collapse="."), sep="-")
+  else
+    parts$range <- range
+
+  parts$moving_average <- "ma" %_% ifelse(is.null(ma), 0, ma)
+  if (yearly)
+    parts$moving_average <- "yearly"
+
+  if (!missing(ma_i)) {
+    parts$moving_average_i <- "mai" %_% ifelse(is.null(ma_i), 0, ma_i)
+    if (yearly)
+      parts$moving_average_i <- NULL
+  }
+
+  if (!is.null(baseline))
+    parts$baseline <- "baseline" %_% paste(head(baseline, 1L), tail(baseline, 1L), sep="-")
+
+  if (loess)
+    parts$loess <- loess_id
+
+  if (trend)
+    parts$trend <- trend_id
+
+  if (segmented)
+    parts$segmented <- segmented_id
+
+  r <- paste(paste(parts, collapse=sep), ext, sep=".")
+
+  r
+}
+## usage:
+# make_standardized_plot_filename(w, ma, yearly, conf_int, loess, trend, series_max_length=75)
 
 
 ##  Plot sequential global annual mean surface-temp. trend with confidence intervals (via Chris Colose).
@@ -415,7 +562,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), save_png=FALSE, save_png_dir, ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -444,6 +591,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   ensemble <- attr(models, "ensemble")
   if (is.null(baseline))
     baseline <- attr(models, "baseline")
+  model_type <- attr(models, "model_type")
 
   originalScenario <- attr(models, "scenario")
   keepCols <- names(models)
@@ -453,6 +601,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
     # Restore some attributes.
     attr(models, "ensemble") <- ensemble
+    attr(models, "model_type") <- model_type
     attr(models, "scenario") <- factor(originalScenario[originalScenario %in% scenario], levels=scenario[scenario %in% originalScenario])
     attr(models, "baseline") <- baseline
   }
@@ -461,6 +610,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   m <- make_time_series_from_anomalies(models)
   i <- make_time_series_from_anomalies(instrumental, conf_int=TRUE)
+  flit <- m
 
   if (yearly) {
     i <- make_yearly_data(i)
@@ -488,6 +638,10 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   startTS <- start(m); endTS <- end(m)
   i <- window(i, startTS, endTS, extend=TRUE) # Not necessary?
   wi <- window(wi, startTS, endTS, extend=TRUE)
+
+  ## Get date range of 'i' before it was converted to a yearly time series.
+  flit <- window(flit, start[1], end[1], extend=TRUE)
+  textRange <- paste(paste(start(flit), collapse="."), paste(end(flit), collapse="."), sep="-"); flit <- NULL
 
   maText <- ma_iText <- ""
   if (!is.null(ma))
@@ -530,6 +684,41 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   xaxisTicks <- GetXAxisTicks()
   if (length(xaxisTicks) < 8L)
     xaxisTicks <- GetXAxisTicks(by=5)
+
+  make_standardized_plot_filenameArgs <- list(
+    x = wi,
+    ma = ma,
+    ma_i = ma_i,
+    yearly = yearly,
+    range = textRange,
+    baseline = baseline,
+    conf_int = conf_int_i,
+    series_max_length = 75L,
+    model_details = list(
+      ensemble = tolower(ensemble),
+      model_type = gsub("\\s+", "-", gsub("\\s+\\+\\s+", "+", tolower(attr(models, "model_type")))),
+      scenario = paste(gsub("\\s+", "", tolower(scenario)), collapse="+"),
+      realizations = paste("realizations", envelope_type, sep=".")
+    )
+  )
+  if (!plotInstrumental) { make_standardized_plot_filenameArgs$x <- NULL; make_standardized_plot_filenameArgs$ma_i <- NULL }
+  ## N.B. These aren't actually plot args (so they'll fail), but I'll leave them in case of further expansion of inst. plots here:
+  if(!is.null(plot_i...$loess)) make_standardized_plot_filenameArgs$loess <- plot_i...$loess
+  if(!is.null(plot_i...$trend)) make_standardized_plot_filenameArgs$trend <- plot_i...$trend
+  make_standardized_plot_filenameArgs <- modifyList(make_standardized_plot_filenameArgs, make_standardized_plot_filename...)
+  filename <- do.call(make_standardized_plot_filename, make_standardized_plot_filenameArgs)
+
+  if (missing(save_png_dir)) {
+    if (!is.null(getOption("climeseries_image_dir")))
+      imageDir <- getOption("climeseries_image_dir")
+    else
+      imageDir <- "."
+  }
+  else
+    imageDir <- save_png_dir
+
+  if (save_png)
+    png(filename=paste(imageDir, filename, sep="/"), width=12.5, height=7.3, units="in", res=600)
 
   xaxt <- "n"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
@@ -685,6 +874,11 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   )
   legendArgs <- modifyList(legendArgs, legend...)
   do.call("legend", legendArgs)
+
+  if (save_png)
+    dev.off()
+
+  cat("Standardized file name:", filename, fill=TRUE); flush.console()
 
   return (nop())
 }

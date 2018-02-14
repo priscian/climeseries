@@ -1135,6 +1135,8 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
 
   attr(m, "ensemble") <- "CMIP5"
 
+  attr(m, "model_type") <- subdir
+
   attr(m, "model") <- modelDetails$model
 
   scenario <- "RCP " %_% sprintf(modelDetails$RCP, fmt="%.1f")
@@ -1209,3 +1211,67 @@ add_loess_variables <- function(inst, series, ...)
 # d <- get_climate_data(download=FALSE, baseline=TRUE)
 # g <- add_loess_variables(d, series, loess...=list(span=0.4))
 # plot_climate_data(g, series %_% " (LOESS fit)")
+
+
+## Fit segmented linear models to selected climate data.
+#' @export
+fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(length(series),"Paired")), start=NULL, end=NULL, yearly=TRUE, breakpoints...=list(), segmented...=list(), seg.control...=list(seed=100), ...)
+{
+  r <- list(data=x, series=series)
+  r$range <- list(start=start, end=end)
+  r$col <- col
+  length(r$col) <- length(r$series); names(r$col) <- r$series
+
+  if (!yearly) {
+    g <- r$data
+  }
+  else {
+    g <- as.data.frame(make_yearly_data(r$data))
+    if (!is.null(start)) start <- trunc(start)
+    if (!is.null(end)) end <- trunc(end)
+  }
+
+  yearVar <- ifelse(yearly, "year", "yr_part")
+
+  r$piecewise <- list()
+  for (i in r$series) {
+    r$piecewise[[i]] <- list()
+    r$piecewise[[i]]$col <- r$piecewise$col[i]
+
+    h <- oss(g, i)[na_unwrap(g[[i]]), , drop=FALSE]
+    h <- h[h[[yearVar]] >= ifelse(!is.null(start), start, -Inf) & h[[yearVar]] <= ifelse(!is.null(end), end, Inf), ]
+
+    breakpointsArgs <- list(
+      formula = eval(substitute(Y ~ X, list(X=as.name(yearVar), Y=as.name(i)))),
+      data = h,
+      breaks = NULL
+    )
+    breakpointsArgs <- modifyList(breakpointsArgs, breakpoints...)
+    r$piecewise[[i]]$bp <- do.call("breakpoints", breakpointsArgs)
+
+    r$piecewise[[i]]$breaks <- r$piecewise[[i]]$bp$X[, yearVar][r$piecewise[[i]]$bp$breakpoint]
+
+    seg.controlArgs <- list(
+      stop.if.error = TRUE,
+      K = length(r$piecewise[[i]]$breaks),
+      n.boot = 250,
+      random = FALSE,
+      h = 0.3
+    )
+    seg.controlArgs <- modifyList(seg.controlArgs, seg.control...)
+    segControl <- do.call("seg.control", seg.controlArgs)
+
+    r$piecewise[[i]]$lm <- lm(breakpointsArgs$formula, data=h)
+
+    segmentedArgs <- list(
+      obj = r$piecewise[[i]]$lm,
+      seg.Z = as.formula(paste("~", yearVar)),
+      psi = r$piecewise[[i]]$breaks,
+      control = segControl
+    )
+    segmentedArgs <- modifyList(segmentedArgs, segmented...)
+    r$piecewise[[i]]$sm <- do.call("segmented", segmentedArgs)
+  }
+
+  r
+}

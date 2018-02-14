@@ -186,6 +186,24 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `HadCET` = (function(p) {
+      x <- NULL
+
+      skip <- 7L
+
+      tryCatch({
+        x <- read.table(p, header=FALSE, as.is=TRUE, na.strings=c("-99.9", "-99.99"), skip=skip, check.names=FALSE, stringsAsFactors=FALSE)
+      }, error=Error, warning=Error)
+
+      flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
+      for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+      flit <- dplyr::arrange(flit, V1, month)
+
+      d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+
+      return (d)
+    })(path),
+
     `Cowtan & Way Krig. Global` = (function(p) {
       x <- NULL
 
