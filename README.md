@@ -45,8 +45,7 @@ inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
   "ERA-Interim 2m Global", "NCEP Surface Air Global")
-plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.0), save_png=TRUE,
-  save_png_dir=save_png_dir)
+plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.0), save_png=FALSE)
 ```
 
 ![Some major monthly global average temperature time series.](inst/images/GISTEMP&#32;Global+NCEI&#32;Global+HadCRUT4&#32;Global+Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global+&c_1880.1-2018.1_yearly_baseline1981-2010.png)
@@ -59,8 +58,7 @@ plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
 plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, col=c("red", "blue"), alpha=0.2,
-  ci_alpha=0.1, save_png=TRUE,
-  save_png_dir=save_png_dir)
+  ci_alpha=0.1, save_png=FALSE)
 ```
 
 ![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global.ci+HadCRUT4&#32;Global.ci_1850.1-2017.12_yearly_baseline1981-2010.png)
@@ -73,8 +71,7 @@ plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 cmip5 <- get_models_data(ensemble="cmip5")
 plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950, end=2100, ma=12,
-  baseline=1981:2010, center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5), save_png=TRUE,
-  save_png_dir=save_png_dir)
+  baseline=1981:2010, center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5), save_png=FALSE)
 ```
 
 ![CMIP5 scenario realizations.](inst/images/cmip5-all-models-rcp2.6+rcp4.5+rcp6.0+rcp8.5-realizations.quantiles_1950.1-2100.1_ma12_baseline1981-2010.png)
@@ -92,8 +89,7 @@ series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Kr
 plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020, yearly=TRUE,
   ma=12, baseline=1970:2000, scenario_text="Scenario TAS + TOS Realizations", center_fun="mean",
   smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE,
-  save_png=TRUE,
-  save_png_dir=save_png_dir)
+  save_png=FALSE)
 ```
 
 ![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp8.5-realizations.range_GISTEMP&#32;Global+NCEI&#32;Global+HadCRUT4&#32;Global+Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global+&c_1880.1-2020.1_yearly_baseline1970-2000.png)
@@ -110,8 +106,7 @@ start <- 1970; end <- 2018
 g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
 series_adj <- paste(series, "(adj.)")
 main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
-plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, baseline=TRUE, save_png=TRUE,
-  save_png_dir=save_png_dir)
+plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, baseline=TRUE, save_png=FALSE)
 ```
 
 ![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/RSS&#32;TLT&#32;4.0&#32;-70.0-82.5&#32;(adj.)+UAH&#32;TLT&#32;6.0&#32;Global&#32;(adj.)+&c_1970.1-2017.12_yearly_baseline1981-2010.png)
@@ -125,9 +120,7 @@ plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, basel
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- c("HadCRUT4 Global", "NCEI Global", "GISTEMP Global", "Cowtan & Way Krig. Global")
 plot_climate_data(inst, series, yearly=TRUE, col=c("red", "purple", "blue", "green"), lwd=1,
-  segmented=TRUE, save_png=TRUE,
-  save_png_dir=save_png_dir)
-
+  segmented=TRUE, save_png=FALSE)
 ```
 
 ![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/HadCRUT4&#32;Global+NCEI&#32;Global+GISTEMP&#32;Global+Cowtan&#32;&&#32;Way&#32;Krig.&#32;Global_1850.1-2017.12_yearly_baseline1981-2010_seg.png)
@@ -146,9 +139,7 @@ ylab <- "Global Mean Sea Level (mm)"
 main <- "GMSL from TOPEX/Poseidon, Jason-1, & Jason-2 Satellite Altimetry"
 plot_climate_data(g, series_adj, ylab=ylab, main=main, col="blue", segmented=TRUE,
   mark_segments=TRUE, segmented...=list(yearly=FALSE, breakpoints...=list(breaks=1)),
-  plot.segmented...=list(col="red"), save_png=TRUE,
-  save_png_dir=save_png_dir)
-
+  plot.segmented...=list(col="red"), save_png=FALSE)
 ```
 
 ![Has recent sea-level rise accelerated?](inst/images/NOAA&#32;Global&#32;Mean&#32;Sea&#32;Level&#32;(anomalies)_1993.1-2017.12_ma0_seg.png)
