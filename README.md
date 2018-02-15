@@ -78,7 +78,7 @@ plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950
 
 ```
 ########################################
-## CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the HadCRUT4 land+SST series.
+## CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the primary land+SST series.
 ## Cf. Fig. 4(a) of Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888
 ########################################
 
@@ -114,7 +114,7 @@ plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, basel
 ```
 ########################################
 ## Estimate optimal number and location of significant changepoints in piecewise regression of climate series.
-## Cf. Figure 1 of Cahill et al. 2015, dx.doi.org/10.1088/1748-9326/10/8/084002.
+## Cf. Figure 1 of Cahill et al. 2015, dx.doi.org/10.1088/1748-9326/10/8/084002
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
@@ -123,12 +123,12 @@ plot_climate_data(inst, series, yearly=TRUE, col=c("red", "purple", "blue", "gre
   save_png=FALSE)
 ```
 
-![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/hadcrut4+ncei+gistemp+cw14__1850.1-recent_yearly_baseline1981-2010_seg.png)
+![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/hadcrut4+ncei+gistemp+cw14_1850.1-recent_yearly_baseline1981-2010_seg.png)
 
 ```
 ########################################
 ## Has recent sea-level rise accelerated?
-## V. https://tamino.wordpress.com/2017/10/24/what-is-sea-level-up-to-lately/.
+## V. https://tamino.wordpress.com/2017/10/24/what-is-sea-level-up-to-lately
 ########################################
 
 inst <- get_climate_data(download=FALSE, baseline=FALSE)
