@@ -287,12 +287,29 @@ get_tidegauge_slr <- function(station_id)
 
 ## Based on the technique described at https://tamino.wordpress.com/2012/01/08/trend-and-cycle-together/.
 #' @export
-remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmonics=4, loess...=list(), unwrap=TRUE, keep_series=TRUE, keep_interpolated=FALSE, keep_loess=FALSE, ...)
+remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmonics=4, loess...=list(), unwrap=TRUE, keep_series=TRUE, keep_interpolated=FALSE, keep_loess=FALSE, is_unc=FALSE, unc_suffix="_uncertainty", fit_unc=FALSE, ...)
 {
-  d <- inst[, c(common_columns, series)]
+  uncertaintyDf <- NULL
+
+  if (!is_unc && exists(series %_% unc_suffix)) {
+    ## Get all arguments of this function to pass on for recursion.
+    recursiveArgs <- get_all_args()
+    recursiveArgs$center <- FALSE
+    recursiveArgs$is_unc <- TRUE
+
+    uncertaintyDf <- do.call(remove_periodic_cycle, recursiveArgs)
+  }
+
+  d <- inst[, c(common_columns, series %_% ifelse(!is_unc, "", unc_suffix))]
   if (unwrap)
-    d <- subset(d, na_unwrap(d[, series]))
-  d[[series %_% " (interpolated)"]] <- drop(interpNA(d[, series], "fmm"))
+    d <- subset(d, na_unwrap(d[, series %_% ifelse(!is_unc, "", unc_suffix)]))
+  if (is_unc && !fit_unc) {
+    d[[series %_% " (anomalies)" %_% unc_suffix]] <- d[[series %_% unc_suffix]]
+
+    return (d)
+  }
+
+  d[[series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)]] <- drop(interpNA(d[, series %_% ifelse(!is_unc, "", unc_suffix)], "fmm"))
 
   if (is.null(period)) { # Estimate period from data.
     spectralDensity <- spectrum(y)
@@ -301,7 +318,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
 
   ## Get residuals from LOESS fit.
   loessArgs = list(
-    formula = eval(substitute(s ~ yr_part, list(s=as.name(series %_% " (interpolated)")))),
+    formula = eval(substitute(s ~ yr_part, list(s=as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix))))),
     data = d,
     span = 0.2
   )
@@ -309,7 +326,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
 
   l <- do.call("loess", loessArgs)
   if (keep_loess)
-    d[[series %_% " (LOESS fit)"]] <- l$fit
+    d[[series %_% " (LOESS fit)" %_% ifelse(!is_unc, "", unc_suffix)]] <- l$fit
   r <- l$resid
 
   ## Construct model formula for given no. of harmonics.
@@ -319,18 +336,21 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
   f <- as.formula(paste0(fBase, paste0(f, collapse=" + ")))
 
   rfit <- lm(f, data=d, ...)
-  uncycled <- d[[series]] - rfit$fit
+  uncycled <- d[[series %_% ifelse(!is_unc, "", unc_suffix)]] - rfit$fit
 
   if (is.logical(center))
-    d[[series %_% " (anomalies)"]] <- scale(uncycled, center=center, scale=FALSE)
+    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center=center, scale=FALSE)
   else
-    d[[series %_% " (anomalies)"]] <- uncycled - mean(uncycled[d$year %in% center], na.rm=TRUE)
+    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm=TRUE)
 
   if (!keep_series)
-    d[[series]] <- NULL
+    d[[series %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
 
   if (!keep_interpolated)
-    d[[series %_% " (interpolated)"]] <- NULL
+    d[[series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
+
+  if (!is.null(uncertaintyDf))
+    d <- merge(d, uncertaintyDf[c("yr_part", get_climate_series_names(uncertaintyDf, conf_int=TRUE))], all.x=TRUE, by="yr_part", sort=TRUE)
 
   d
 }
@@ -1270,7 +1290,38 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
       control = segControl
     )
     segmentedArgs <- modifyList(segmentedArgs, segmented...)
-    r$piecewise[[i]]$sm <- do.call("segmented", segmentedArgs)
+    #r$piecewise[[i]]$sm <- do.call("segmented", segmentedArgs)
+
+    run_segmented <- function()
+    {
+      mf <- model.frame(r$piecewise[[i]]$lm)
+
+      while (TRUE) {
+        withRestarts({
+          sm <- do.call("segmented", segmentedArgs)
+          break
+        },
+          restart = function() {
+            ## Which breakpoint is closest to the start or end of the time series?
+            if (length(segmentedArgs$psi) > 1L)
+              segmentedArgs$psi <<- segmentedArgs$psi[-which.min(pmin(segmentedArgs$psi, NROW(mf) - segmentedArgs$psi + 1))]
+          })
+      }
+
+      sm
+    }
+
+    withCallingHandlers({
+        sm <- run_segmented()
+      },
+        error = function(e) {
+          message("Error: ", e$message)
+          if (any(grepl("one coef is NA: breakpoint(s) at the boundary", e$message, fixed=TRUE)))
+            invokeRestart("restart")
+        }
+    )
+
+    r$piecewise[[i]]$sm <- sm
   }
 
   r

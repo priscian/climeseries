@@ -10,9 +10,10 @@ plot_climate_data(x, series, start = NULL, end = NULL, ma = NULL,
   col = NULL, col_fun = RColorBrewer::brewer.pal, col_fun... = list(name =
   "Paired"), alpha = 0.5, lwd = 2, conf_int = FALSE, ci_alpha = 0.3,
   trend = FALSE, trend_legend_inset = c(0.2, 0.2), loess = FALSE,
-  loess... = list(), get_x_axis_ticks... = list(),
-  make_standardized_plot_filename... = list(), save_png = FALSE,
-  save_png_dir, ...)
+  loess... = list(), get_x_axis_ticks... = list(), segmented = FALSE,
+  segmented... = list(), plot.segmented... = list(),
+  mark_segments = FALSE, make_standardized_plot_filename... = list(),
+  save_png = FALSE, save_png_dir, png... = list(), ...)
 }
 \arguments{
 \item{x}{A data set (down)loaded by function \code{\link{get_climate_data}}.}

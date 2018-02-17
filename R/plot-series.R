@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, make_standardized_plot_filename...=list(), save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -311,8 +311,13 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
       dev_null <- do.call("plot", plot.segmentedArgs)
 
-      if (mark_segments)
-        vline(sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f"))
+      if (mark_segments) {
+        vlineArgs <- list(
+          mark_years = sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f")
+        )
+        vlineArgs <- modifyList(vlineArgs, vline...)
+        do.call("vline", vlineArgs)
+      }
     }
   }
 

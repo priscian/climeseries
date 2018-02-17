@@ -269,6 +269,43 @@ get_dots <- function(..., evaluate=FALSE)
 }
 
 
+## https://stackoverflow.com/a/47955845/931941
+#' @export
+get_all_args <- function(defaults = FALSE) {
+  ## Get formals of parent function.
+  parentFormals <- formals(sys.function(sys.parent(n=1)))
+
+  ## Get names of assumed arguments.
+  hasDots <- FALSE
+  fnames <- names(parentFormals)
+  if (any(fnames == "...")) {
+    hasDots <- TRUE
+    ## Remove '...' from list of parameter names.
+    fnames <- fnames[-which(fnames == "...")]
+  }
+
+  ## Get current values for named variables in the parent frame.
+  a <- evalq(as.list(environment()), envir=parent.frame())
+  a <- a[fnames]
+
+  ## Get the list of variables in '...'.
+  if (hasDots)
+    # a <- c(a, evalq(list(...), envir=parent.frame()))
+    a <- c(a, evalq(get_dots(...)$arguments, envir=parent.frame()))
+
+  if (defaults) {
+    ## Get default values.
+    defArgs <- as.list(parentFormals)
+    defArgs <- defArgs[unlist(lapply(defArgs, FUN=function(x) class(x) != "name"))]
+    a[names(defArgs)] <- defArgs
+    setArgs <- evalq(as.list(match.call())[-1], envir=parent.frame())
+    a[names(setArgs)] <- setArgs
+  }
+
+  a
+}
+
+
 #' @export
 merge_fun_factory <- function(FUN=base::merge, SETDIFF=TRUE, ...)
 {
@@ -388,3 +425,28 @@ vss <- view_only_selected_series
 # vss(e, series)
 # g <- make_yearly_data(e)
 # vss(g, series, with=FALSE)
+
+
+## Compare internal representations of R objects:
+## http://stackoverflow.com/questions/9278715/value-reference-equality-for-same-named-function-in-package-namespace-environmen
+#' @export
+are_same <- function(x, y)
+{
+  f <- function(x) capture.output(.Internal(inspect(x)))
+  all(f(x) == f(y))
+}
+
+
+#' @export
+is_invalid <- function(x, ...)
+{
+  if (missing(x) || is.null(x) || length(x) == 0L)
+    return (TRUE)
+
+  if (is.list(x))
+    return (all(sapply(x, is_invalid)))
+  else if (is.vector(x))
+    return (all(is.na(x)))
+  else
+    return (FALSE)
+}

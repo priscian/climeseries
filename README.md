@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20180214.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20180216.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -127,6 +127,26 @@ plot_climate_data(inst, series, yearly=TRUE, col=c("red", "purple", "blue", "gre
 
 ```
 ########################################
+## Has past sea-level rise accelerated?
+## V. Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1.
+########################################
+
+inst <- get_climate_data(download=FALSE, baseline=FALSE)
+series <- c("CSIRO Reconstructed Global Mean Sea Level")
+g <- remove_periodic_cycle(inst, series, fit_unc=FALSE)
+series_adj <- series %_% " (anomalies)"
+ylab <- "Global Mean Sea Level (mm)"
+main <- "Reconstructed GMSL"
+plot_climate_data(g, series_adj, yearly=TRUE, ylab=ylab, main=main, col="blue", conf_int=TRUE, segmented=TRUE,
+  mark_segments=TRUE, vline...=list(text...=list(y=125)), segmented...=list(yearly=FALSE,
+  breakpoints...=list(h=360, breaks=NULL), seg.control...=list(seed=NULL)), plot.segmented...=list(col="red"),
+  save_png=FALSE)
+```
+
+![Has past sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-anomalies_1880.1-recent_yearly_seg.png)
+
+```
+########################################
 ## Has recent sea-level rise accelerated?
 ## V. https://tamino.wordpress.com/2017/10/24/what-is-sea-level-up-to-lately
 ########################################
@@ -138,7 +158,7 @@ series_adj <- series %_% " (anomalies)"
 ylab <- "Global Mean Sea Level (mm)"
 main <- "GMSL from TOPEX/Poseidon, Jason-1, & Jason-2 Satellite Altimetry"
 plot_climate_data(g, series_adj, ylab=ylab, main=main, col="blue", segmented=TRUE, mark_segments=TRUE,
-  segmented...=list(yearly=FALSE, breakpoints...=list(breaks=1)), plot.segmented...=list(col="red"),
+  segmented...=list(yearly=FALSE, breakpoints...=list(h=120, breaks=NULL)), plot.segmented...=list(col="red"),
   save_png=FALSE)
 ```
 
@@ -152,7 +172,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20180214.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20180216.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
