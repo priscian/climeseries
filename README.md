@@ -139,8 +139,7 @@ ylab <- "Global Mean Sea Level (mm)"
 main <- "Reconstructed GMSL"
 plot_climate_data(g, series_adj, yearly=TRUE, ylab=ylab, main=main, col="blue", conf_int=TRUE, segmented=TRUE,
   mark_segments=TRUE, vline...=list(text...=list(y=125)), segmented...=list(yearly=FALSE,
-  breakpoints...=list(h=360, breaks=NULL)), plot.segmented...=list(col="red"), save_png=TRUE,
-  png...=list(filename=paste(save_png_dir, "csiro-reconstructed-gmsl-anomalies_1880.1-recent_yearly_seg.png", sep="/")))
+  breakpoints...=list(h=360, breaks=NULL)), plot.segmented...=list(col="red"), save_png=FALSE)
 ```
 
 ![Has past sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-anomalies_1880.1-recent_yearly_seg.png)
