@@ -291,7 +291,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
 {
   uncertaintyDf <- NULL
 
-  if (!is_unc && exists(series %_% unc_suffix)) {
+  if (!is_unc && !is_invalid(inst[[series %_% unc_suffix]])) {
     ## Get all arguments of this function to pass on for recursion.
     recursiveArgs <- get_all_args()
     recursiveArgs$center <- FALSE
