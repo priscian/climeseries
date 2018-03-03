@@ -274,6 +274,24 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `JMA Global` = (function(p) {
       x <- NULL
 
+      skip <- 1L
+
+      tryCatch({
+        x <- read.csv(p, header=FALSE, skip=skip, check.names=FALSE)
+      }, error=Error, warning=Error)
+
+      flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
+      for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+      flit <- dplyr::arrange(flit, V1, month)
+
+      d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+
+      return (d)
+    })(path),
+
+    `JMA Global (gridded)` = (function(p) {
+      x <- NULL
+
       skip <- 0L
 
       tryCatch({
@@ -867,7 +885,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       x <- NULL
 
       tryCatch({
-        flit <- readLines(p)
+        flit <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
         flit <- flit[trimws(flit) != ""]
         flit <- flit[grep("^\\d{4}\\t", flit, perl=TRUE)]
         x <- read.delim(header=FALSE, skip=0L, text=flit, check.names=FALSE)
@@ -1015,12 +1033,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `ESRL AMO` = (function(p) {
       x <- NULL
 
-      skip <- 1L
+      skip <- 0L
 
       tryCatch({
-        flit <- trimws(readLines(p))
-        flit <- flit[flit != ""]
-        flit <- flit[grep("^\\d{4}\\s", flit, perl=TRUE)]
+        flit <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
+        flit <- trimws(flit[grep("^\\s\\d{4}\\s", flit, perl=TRUE)])
         x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
@@ -1039,15 +1056,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
       else currentMonth <- currentMonth - 1
 
-      if (currentMonth != 12) pp <- p$`1-11` else pp <- p$`12`
-
-      uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, pp))
+      uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
       if (!url.exists(uri)) { ## Does the previous month's data exist?
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
         else currentMonth <- currentMonth - 1
 
-        if (currentMonth != 12) pp <- p$`1-11` else pp <- p$`12`
-        uri <- sub("@@MONTHNUM@@", currentMonth, sub("@@YEARNUM@@", currentYear, pp))
+        uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
         if (!url.exists(uri)) ## ... and if not, does the month before that exist?
           return (NULL)
       }

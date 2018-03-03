@@ -1281,7 +1281,7 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
     seg.controlArgs <- modifyList(seg.controlArgs, seg.control...)
     segControl <- do.call("seg.control", seg.controlArgs)
 
-    r$piecewise[[i]]$lm <- lm(breakpointsArgs$formula, data=h)
+    r$piecewise[[i]]$lm <- lm(breakpointsArgs$formula, data=h, x=TRUE, y=TRUE)
 
     segmentedArgs <- list(
       obj = r$piecewise[[i]]$lm,

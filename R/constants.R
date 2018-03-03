@@ -77,14 +77,14 @@ nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/R
 data_urls <- list(
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
-  `ERA-Interim 2m` = list(path=list(`1-11`=eraInterim2mTempBase %_% "Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt", `12`=eraInterim2mTempBase %_% "ts_1month_anom_ei_T2_197901-@@YEARNUM@@12.txt"), type="temperature"),
+  #`ERA-Interim 2m` = list(path=list(`1-11`=eraInterim2mTempBase %_% "Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt", `12`=eraInterim2mTempBase %_% "ts_1month_anom_ei_T2_197901-@@YEARNUM@@12.txt"), type="temperature"),
+  `ERA-Interim 2m` = eraInterim2mTempBase %_% "ts_1month_anom_ei_T2_197901-@@YEARNUM@@@@MONTHNUM@@.txt",
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
   `Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei/table.html", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  ## TODO: These files names have dates in them, so I'll need to eventually get the name dynamically.
   `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_", type="land ice"),
   `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_", type="land ice"),
   `Ocean Mass Variation` = list(path=nasaLandIceMassBase %_% "ocean_mass_", type="ocean mass"),
@@ -115,6 +115,8 @@ data_urls <- list(
   `NCEI US PHDI` = list(path=nceiBase %_% "us/110/00/phdi" %_% nceiUsMonthly, type="drought"),
   `NCEI US PMDI` = list(path=nceiBase %_% "us/110/00/pmdi" %_% nceiUsMonthly, type="drought"),
   `NCEI US Palmer Z-Index` = list(path=nceiBase %_% "us/110/00/zndx" %_% nceiUsMonthly, type="drought"),
+  ## USCRN (individual sites)
+  ## https://www1.ncdc.noaa.gov/pub/data/uscrn/products/monthly01/
   ## ERSSTv4
   ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## ERSSTv5
@@ -140,8 +142,8 @@ data_urls <- list(
   #`BEST Antarctica` = bestBase %_% "Regional/TAVG/Text/antarctica-TAVG-Trend.txt", # Currently has all missing values for monthly anomalies.
   `BEST Greenland` = bestBase %_% "Regional/TAVG/Text/greenland-TAVG-Trend.txt",
   # http://berkeleyearth.org/data/
-  ## JMA
-  `JMA Global` = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/grid/gst_mon_1891_last.gz",
+  `JMA Global` = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/list/csv/mon_wld.csv",
+  #`JMA Global (gridded)` = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/grid/gst_mon_1891_last.gz",
   ## NOAA STAR? https://www.star.nesdis.noaa.gov/smcd/emb/mscat/products.php
   ## RSS
   `RSS TLS 3.3` = rssBase %_% rssTls %_% "Land_and_Ocean_v03_3.txt",
@@ -191,8 +193,8 @@ data_urls <- list(
   ## CO2
   `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   `CO2 NOAA ESRL` = list(path="ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt", type="CO2"),
-  ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
   `CO2 Cape Grim` = list(path="http://capegrim.csiro.au/GreenhouseGas/data/CapeGrim_CO2_data_download.csv", type="CO2"),
+  ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
   `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
   `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),
@@ -206,8 +208,6 @@ data_urls <- list(
   # http://www.sidc.be/silso/datafiles
   # https://www.ngdc.noaa.gov/stp/solar/ssndata.html
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"), # Not updated monthly!
-  ## Use this one (which however includes multiple satellites and some repeated dates):
-  # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv
   `NOAA Global Mean Sea Level` = list(path="https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv", type="sea level"),
   `CSIRO Reconstructed Global Mean Sea Level` = list(path="http://www.cmar.csiro.au/sealevel/downloads/church_white_gmsl_2011_up.zip", type="sea level"),
   # ftp://podaac.jpl.nasa.gov/allData/merged_alt/L2/TP_J1_OSTM/global_mean_sea_level/GMSL_TPJAOS_V4_199209_201704.txt
@@ -224,6 +224,7 @@ data_urls <- list(
   # Methane: https://www.esrl.noaa.gov/gmd/ccgg/trends_ch4/
   # Latest TSI: http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt
   # NOAA STAR: ftp://ftp.star.nesdis.noaa.gov/pub/smcd/emb/mscat/data/MSU_AMSU_v4.0/Monthly_Atmospheric_Layer_Mean_Temperature/
+  # MASIE sea ice: ftp://sidads.colorado.edu/DATASETS/NOAA/G02186/masie_4km_allyears_extent_sqkm.csv
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.
