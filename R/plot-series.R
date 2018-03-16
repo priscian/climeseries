@@ -261,6 +261,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     }
   }
 
+  r <- list()
+
   ## Decadal linear trends.
   if (trend) {
     m <- list()
@@ -284,6 +286,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
     if (!is.null(trend_legend_inset))
       legend("bottomright", inset=trend_legend_inset, legend=legendText, col=m$col, lwd=2, bty="n", cex=0.8)
+
+    r$trend <- m
   }
 
   if (segmented) {
@@ -319,6 +323,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         do.call("vline", vlineArgs)
       }
     }
+
+    r$segmented <- sm
   }
 
   if (save_png)
@@ -326,8 +332,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   cat("Standardized file name:", filename, fill=TRUE); flush.console()
 
-  if (trend)
-    return (invisible(m))
+  if (length(r) > 0L)
+    return (invisible(r))
 
   return (nop())
 }

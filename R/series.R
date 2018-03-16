@@ -277,7 +277,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 1L
 
       tryCatch({
-        x <- read.csv(p, header=FALSE, skip=skip, check.names=FALSE)
+        flit <- gsub("\\*", "", readLines(p), fixed=FALSE)
+        x <- read.csv(text=flit, header=FALSE, skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
 
       flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
