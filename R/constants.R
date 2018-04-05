@@ -219,6 +219,7 @@ data_urls <- list(
   # https://climatedataguide.ucar.edu/climate-data/ocean-temperature-analysis-and-heat-content-estimate-institute-atmospheric-physics
   # https://www.ncdc.noaa.gov/snow-and-ice/
   # https://www.ncdc.noaa.gov/teleconnections/pdo/data.csv
+  # http://research.jisao.washington.edu/pdo/PDO.latest.txt / ftp://ftp.atmos.washington.edu/mantua/pnw_impacts/INDICES/PDO.latest
   # NINO indices: http://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices
   # CONUS tornadoes: http://www.spc.noaa.gov/wcm/data/1950-2016_all_tornadoes.csv
   # Methane: https://www.esrl.noaa.gov/gmd/ccgg/trends_ch4/
