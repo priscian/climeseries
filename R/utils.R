@@ -399,9 +399,23 @@ dataframe <- function (..., row.names=NULL, check.rows=FALSE, check.names=FALSE,
 
 
 #' @export
-only_selected_series <- function(x, series, ...)
+char_sort <- function(x, s)
 {
-  x[, c(intersect(names(x), c(common_columns, series))), ...]
+  x[which(x %in% s)] <- s[which(s %in% x)]
+
+  x
+}
+
+
+#' @export
+only_selected_series <- function(x, series, sort = FALSE, ...)
+{
+  colNames <- c(intersect(names(x), c(common_columns, series)))
+  if (!sort)
+    colNames <- char_sort(colNames, series)
+  r <- x[, colNames, ...]
+
+  r
 }
 
 #' @export

@@ -926,10 +926,10 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 
 
 #' @export
-make_yearly_data <- function(x, na_rm=TRUE, unwrap=TRUE)
+make_yearly_data <- function(x, na_rm=TRUE, unwrap=TRUE, baseline=FALSE)
 {
   if (missing(x))
-    x <- get_climate_data(download=FALSE, baseline=FALSE)
+    x <- get_climate_data(download=FALSE, baseline=baseline)
 
   r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by=year]
   if (unwrap)

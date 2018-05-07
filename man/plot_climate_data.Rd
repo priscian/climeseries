@@ -12,8 +12,10 @@ plot_climate_data(x, series, start = NULL, end = NULL, ma = NULL,
   trend = FALSE, trend_legend_inset = c(0.2, 0.2), loess = FALSE,
   loess... = list(), get_x_axis_ticks... = list(), segmented = FALSE,
   segmented... = list(), plot.segmented... = list(),
-  mark_segments = FALSE, make_standardized_plot_filename... = list(),
-  save_png = FALSE, save_png_dir, png... = list(), ...)
+  mark_segments = FALSE, vline... = list(),
+  make_standardized_plot_filename... = list(), start_callback = NULL,
+  end_callback = NULL, save_png = FALSE, save_png_dir, png... = list(),
+  ...)
 }
 \arguments{
 \item{x}{A data set (down)loaded by function \code{\link{get_climate_data}}.}

@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -225,6 +225,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
   abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
 
+  if (!is.null(start_callback))
+    eval(start_callback)
+
   if (conf_int) { # Plot confidence bands for temp series that have them.
     confintNames <- intersect(series %_% "_uncertainty", colnames(w))
     if (length(confintNames) != 0L) {
@@ -327,6 +330,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     r$segmented <- sm
   }
 
+  if (!is.null(end_callback))
+    eval(end_callback)
+
   if (save_png)
     dev.off()
 
@@ -340,7 +346,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
 
 ## Make a standardized file name. Primarily for internal use in 'plot_climate_data()' and 'plot_models_and_climate_data()'.
-make_standardized_plot_filename <- function(x, conf_int, ma, ma_i, yearly, range, baseline, loess, trend, segmented, series_max_length=Inf, series_override, series_sep="+", sep="_", conf_int_id=".ci", loess_id="loess", trend_id="trend", segmented_id="seg", ext="png", model_details)
+make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_int, ma, ma_i, yearly, range, baseline, loess, trend, segmented, series_max_length=Inf, series_override, series_sep="+", sep="_", conf_int_id=".ci", loess_id="loess", trend_id="trend", segmented_id="seg", ext="png", model_details)
 {
   modelString <- NULL
   if (!missing(model_details))
@@ -412,7 +418,7 @@ make_standardized_plot_filename <- function(x, conf_int, ma, ma_i, yearly, range
   if (segmented)
     parts$segmented <- segmented_id
 
-  r <- paste(paste(parts, collapse=sep), ext, sep=".")
+  r <- paste(paste0(prefix, paste(parts, collapse=sep), suffix), ext, sep=".")
 
   r
 }
@@ -582,7 +588,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -774,6 +780,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
   abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
 
+  if (!is.null(start_callback))
+    eval(start_callback)
+
   ## Plot model averages.
   year <- as.numeric(attr(wmz, "index"))
   modelsMiddle <- by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv) }) })
@@ -903,6 +912,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   )
   legendArgs <- modifyList(legendArgs, legend...)
   do.call("legend", legendArgs)
+
+  if (!is.null(end_callback))
+    eval(end_callback)
 
   if (save_png)
     dev.off()

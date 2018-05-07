@@ -15,8 +15,9 @@ plot_models_and_climate_data(instrumental, models, series = NULL,
   legend... = list(), plot_i... = list(),
   col_i_fun = RColorBrewer::brewer.pal, col_i_fun... = list(name =
   "Paired"), alpha_i = 0.5, conf_int_i = FALSE, ci_alpha_i = 0.3,
-  make_standardized_plot_filename... = list(), save_png = FALSE,
-  save_png_dir, png... = list(), ...)
+  make_standardized_plot_filename... = list(), start_callback = NULL,
+  end_callback = NULL, save_png = FALSE, save_png_dir, png... = list(),
+  ...)
 }
 \arguments{
 \item{instrumental}{An instrumental-temperature dataset (down)loaded by function \code{\link{get_climate_data}}.}
