@@ -355,7 +355,7 @@ parse_one <- function(res, result)
 
 ## Code "borrowed" from 'MESS::auc()' (https://cran.r-project.org/web/packages/MESS/).
 #' @export
-integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear"), absolutearea=FALSE, ...)
+integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear"), absolutearea=FALSE, integrate...=list(), ...)
 {
   type <- match.arg(type)
   if (length(x) != length(y))
@@ -377,7 +377,15 @@ integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear")
         abs(splinefun(x, y, method="natural"))
       }
     else myfunction <- splinefun(x, y, method="natural")
-    res <- integrate(myfunction, lower=from, upper=to)$value
+
+    integrateArgs <- list(
+      f = myfunction,
+      lower = from,
+      upper = to
+    )
+    integrateArgs <- modifyList(integrateArgs, integrate...)
+    res <- do.call("integrate", integrateArgs)
+    #res <- integrate(myfunction, lower=from, upper=to)$value
   }
 
   res
