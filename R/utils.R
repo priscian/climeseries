@@ -153,6 +153,24 @@ shift.data.frame <- function(x, i, ...)
 
 
 #' @export
+nearest <- function(v, x, value = FALSE)
+{
+  d <- data.table(v, value = v)
+  setattr(d, "sorted", "v")
+  setkey(d, v) # Sort the data
+
+  ## Binary search
+  m <- d[J(x), roll = "nearest"]$value
+
+  l <- which(v == m)
+
+  if (value)
+    v[l]
+  else
+    l
+}
+
+#' @export
 nearest_below <- function(v, x, value=FALSE) { l <- which(v == max(v[(v < x)])); if (value) v[l] else l }
 
 #' @export

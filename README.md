@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20180603.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20180625.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -70,7 +70,7 @@ plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, 
 
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 cmip5 <- get_models_data(ensemble="cmip5")
-plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950, end=2100, ma=12,
+plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950, end=2100.99, ma=12,
   baseline=1981:2010, center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5), save_png=FALSE)
 ```
 
@@ -86,7 +86,7 @@ inst <- get_climate_data(download=FALSE, baseline=TRUE)
 cmip5 <- get_models_data(ensemble="cmip5", subdir="tas + tos")
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global")
-plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020, yearly=TRUE,
+plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020.99, yearly=TRUE,
   ma=12, baseline=1970:2000, scenario_text="Scenario TAS + TOS Realizations", center_fun="mean",
   smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE,
   save_png=FALSE)
@@ -171,7 +171,7 @@ library(help=climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20180603.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20180625.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:

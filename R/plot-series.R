@@ -95,12 +95,14 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   y <- make_time_series_from_anomalies(x, conf_int=TRUE)
   ## Get date range of 'y' before it's converted to a yearly time series.
-  flit <- window(y, start, end, extend=TRUE)
-  textRange <- paste(paste(start(flit), collapse="."), paste(end(flit), collapse="."), sep="-"); flit <- NULL
+  flit <- window_ts(y, start, end, extend=TRUE)
+  startTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[1], "above")
+  endTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
+  textRange <- paste(paste(startTS_abo, collapse="."), paste(endTS_abo, collapse="."), sep="-"); flit <- NULL
   if (yearly) {
     y <- make_yearly_data(y)
     y$yr_part <- y$year
-    y <- ts(y, min(y$year, na.rm=TRUE), frequency=1)
+    y <- make_time_series_from_anomalies(y, frequency=1L, conf_int=conf_int)
     ma <- NULL
   }
   w <- interpNA(y, "linear", unwrap=TRUE)
@@ -108,8 +110,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   climateSeriesNames <- setdiff(allNames, common_columns)
   w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma)
   ## [13 Oct. 2017] Make sure to window the time series only AFTER applying the moving average.
-  y <- window(y, start, end, extend=TRUE)
-  w <- window(w, start, end, extend=TRUE)
+  y <- window_ts(y, start, end, extend=TRUE)
+  w <- window_ts(w, start, end, extend=TRUE)
   maText <- ""
   if (!is.null(ma))
     maText <- "(" %_% ma %_% "-month moving average)"
@@ -124,10 +126,11 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (is.null(main))
     main <- "Average Temperature"
 
-  startTS <- start(w); endTS <- end(w)
+  startTS <- nearest_year_month_from_numeric(w[, "yr_part"], tsp(w)[1], "above")
+  endTS <- nearest_year_month_from_numeric(w[, "yr_part"], tsp(w)[2], "below")
 
   if (yearly)
-    main <- paste(main, " (", sprintf("%04d", startTS[1L]), "\u2013", sprintf("%04d", endTS[1L]), ")", sep="")
+    main <- paste(main, " (", sprintf("%04d", startTS_abo[1L]), "\u2013", sprintf("%04d", endTS_abo[1L]), ")", sep="")
   else
     main <- paste(main, " (", MOS[startTS[2L]], ". ", sprintf("%04d", startTS[1L]), "\u2013", MOS[endTS[2L]], ". ", sprintf("%04d", endTS[1L]), ")", sep="")
 
@@ -382,6 +385,9 @@ make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_in
 
     ## Replace character incompatible with the OS file system.
     seriesString <- gsub("\\/", "\\-", seriesString)
+
+    startTS <- nearest_year_month_from_numeric(x[, "yr_part"], tsp(x)[1], "above")
+    endTS <- nearest_year_month_from_numeric(x[, "yr_part"], tsp(x)[2], "below")
   }
 
   parts <- list()
@@ -392,7 +398,7 @@ make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_in
     parts$series <- series_override
 
   if (missing(range))
-    parts$range <- paste(paste(start(x), collapse="."), paste(end(x), collapse="."), sep="-")
+    parts$range <- paste(paste(startTS, collapse="."), paste(endTS, collapse="."), sep="-")
   else
     parts$range <- range
 
@@ -636,17 +642,16 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   m <- make_time_series_from_anomalies(models)
   i <- make_time_series_from_anomalies(instrumental, conf_int=TRUE)
-  flit <- m
 
   if (yearly) {
     i <- make_yearly_data(i)
     i$yr_part <- i$year
-    i <- ts(i, min(i$year, na.rm=TRUE), frequency=1)
+    i <- make_time_series_from_anomalies(i, frequency=1)
     ma_i <- NULL
 
     m <- make_yearly_data(m)
     m$yr_part <- m$year
-    m <- ts(m, min(m$year, na.rm=TRUE), frequency=1)
+    m <- make_time_series_from_anomalies(m, frequency=1)
     ma <- NULL
   }
 
@@ -659,15 +664,16 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   }
   wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm), drop=FALSE], ma)
 
-  m <- window(m, start[1], end[1], extend=TRUE) # Not necessary?
-  wm <- window(wm, start[1], end[1], extend=TRUE)
-  startTS <- start(m); endTS <- end(m)
-  i <- window(i, startTS, endTS, extend=TRUE) # Not necessary?
-  wi <- window(wi, startTS, endTS, extend=TRUE)
-
   ## Get date range of 'i' before it was converted to a yearly time series.
-  flit <- window(flit, start[1], end[1], extend=TRUE)
-  textRange <- paste(paste(start(flit), collapse="."), paste(end(flit), collapse="."), sep="-"); flit <- NULL
+  flit <- window_ts(m, start[1], end[1], extend=TRUE)
+  startTS <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[1], "above")
+  endTS <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
+  textRange <- paste(paste(startTS, collapse="."), paste(endTS, collapse="."), sep="-"); flit <- NULL
+
+  m <- window_ts(m, start[1], end[1], extend=TRUE) # Not necessary?
+  wm <- window_ts(wm, start[1], end[1], extend=TRUE)
+  i <- window_ts(i, start[1], end[1], extend=TRUE) # Not necessary?
+  wi <- window_ts(wi, start[1], end[1], extend=TRUE)
 
   maText <- ma_iText <- ""
   if (!is.null(ma))

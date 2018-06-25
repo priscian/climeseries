@@ -111,9 +111,10 @@ data_urls <- list(
   `NCEI US Max. Temp.` = nceiBase %_% "us/110/00/tmax" %_% nceiUsMonthly,
   `NCEI US Min. Temp.` = nceiBase %_% "us/110/00/tmin" %_% nceiUsMonthly,
   `NCEI US Precip.` = list(path=nceiBase %_% "us/110/00/pcp" %_% nceiUsMonthly, type="precipitation"),
-  `NCEI US PDSI` = list(path=nceiBase %_% "us/110/00/pdsi" %_% nceiUsMonthly, type="drought"),
-  `NCEI US PHDI` = list(path=nceiBase %_% "us/110/00/phdi" %_% nceiUsMonthly, type="drought"),
-  `NCEI US PMDI` = list(path=nceiBase %_% "us/110/00/pmdi" %_% nceiUsMonthly, type="drought"),
+  ## N.B. Restore these for the second update in July! (URLs may change.)
+  #`NCEI US PDSI` = list(path=nceiBase %_% "us/110/00/pdsi" %_% nceiUsMonthly, type="drought"),
+  #`NCEI US PHDI` = list(path=nceiBase %_% "us/110/00/phdi" %_% nceiUsMonthly, type="drought"),
+  #`NCEI US PMDI` = list(path=nceiBase %_% "us/110/00/pmdi" %_% nceiUsMonthly, type="drought"),
   `NCEI US Palmer Z-Index` = list(path=nceiBase %_% "us/110/00/zndx" %_% nceiUsMonthly, type="drought"),
   ## USCRN (individual sites)
   ## https://www1.ncdc.noaa.gov/pub/data/uscrn/products/monthly01/

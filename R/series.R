@@ -1530,16 +1530,41 @@ recenter_anomalies <- function(x, baseline=defaultBaseline, digits=4L, by_month=
 #' @return An object of class \code{\link[stats]{ts}}.
 #'
 #' @export
-make_time_series_from_anomalies <- function(x, frequency=12L, ...)
+make_time_series_from_anomalies <- function(x, frequency = 12L, offset = 0.5, ...)
 {
   if (is.ts(x))
     return (x)
 
-  d <- x[, c(common_columns, get_climate_series_names(x, ...)), drop=FALSE]
+  startTime <- switch(as.character(frequency),
+    `1` = (function() {
+      if (is.matrix (x))
+        r <- min(x[, "year"], na.rm = TRUE)
+      else
+        r <- min(x$year, na.rm = TRUE)
 
-  startTime <- unlist(x[1L, c("year", "month")])
+      r
+    })(),
 
-  s <- ts(d, start=startTime, frequency=frequency)
+    `12` = (function() {
+      r <- unlist(x[1L, c("year", "month")])
+      r[2] <- r[2] + offset
+
+      r
+    })()
+  )
+
+  s <- ts(x, start = startTime, frequency = frequency)
 
   return (s)
+}
+
+
+## Correctly 'window()' time series on standard 'yr_part' values.
+#' @export
+window_ts <- function(x, start = NULL, end = NULL, ...)
+{
+  z <- window_default(x, start, end, ...)
+  z[, "yr_part"] <- time(z)
+
+  z
 }

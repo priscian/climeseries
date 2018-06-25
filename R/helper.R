@@ -825,7 +825,7 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", daily_f
 
           ## Calculate vertical column integral of aerosol extinction.
           if (!all(is.na(y))) {
-            r <- integratex(attr(y, "alt"), y)
+            r <- integratex(attr(y, "alt"), y)$value
             ## Boucher - Atmospheric Aerosols--Properties and Climate Impacts (2015), p. 44 (Eq. 3.31):
             ## τ = τ_r × (λ / λ_r)^-α; λ = 550 nm, λ_r = 750 nm, τ_r is OSIRIS value, α = 2.3 (v. Rieger et al. 2015)
             ##   = τ_r × 2.04, where τ_r is aerosol extinction integrated from 15–35 km
@@ -1323,6 +1323,33 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
 
     r$piecewise[[i]]$sm <- sm
   }
+
+  r
+}
+
+
+#' @export
+nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("nearest", "above", "below"), as_data_frame = FALSE)
+{
+  nearest_type <- match.arg(nearest_type)
+
+  r <- range(yr_part)
+  x <- x[1]
+  flit <- expand.grid(month=1:12, year=seq(floor(r[1]), floor(r[2]), by=1))
+  flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+  flit <- flit[flit$yr_part >= r[1] & flit$yr_part <= r[2], ]
+
+  egrid <- switch(nearest_type,
+    `above` = flit[flit$yr_part >= x, ],
+
+    `below` = flit[flit$yr_part <= x, ],
+
+    flit
+  )
+
+  r <- egrid[nearest(egrid$yr_part, x), c("year", "month")]
+  if (!as_data_frame)
+    r <- unlist(r)
 
   r
 }
