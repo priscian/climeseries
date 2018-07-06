@@ -1062,9 +1062,14 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
         else currentMonth <- currentMonth - 1
 
-        uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
-        if (!url.exists(uri)) ## ... and if not, does the month before that exist?
-          return (NULL)
+        if (!url.exists(uri)) { ## Does the previous month's data exist?
+          if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
+          else currentMonth <- currentMonth - 1
+
+          uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
+          if (!url.exists(uri)) ## ... and if not, does the month before that exist?
+            return (NULL)
+        }
       }
 
       x <- NULL
@@ -1499,6 +1504,7 @@ recenter_anomalies <- function(x, baseline=defaultBaseline, digits=4L, by_month=
     if (by_month) {
       bma <- tapply(flit[[i]], flit$month, mean, na.rm=TRUE)
       base <- rep(NA_real_, nrow(x))
+      ## N.B. This next step is both a time & memory sink, the latter being more problematic; optimize it!
       null <- sapply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x$month == s] <<- v }); null <- NULL
     }
     else { # By year.

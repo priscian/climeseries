@@ -643,6 +643,12 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   m <- make_time_series_from_anomalies(models)
   i <- make_time_series_from_anomalies(instrumental, conf_int=TRUE)
 
+  ## Get date range of 'i' before it was converted to a yearly time series.
+  flit <- window_ts(m, start[1], end[1], extend=TRUE)
+  startTS <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[1], "above")
+  endTS <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
+  textRange <- paste(paste(startTS, collapse="."), paste(endTS, collapse="."), sep="-"); flit <- NULL
+
   if (yearly) {
     i <- make_yearly_data(i)
     i$yr_part <- i$year
@@ -663,12 +669,6 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames, drop=FALSE], ma_i)
   }
   wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm), drop=FALSE], ma)
-
-  ## Get date range of 'i' before it was converted to a yearly time series.
-  flit <- window_ts(m, start[1], end[1], extend=TRUE)
-  startTS <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[1], "above")
-  endTS <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
-  textRange <- paste(paste(startTS, collapse="."), paste(endTS, collapse="."), sep="-"); flit <- NULL
 
   m <- window_ts(m, start[1], end[1], extend=TRUE) # Not necessary?
   wm <- window_ts(wm, start[1], end[1], extend=TRUE)
@@ -699,7 +699,12 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   xlab <- "Year"
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l), unit, ")", b, sep="")), list(b=baselineText, unit=unit)))
-  main <- paste(ensemble, " ", scenario_text, " (", startTS[1], "\u2013", endTS[1], ")", sep="")
+  main <- paste(ensemble, " ", scenario_text, sep="")
+  if (yearly)
+    main <- paste(main, " (", sprintf("%04d", startTS[1L]), "\u2013", sprintf("%04d", endTS[1L]), ")", sep="")
+  else
+    main <- paste(main, " (", MOS[startTS[2L]], ". ", sprintf("%04d", startTS[1L]), "\u2013", MOS[endTS[2L]], ". ", sprintf("%04d", endTS[1L]), ")", sep="")
+
 
   GetXAxisTicks <- function(min=1800, max=3000, by=10)
   {
