@@ -175,6 +175,7 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
   #tryCatch({
     r <- httr::content(httr::GET(uri), "text", encoding="ISO-8859-1")
     r <- gsub("*****", " ****", r, fixed=TRUE)
+    r <- gsub("****", " ***", r, fixed=TRUE)
     r <- gsub("^\\D+.*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
     x <- read.table(text=r, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
   #}, error=Error, warning=Error)
