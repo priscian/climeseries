@@ -1062,6 +1062,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
         else currentMonth <- currentMonth - 1
 
+        uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
         if (!url.exists(uri)) { ## Does the previous month's data exist?
           if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
           else currentMonth <- currentMonth - 1
@@ -1074,12 +1075,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       x <- NULL
 
-      skip <- 1
+      skip <- 2
 
       tryCatch({
         flit <- trimws(readLines(uri))
         flit <- flit[flit != ""]
-        x <- read.csv(header=TRUE, skip=skip, text=flit, check.names=FALSE)
+        x <- read.csv(header=FALSE, skip=skip, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
@@ -1088,7 +1089,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       monthValue <- as.numeric(dateMatches[, 3L])
 
       d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
-      flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
+      #flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
+      flit <- x[, -1]; colnames(flit) <- paste(series, c("Global", "European"))
       d <- cbind(d, flit)
 
       return (d)
