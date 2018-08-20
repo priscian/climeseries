@@ -122,6 +122,7 @@ data_urls <- list(
   ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## ERSSTv5
   ## https://www.ncdc.noaa.gov/data-access/marineocean-data/extended-reconstructed-sea-surface-temperature-ersst-v5
+  ## Single file: ftp://ftp.cdc.noaa.gov/Datasets/noaa.ersst.v5/sst.mnmean.nc
   ## Hadley
   `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_ns_avg.txt",
   `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_sh.txt",

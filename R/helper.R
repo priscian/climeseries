@@ -454,9 +454,12 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Ma
     x <- create_aggregate_variable(x, c("TSI Reconstructed", "SORCE TSI"), "TSI Aggregate Global", type="head")
   }
 
-  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global (interp.)", type="head")
+  aggregateName <- "CO2 Aggregate Global"
+  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name=aggregateName %_% " (interp.)", type="head")
+  x[["log " %_% aggregateName %_% " (interp.)"]] <- log(x[[aggregateName %_% " (interp.)"]])
   x$`CO2 Law Dome` <- NULL
-  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name="CO2 Aggregate Global", interpolate=FALSE)
+  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name=aggregateName, interpolate=FALSE)
+  x[["log " %_% aggregateName]] <- log(x[[aggregateName]])
 
   x
 }
@@ -474,21 +477,22 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Ma
 #' @export
 remove_exogenous_influences <- function(x, series,
   start = NULL, end = NULL,
-  lags = list(`MEI Aggregate Global`=NULL, `SAOD Aggregate Global`=NULL, `TSI Aggregate Global`=NULL),
+  lags = list(`MEI Aggregate Global` = NULL, `SAOD Aggregate Global` = NULL, `TSI Aggregate Global` = NULL),
   aggregate_vars_fun = add_default_aggregate_variables,
   period = 1, num_harmonics = 4,
-  max_lag = 12, bs_df = NULL, bs_degree = 3)
+  max_lag = 12, bs_df = NULL, bs_degree = 3,
+  suffix = " (adj.)")
 {
   if (missing(x))
-    x <- get_climate_data(download=FALSE, baseline=FALSE)
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
 
   x <- aggregate_vars_fun(x)
 
   lagsDf <- NULL
 
   for (i in series) {
-    startYrPart <- min(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
-    endYrPart <- max(x$yr_part[na_unwrap(x[[i]])], na.rm=TRUE)
+    startYrPart <- min(x$yr_part[na_unwrap(x[[i]])], na.rm = TRUE)
+    endYrPart <- max(x$yr_part[na_unwrap(x[[i]])], na.rm = TRUE)
     if (!is.null(start)) startYrPart <- max(start, startYrPart)
     if (!is.null(end)) endYrPart <- min(end, endYrPart)
 
@@ -506,20 +510,20 @@ remove_exogenous_influences <- function(x, series,
 
     ## Construct model formula for given no. of harmonics.
     flitSeries <- x[[i]]
-    x[[i]] <- interpNA(x[[i]], type="tail")
+    x[[i]] <- interpNA(x[[i]], type = "tail")
     fBase <- backtick(i) %_% "~"; form <- NULL
     for (j in seq(num_harmonics))
       form <- c(form, paste0(c("sin", "cos"), paste0("(", 2 * j, " * pi / period * yr_part)")))
-    form <- c(paste0("splines::bs(yr_part - yr_part_offset, df=", bsDf, ", degree=", bs_degree, ")"), backtick(names(lags)), form)
-    form <- as.formula(paste0(fBase, paste0(form, collapse=" + ")))
+    form <- c(paste0("splines::bs(yr_part - yr_part_offset, df = ", bsDf, ", degree=", bs_degree, ")"), backtick(names(lags)), form)
+    form <- as.formula(paste0(fBase, paste0(form, collapse = " + ")))
 
     y <- x[, c(i, "yr_part", names(lags))]
     x[[i]] <- flitSeries
-    l <- expand.grid(sapply(lags, function(a) { r <- seq(0, max_lag); if (!is.null(a)) r <- a; r }, simplify=FALSE))
+    l <- expand.grid(sapply(lags, function(a) { r <- seq(0, max_lag); if (!is.null(a)) r <- a; r }, simplify = FALSE))
     aic <- apply(l, 1,
       function(a) {
         lr <- as.list(unlist(a))
-        z <- shift(y, lr, roll=FALSE)
+        z <- shift(y, lr, roll = FALSE)
         z <- subset(z, z$yr_part >= startYrPart & z$yr_part <= endYrPart)
 
         ## Test the lag combinations to find the model with the lowest AIC.
@@ -527,37 +531,37 @@ remove_exogenous_influences <- function(x, series,
       }
     )
 
-    lagMinAic <- as.list(unlist(l[which.min(aic)[1], ]))
-    z <- shift(y, lagMinAic, roll=FALSE)
+    lagMinAic <- as.list(unlist(l[which.min(aic)[1], , drop = FALSE]))
+    z <- shift(y, lagMinAic, roll = FALSE)
     z <- subset(z, z$yr_part >= startYrPart & z$yr_part <= endYrPart)
     yr_part <- z$yr_part
     ## Interpolate exogenous variables back in time a little for long lags.
     for (j in names(lagMinAic))
-      z[[j]] <- drop(interpNA(z[[j]], type="tail"))
+      z[[j]] <- drop(interpNA(z[[j]], type = "tail"))
     m <- lm(form, z)
     mf <- model.frame(m)
 
     ## Check the fit:
-    # plot(yr_part, mf[[1]], type="l"); lines(yr_part, m$fitted, type="l", col="red"); plot(m$residuals)
+    # plot(yr_part, mf[[1]], type="l"); lines(yr_part, m$fitted, type = "l", col = "red"); plot(m$residuals)
 
     yrPartCoefs <- coef(m)[grep("bs\\(yr_part", names(coef(m)))]
-    yrPartValues <- mf[[grep("bs\\(yr_part", names(mf), value=TRUE)]]
-    adj <- m$residuals + (yrPartValues %*% yrPartCoefs)[, , drop=TRUE] + coef(m)["(Intercept)"]
+    yrPartValues <- mf[[grep("bs\\(yr_part", names(mf), value = TRUE)]]
+    adj <- m$residuals + (yrPartValues %*% yrPartCoefs)[, , drop = TRUE] + coef(m)["(Intercept)"]
     adj <- adj - mean(adj)
 
-    flit <- data.frame(yr_part=yr_part, check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
-    flit[[i %_% " (adj.)"]] <- adj
+    flit <- dataframe(yr_part = yr_part)
+    flit[[i %_% suffix]] <- adj
 
-    lagsDf <- rbind(lagsDf, data.frame(lagMinAic, check.names=FALSE))
+    lagsDf <- rbind(lagsDf, dataframe(lagMinAic))
 
     #browser()
-    x <- merge(x, flit, by="yr_part", all.x=TRUE)
+    x <- merge(x, flit, by = "yr_part", all.x = TRUE)
   }
 
   rownames(lagsDf) <- series
-  cat("Lag values (mos.) of exogenous variables for each series:", fill=TRUE)
-  print(lagsDf, row.names=TRUE)
-  cat(fill=TRUE)
+  cat("Lag values (mos.) of exogenous variables for each series:", fill = TRUE)
+  print(lagsDf, row.names = TRUE)
+  cat(fill = TRUE)
 
   x
 }
