@@ -246,8 +246,12 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     }
   }
 
+  ## Convert to 'zoo' object for plotting.
+  wz <- as.zoo(w)
+
   par(new=TRUE)
-  plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.ts()'.
+  #plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.ts()'.
+  plot(wz[, get_climate_series_names(w, conf_int=FALSE)], screens=1L, plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.zoo()'.
 
   legend(x="topleft", legend=series %_% ifelse(loess, " (+ LOESS)", ""), col=col, lwd=lwd, bty="n", cex=0.8)
 

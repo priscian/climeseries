@@ -116,8 +116,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## Missing values are given as "-9999".
       is.na(d$temp) <- d$temp == -9999
 
-      if (grepl("^NCEI US\\s+.*?Temp.*?$", series)) # US temps given in Fahrenheit.
+      if (grepl("^NCEI US\\s+.*?Temp.*?$", series)) { # US temps given in Fahrenheit.
         d$temp <- fahr_to_celsius(d$temp)
+      }
 
       return (d)
     })(path),

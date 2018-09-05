@@ -229,6 +229,7 @@ data_urls <- list(
   # Latest TSI: http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt
   # NOAA STAR: ftp://ftp.star.nesdis.noaa.gov/pub/smcd/emb/mscat/data/MSU_AMSU_v4.0/Monthly_Atmospheric_Layer_Mean_Temperature/
   # MASIE sea ice: ftp://sidads.colorado.edu/DATASETS/NOAA/G02186/masie_4km_allyears_extent_sqkm.csv
+  # Australia: http://www.bom.gov.au/web01/ncc/www/cli_chg/timeseries/tmean/allmonths/aus/latest.txt
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.

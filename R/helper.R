@@ -435,10 +435,10 @@ create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...)
 
 
 #' @export
-add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Mauna Loa", use_adjusted_tsi=TRUE)
+add_default_aggregate_variables <- function(x, co2_instrumental_variable = "CO2 Mauna Loa", use_adjusted_tsi = TRUE)
 {
-  x <- create_aggregate_variable(x, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index"), "MEI Aggregate Global", type="head")
-  x <- create_aggregate_variable(x, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global"), "SAOD Aggregate Global", type="head")
+  x <- create_aggregate_variable(x, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index"), "MEI Aggregate Global", type = "head")
+  x <- create_aggregate_variable(x, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global"), "SAOD Aggregate Global", type = "head")
 
   ## TSI
   if (use_adjusted_tsi) {
@@ -446,19 +446,20 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Ma
     ## so, shift it up and fill in the monthly details missing from "TSI Reconstructed".
     flit <- make_yearly_data(x[, c(common_columns, "PMOD TSI (new VIRGO)", "SORCE TSI")])
     tsiDifference <- flit$`PMOD TSI (new VIRGO)` - flit$`SORCE TSI`
-    x$`PMOD TSI (new VIRGO adj.)` <- x$`PMOD TSI (new VIRGO)` - mean(tsiDifference, na.rm=TRUE)
-    #x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO)", "SORCE TSI"), "TSI Aggregate Global", type="head")
-    x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO adj.)", "SORCE TSI"), "TSI Aggregate Global", type="head")
+    x$`PMOD TSI (new VIRGO adj.)` <- x$`PMOD TSI (new VIRGO)` - mean(tsiDifference, na.rm = TRUE)
+    #x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO)", "SORCE TSI"), "TSI Aggregate Global", type = "head")
+    x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO adj.)", "SORCE TSI"), "TSI Aggregate Global", type = "head")
   }
   else { # Otherwise, for less monthly detail and less interpolation, just use "Reconstructed" and SORCE.
-    x <- create_aggregate_variable(x, c("TSI Reconstructed", "SORCE TSI"), "TSI Aggregate Global", type="head")
+    x <- create_aggregate_variable(x, c("TSI Reconstructed", "SORCE TSI"), "TSI Aggregate Global", type = "head")
   }
 
   aggregateName <- "CO2 Aggregate Global"
-  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name=aggregateName %_% " (interp.)", type="head")
+  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name = aggregateName %_% " (interp.)", type = "head")
+  #x[["log " %_% aggregateName %_% " (interp.)"]] <- 5.35 * log(x[[aggregateName %_% " (interp.)"]] / 280) # A test.
   x[["log " %_% aggregateName %_% " (interp.)"]] <- log(x[[aggregateName %_% " (interp.)"]])
   x$`CO2 Law Dome` <- NULL
-  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name=aggregateName, interpolate=FALSE)
+  x <- create_aggregate_co2_variable(x, co2_instrumental_variable, aggregate_name = aggregateName, interpolate = FALSE)
   x[["log " %_% aggregateName]] <- log(x[[aggregateName]])
 
   x
@@ -467,9 +468,9 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable="CO2 Ma
 ## usage:
 # e <- get_climate_data(download=FALSE, baseline=FALSE)
 # e <- add_default_aggregate_variables(e)
-# plot_climate_data(e, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index", "MEI Aggregate Global"), 1940, lwd=2)
-# plot_climate_data(e, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global", "SAOD Aggregate Global"), 1985, lwd=2)
-# plot_climate_data(e, c("TSI Reconstructed", "PMOD TSI (new VIRGO)", "TSI Aggregate Global"), 1985, lwd=2)
+# plot_climate_data(e, c("Extended Multivariate ENSO Index", "Multivariate ENSO Index", "MEI Aggregate Global"), 1940, lwd = 2)
+# plot_climate_data(e, c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global", "SAOD Aggregate Global"), 1985, lwd = 2)
+# plot_climate_data(e, c("TSI Reconstructed", "PMOD TSI (new VIRGO)", "TSI Aggregate Global"), 1985, lwd = 2)
 
 
 ## Create temperature series with the influence of some exogenous factors removed.
@@ -487,6 +488,9 @@ remove_exogenous_influences <- function(x, series,
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
   x <- aggregate_vars_fun(x)
+
+  if (length(lags) == 0)
+    return (x)
 
   lagsDf <- NULL
 
@@ -544,9 +548,13 @@ remove_exogenous_influences <- function(x, series,
     ## Check the fit:
     # plot(yr_part, mf[[1]], type="l"); lines(yr_part, m$fitted, type = "l", col = "red"); plot(m$residuals)
 
-    yrPartCoefs <- coef(m)[grep("bs\\(yr_part", names(coef(m)))]
-    yrPartValues <- mf[[grep("bs\\(yr_part", names(mf), value = TRUE)]]
-    adj <- m$residuals + (yrPartValues %*% yrPartCoefs)[, , drop = TRUE] + coef(m)["(Intercept)"]
+    partialCoefsRe <- "bs\\(yr_part"
+    partialCoefs <- coef(m)[grep(partialCoefsRe, names(coef(m)))]
+    partialValuesNames <- grep(partialCoefsRe, names(mf), value = TRUE)
+    partialValuesList <- sapply(partialValuesNames, function(a) data.matrix(mf[[a]]), simplify = FALSE)
+    partialValues <- Reduce(cbind, partialValuesList)
+    partial <- (partialValues %*% partialCoefs)[, , drop = TRUE] + coef(m)["(Intercept)"]
+    adj <- m$residuals + partial
     adj <- adj - mean(adj)
 
     flit <- dataframe(yr_part = yr_part)
@@ -569,18 +577,18 @@ remove_exogenous_influences <- function(x, series,
 ## usage:
 # series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 5.6 Global")
 # start <- 1979; end <- 2011
-# g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
+# g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 # series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
 # h <- make_yearly_data(g[, c(climeseries::common_columns, series_all)])
 # h <- h[year >= start & year < end]
 # ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
 # main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
 # if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
-#   dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
+#   dev.new(width = 12.5, height = 7.3) # New default device of 1200 × 700 px at 96 DPI.
 # for (i in series) {
 #   year_range <- paste0(min(h$year), "\u2013", max(h$year))
-#   plot(h$year, h[[i]], lwd=2, pch=19, type="o", main=paste(i, year_range), xlab="year", ylab=ylab)
-#   plot(h$year, h[[i %_% " (adj.)"]], lwd=2, pch=19, type="o", main=paste(i, year_range, main), xlab="year", ylab=ylab)
+#   plot(h$year, h[[i]], lwd = 2, pch = 19, type = "o", main = paste(i, year_range), xlab = "year", ylab = ylab)
+#   plot(h$year, h[[i %_% " (adj.)"]], lwd = 2, pch = 19, type = "o", main = paste(i, year_range, main), xlab = "year", ylab = ylab)
 # }
 
 
@@ -1358,3 +1366,92 @@ nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("neares
 
   r
 }
+
+
+#' @export
+create_hadcrut4_zonal_data <- function(x,
+  sub_lat = c(-90, 90), sub_long = c(-180, 180),
+  kriged = TRUE,
+  data_dir = getOption("climeseries_data_dir"),
+  hadcrut_url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc",
+  cw_url = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.nc.gz",
+  series_suffix = NULL
+)
+{
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
+
+  if (is.null(data_dir)) data_dir <- getwd()
+
+  if (!kriged) {
+    series <- "HadCRUT4"
+    flit <- basename(hadcrut_url)
+    download.file(hadcrut_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
+  } else {
+    series <- "Cowtan & Way Krig."
+    flit <- basename(cw_url)
+    download.file(cw_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
+    R.utils::gunzip(paste(data_dir, flit, sep = "/"), overwrite = TRUE, remove = FALSE)
+    flit <- basename(tools::file_path_sans_ext(cw_url))
+  }
+  n <- nc_open(paste(data_dir, flit, sep = "/")) # 'print(n)' or just 'n' for details.
+  a <- ncvar_get(n, "temperature_anomaly")
+  ## Structure of 'a' is temperature_anomaly[longitude, latitude, time], 72 × 36 × Inf (monthly since Jan. 1850)
+  lat <- ncvar_get(n, "latitude")
+  long <- ncvar_get(n, "longitude")
+  times <- ncvar_get(n, "time")
+  tunits <- ncatt_get(n,"time", "units")
+  nc_close(n)
+
+  tunits
+  # $value
+  # [1] "days since 1850-1-1 00:00:00"
+  dtimes <- as.Date(times, origin = "1850-01-01")
+  ## This data set should have the same length as the "time" dimension of 'a':
+  h <- dataframe(year = year(dtimes), month = month(dtimes))
+  #h <- dataframe(year = year(dtimes), met_year = NA, month = month(dtimes))
+  #h$yr_part <- h$year + (h$month - 0.5) / 12L
+
+  flit <- apply(a, 3,
+    function(y)
+    {
+      x <- t(y)
+      w <- cos(matrix(rep(lat, ncol(x)), ncol = ncol(x), byrow = FALSE) * (pi / 180)) # Latitude weights.
+
+      ## Use only subgrid for calculations.
+      keepSubGrid <- list(lat = lat >= sub_lat[1] & lat <= sub_lat[2], long = long >= sub_long[1] & long <= sub_long[2])
+      x1 <- x[keepSubGrid$lat, keepSubGrid$long, drop = FALSE]
+      w1 <- w[keepSubGrid$lat, keepSubGrid$long, drop = FALSE]
+
+      nlat <- length(lat[keepSubGrid$lat])
+      temp <- NULL
+      for (i in seq(1L, nrow(x1), by = nlat)) {
+        xi <- data.matrix(x1[i:(i + nlat - 1L), ])
+        tempi <- stats::weighted.mean(xi, w1, na.rm = TRUE)
+
+        temp <- c(temp, tempi)
+      }
+
+      temp
+    })
+  is.na(flit) <- is.nan(flit)
+
+  lat_long_to_text <- function(x, sufs) { suf <- sufs[2]; r <- abs(x); if (x < 0) suf <- sufs[1]; r %_% suf }
+  subLatText <- sapply(sub_lat, lat_long_to_text, sufs = c("S", "N"), simplify = TRUE)
+  subLongText <- sapply(sub_long, lat_long_to_text, sufs = c("W", "E"), simplify = TRUE)
+
+  if (is.null(series_suffix))
+    seriesOut <- paste0(series, " (", paste(subLatText, collapse = "-"), ", ", paste(subLongText, collapse = "-"), ")")
+  else
+    seriesOut <- paste0(series, series_suffix)
+
+  h[[seriesOut]] <- flit
+  x <- merge(x, h, by = c("year", "month"), all = TRUE)
+
+  x
+}
+
+## usage:
+# g <- create_hadcrut4_zonal_data()
+# series <- c("Cowtan & Way Krig. Global", "Cowtan & Way Krig. (90S-90N, 180W-180E)")
+# plot_climate_data(g, series, yearly = TRUE) # These should overlap entirely.
