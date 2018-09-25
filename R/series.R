@@ -1055,23 +1055,20 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
     `ERA-Interim 2m` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
-      if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
-      else currentMonth <- currentMonth - 1
+      if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
+      else currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear
 
       uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
+      uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
       if (!url.exists(uri)) { ## Does the previous month's data exist?
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
         else currentMonth <- currentMonth - 1
 
-        uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
-        if (!url.exists(uri)) { ## Does the previous month's data exist?
-          if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
-          else currentMonth <- currentMonth - 1
+        if (currentMonthLastMonth == 1) { currentYearLastMonth <- currentYearLastMonth - 1; currentMonthLastMonth <- 12 }
+        else currentMonthLastMonth <- currentMonthLastMonth - 1
 
-          uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
-          if (!url.exists(uri)) ## ... and if not, does the month before that exist?
-            return (NULL)
-        }
+        uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
+        uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
       }
 
       x <- NULL

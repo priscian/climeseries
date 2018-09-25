@@ -67,8 +67,9 @@ esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
 modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&service=ArAvTs&starttime=2000-03-01T00:00:00Z&endtime=@@DATE@@T23:59:59Z&data=MOD08_M3_6_Aerosol_Optical_Depth_Land_Ocean_Mean_Mean&portal=GIOVANNI&format=json"
 ## ERA-Interim 2m temperature
-## http://climate.copernicus.eu/resources/data-analysis/average-surface-air-temperature-analysis/monthly-maps/
-eraInterim2mTempBase <- "http://climate.copernicus.eu/sites/default/files/repository/Temp_maps/"
+## https://climate.copernicus.eu/surface-air-temperature-maps
+## https://confluence.ecmwf.int/display/CKB/How+to+download+ERA-Interim+data+from+the+ECMWF+data+archive
+eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/"
 noaaOhcBase <- "http://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
 
@@ -77,9 +78,7 @@ nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/R
 data_urls <- list(
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
-  #`ERA-Interim 2m` = list(path=list(`1-11`=eraInterim2mTempBase %_% "Data_for_month_@@MONTHNUM@@_@@YEARNUM@@_plot_3.txt", `12`=eraInterim2mTempBase %_% "ts_1month_anom_ei_T2_197901-@@YEARNUM@@12.txt"), type="temperature"),
-  #`ERA-Interim 2m` = eraInterim2mTempBase %_% "ts_1month_anom_ei_T2_197901-@@YEARNUM@@@@MONTHNUM@@.txt",
-  `ERA-Interim 2m` = eraInterim2mTempBase %_% "ts_1month_anomaly_Global_ei_2T_@@YEARNUM@@@@MONTHNUM@@.csv",
+  `ERA-Interim 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ei_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@.csv",
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
@@ -123,6 +122,7 @@ data_urls <- list(
   ## ERSSTv5
   ## https://www.ncdc.noaa.gov/data-access/marineocean-data/extended-reconstructed-sea-surface-temperature-ersst-v5
   ## Single file: ftp://ftp.cdc.noaa.gov/Datasets/noaa.ersst.v5/sst.mnmean.nc
+  ## ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/v5/beta/
   ## Hadley
   `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_ns_avg.txt",
   `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_sh.txt",
