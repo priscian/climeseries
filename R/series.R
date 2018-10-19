@@ -768,8 +768,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 1L # Ignore header
 
       tryCatch({
-        x <- read.csv(p, header=FALSE, skip=skip, check.names=FALSE, na.strings="#N/A")
-      }, error=Error, warning=Error)
+        CSIRO_down <- TRUE # Set to TRUE if the CSIRO FTP site fails.
+        alt_p <- system.file("extdata/latest/CSIRO_Alt.csv", package="climeseries")
+        if (!CSIRO_down)
+          download.file(p, alt_p, mode = "wb", quiet = TRUE)
+        x <- read.csv(ifelse(CSIRO_down, alt_p, p), header = FALSE, skip = skip, check.names = FALSE, na.strings = "#N/A")
+      }, error = Error, warning = Error)
 
       re <- "(\\d{4})\\.(\\d{3})"
       yearMatches <- str_match(x$V1, re)

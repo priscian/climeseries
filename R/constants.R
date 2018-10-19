@@ -206,7 +206,8 @@ data_urls <- list(
   `Rutgers Eurasia Snow Cover` = list(path=rutgerssnowBase %_% "eurasia.txt", type="snow"),
   `Rutgers N. America Snow Cover` = list(path=rutgerssnowBase %_% "namgnld.txt", type="snow"),
   `Rutgers N. America (No Greenland) Snow Cover` = list(path=rutgerssnowBase %_% "nam.txt", type="snow"),
-  `NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar"),
+  #`NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar"),
+  `NOAA Sunspot No.` = list(path="http://www.sidc.be/silso/DATA/SN_m_tot_V2.0.txt", type="solar"),
   # http://www.sidc.be/silso/datafiles
   # https://www.ngdc.noaa.gov/stp/solar/ssndata.html
   `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"), # Not updated monthly!
