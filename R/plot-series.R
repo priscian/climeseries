@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -218,15 +218,18 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
 
-  plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, frame.plot=FALSE, ...) # I.e. 'plot.ts()'.
+  if (!add)
+    plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, frame.plot=FALSE, ...) # I.e. 'plot.ts()'.
   if (xaxt == "n")
     axis(1, xaxisTicks)
   else
     xaxisTicks <- axTicks(1L)
   if (maText != "") mtext(maText, 3L)
 
-  grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
-  abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
+  if (!add) {
+    grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
+    abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
+  }
 
   if (!is.null(start_callback))
     eval(start_callback)
@@ -249,9 +252,14 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   ## Convert to 'zoo' object for plotting.
   wz <- as.zoo(w)
 
-  par(new=TRUE)
-  #plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.ts()'.
-  plot(wz[, get_climate_series_names(w, conf_int=FALSE)], screens=1L, plot.type=plot_type, type=type, col=col, lwd=lwd, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ...) # I.e. 'plot.zoo()'.
+  par(new = TRUE)
+  if (add) {
+    plotSeries <- get_climate_series_names(w, conf_int = FALSE)
+    for (i in seq_along(plotSeries))
+      lines(wz[, plotSeries[i]], type = type, col = col[i], lwd = lwd, bty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
+  }
+  else
+    plot(wz[, get_climate_series_names(w, conf_int = FALSE)], screens = 1L, plot.type = plot_type, type = type, col = col, lwd = lwd, bty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
 
   legend(x="topleft", legend=series %_% ifelse(loess, " (+ LOESS)", ""), col=col, lwd=lwd, bty="n", cex=0.8)
 
@@ -290,7 +298,17 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
     legendText <- NULL
     for (s in m$series) {
-      abline(coef(m[[s]]$lm)[1L], coef(m[[s]]$lm)[2L], col=m[[s]]$col, lwd=2)
+      ## Set clipping region for 'abline()'.
+      xRange <- range(wz[!is.na(wz[, s]), "yr_part"], na.rm = TRUE)
+      yRange <- range(wz[, s], na.rm = TRUE)
+      usr <- par("usr")
+      clip(xRange[1], xRange[2], yRange[1], yRange[2])
+
+      abline(m[[s]]$lm, col=m[[s]]$col, lwd=2)
+
+      ## Reset clipping to plot region.
+      do.call("clip", as.list(usr))
+
       legendText <- c(legendText, m[[s]]$rateText)
     }
 
@@ -313,25 +331,41 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     # sapply(sm$piecewise, function(a) a$sm$psi, simplify=FALSE)
 
     for (i in names(sm$piecewise)) {
-      plot.segmentedArgs <- list(
-        x = sm$piecewise[[i]]$sm,
-        add = TRUE,
-        rug = FALSE,
-        lwd = 2,
-        #lty = "longdash",
-        col = col[i],
-        alpha = alpha
-      )
-      plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
-      dev_null <- do.call("plot", plot.segmentedArgs)
+      ## Set clipping region for 'plot.segmented()' and 'abline()'.
+      xRange <- range(wz[!is.na(wz[, i]), "yr_part"], na.rm = TRUE)
+      yRange <- range(wz[, i], na.rm = TRUE)
+      usr <- par("usr")
+      clip(xRange[1], xRange[2], yRange[1], yRange[2])
 
-      if (mark_segments) {
-        vlineArgs <- list(
-          mark_years = sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f")
+      x <- sm$piecewise[[i]]$sm
+
+      if (!is.null(x)) {
+        plot.segmentedArgs <- list(
+          x = x,
+          add = TRUE,
+          rug = FALSE,
+          lwd = 2,
+          #lty = "longdash",
+          col = col[i],
+          alpha = alpha
         )
-        vlineArgs <- modifyList(vlineArgs, vline...)
-        do.call("vline", vlineArgs)
+        plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
+        dev_null <- do.call("plot", plot.segmentedArgs)
+
+        if (mark_segments) {
+          vlineArgs <- list(
+            mark_years = sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f")
+          )
+          vlineArgs <- modifyList(vlineArgs, vline...)
+          do.call("vline", vlineArgs)
+        }
+      } else {
+        lwd <- ifelse(is.null(plot.segmented...$lwd), 2, plot.segmented...$lwd)
+        abline(sm$piecewise[[i]]$lm, col=col[i], lwd=lwd)
       }
+
+      ## Reset clipping to plot region.
+      do.call("clip", as.list(usr))
     }
 
     r$segmented <- sm

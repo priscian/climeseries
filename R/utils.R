@@ -434,12 +434,21 @@ char_sort <- function(x, s)
 
 
 #' @export
-only_selected_series <- function(x, series, sort = FALSE, ...)
+only_selected_series <- function(x, series, sort = FALSE, range = NULL, ...)
 {
   colNames <- c(intersect(names(x), c(common_columns, series)))
   if (!sort)
     colNames <- char_sort(colNames, series)
   r <- x[, colNames, ...]
+
+  if (!is.null(range)) {
+    if ("yr_part" %in% colNames)
+      yearVar <- "yr_part"
+    else if ("year" %in% colNames)
+      yearVar <- "year"
+
+    r <- r[r[[yearVar]] >= ifelse(is.na(range[1]), min(r[[yearVar]], na.rm = TRUE), range[1]) & r[[yearVar]] <= ifelse(is.na(range[2]), max(r[[yearVar]]), range[2]), ]
+  }
 
   r
 }

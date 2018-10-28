@@ -1324,17 +1324,19 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
       sm
     }
 
-    withCallingHandlers({
-        sm <- run_segmented()
-      },
-        error = function(e) {
-          message("Error: ", e$message)
-          if (any(grepl("one coef is NA: breakpoint(s) at the boundary", e$message, fixed=TRUE)))
-            invokeRestart("restart")
-        }
-    )
+    tryCatch({
+      withCallingHandlers({
+          sm <- run_segmented()
+        },
+          error = function(e) {
+            message("Error: ", e$message)
+            if (any(grepl("one coef is NA: breakpoint(s) at the boundary", e$message, fixed=TRUE)))
+              invokeRestart("restart")
+          }
+      )
 
-    r$piecewise[[i]]$sm <- sm
+      r$piecewise[[i]]$sm <- sm
+    }, error = function(e) { message("Warning: No breakpoint(s) found") })
   }
 
   r
