@@ -1348,11 +1348,17 @@ nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("neares
 {
   nearest_type <- match.arg(nearest_type)
 
-  r <- range(yr_part)
-  x <- x[1]
-  flit <- expand.grid(month=1:12, year=seq(floor(r[1]), floor(r[2]), by=1))
-  flit$yr_part <- flit$year + (2 * flit$month - 1)/24
-  flit <- flit[flit$yr_part >= r[1] & flit$yr_part <= r[2], ]
+  if (missing(yr_part)) {
+    flit <- rev(expand.grid(month = 1:12, year = trunc(x), by = 1))
+    flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+  }
+  else {
+    r <- range(yr_part)
+    x <- x[1]
+    flit <- rev(expand.grid(month = 1:12, year = seq(floor(r[1]), floor(r[2]), by = 1)))
+    flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+    flit <- flit[flit$yr_part >= r[1] & flit$yr_part <= r[2], ]
+  }
 
   egrid <- switch(nearest_type,
     `above` = flit[flit$yr_part >= x, ],

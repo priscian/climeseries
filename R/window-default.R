@@ -58,7 +58,7 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
         ystart <- xtime[i[1L]]
         yend <- xtime[i[length(i)]]
         #attr(y, "tsp") <- c(ystart, yend, yfreq)
-        y <- make_time_series_from_anomalies(y, frequency = yfreq, conf_int=TRUE)
+        y <- make_time_series_from_anomalies(y, frequency = yfreq, conf_int = TRUE)
     }
     else {
         stoff <- ceiling((start - xtsp[1L]) * xfreq - ts.eps)
@@ -80,9 +80,41 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
         else c(x, NA)[i]
         ## N.B. This fails for some time series with non-zero 'tsp' starts, so replace it & return a 'ts' object:
         #attr(y, "tsp") <- c(ystart, yend, xfreq)
-        y <- make_time_series_from_anomalies(y, frequency = xfreq, conf_int=TRUE)
+        y <- FillBlankDates(y)
+        y <- make_time_series_from_anomalies(y, frequency = xfreq, conf_int = TRUE)
         if (yfreq != xfreq)
             y <- Recall(y, frequency = yfreq)
     }
     y
+}
+
+
+## For use in 'window_default()' to fix empty dates in padded time series.
+FillBlankDates <- function(y)
+{
+  nau <- na_unwrap(oss(y))
+  if (all(nau))
+    return (y)
+  cumsumNotnau <- cumsum(!nau)
+  fill <- cumsumNotnau - unique(cumsumNotnau[nau]) - 1
+  fill[fill >= 0] <- fill[fill >= 0] + 1; fill[nau] <- 0
+
+  z <- Reduce(rbind,
+    sapply(fill,
+      function(a)
+      {
+        r <- NULL
+        if (a < 0)
+          r <- add_months(min(y[, "yr_part"], na.rm = TRUE), a)
+        else if (a > 0)
+          r <- add_months(max(y[, "yr_part"], na.rm = TRUE), a)
+
+        r
+      }, simplify = FALSE))
+  z <- z %>% make_yr_part %>% make_met_year
+
+  ycols <- intersect(colnames(y), common_columns)
+  y[!nau, ycols] <- z[, ycols]
+
+  y
 }

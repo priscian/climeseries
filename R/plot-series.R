@@ -95,6 +95,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   y <- make_time_series_from_anomalies(x, conf_int=TRUE)
   ## Get date range of 'y' before it's converted to a yearly time series.
+  #browser()
   flit <- window_ts(y, start, end, extend=TRUE)
   startTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[1], "above")
   endTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")

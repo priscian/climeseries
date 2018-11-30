@@ -436,7 +436,10 @@ char_sort <- function(x, s)
 #' @export
 only_selected_series <- function(x, series, sort = FALSE, range = NULL, ...)
 {
-  colNames <- c(intersect(names(x), c(common_columns, series)))
+  if (missing(series))
+    series <- NULL
+
+  colNames <- c(intersect(colnames(x), c(common_columns, series)))
   if (!sort)
     colNames <- char_sort(colNames, series)
   r <- x[, colNames, ...]
@@ -499,3 +502,35 @@ is_invalid <- function(x, ...)
   else
     return (FALSE)
 }
+
+
+#' @export
+make_current_timestamp <- function(fmt = "%Y-%m-%d", use_seconds = FALSE, seconds_sep = '+')
+{
+  sysTime <- Sys.time()
+  timestamp <- format(sysTime, fmt)
+  if (use_seconds)
+    timestamp <- paste(timestamp, sprintf("%05d", lubridate::period_to_seconds(hms(format(Sys.time(), "%H:%M:%S")))), sep = seconds_sep)
+
+  return (timestamp)
+}
+
+
+#' @export
+add_months <- function(x, m)
+{
+  if (length(x) == 1)
+    y <- nearest_year_month_from_numeric(x = x)
+  else
+    y <- x
+
+  y <- as.vector(y)
+
+  r <- c(year = y[1] + (y[2] + m - 1) %/% 12, month = ((y[2] + (m %% 12)) %% 12) %>% (function(z) ifelse(z, z, 12)))
+
+  r
+}
+
+## usage:
+# add_months(1880.458, -7)
+# add_months(c(1880, 6), 8)

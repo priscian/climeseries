@@ -1268,11 +1268,7 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
   # if (length(env) > 0L)
   #   attr(d, "baseline") <- attr(env[[ls(env)[1L]]], "baseline")
 
-  d$met_year <- shift(d$year, -1L, roll=FALSE)
-  metRow <- which(is.na(d$met_year))
-  d$met_year[metRow] <- max(d$year, na.rm=TRUE)
-  if (d$month[metRow] == 12)
-    d$met_year[metRow] <- d$met_year[metRow] + 1
+  d <- make_met_year(d)
 
   suffix <- format(Sys.Date(), "%Y%m%d")
 
@@ -1287,6 +1283,34 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
   write.csv(d, file=tempPath %_% ".csv", row.names=FALSE)
 
   return (d)
+}
+
+
+#' @export
+make_met_year <- function(x, add = TRUE)
+{
+  met_year <- shift(x[, "year"], -1L, roll = FALSE)
+  metRow <- which(is.na(met_year))
+  met_year[metRow] <- max(x[, "year"], na.rm = TRUE)
+  if (x[, "month"][metRow] == 12)
+    met_year[metRow] <- met_year[metRow] + 1
+  if (add)
+    return (cbind(x, met_year = met_year))
+  else
+    return (met_year)
+}
+
+
+#' @export
+make_yr_part <- function(x, add = TRUE)
+{
+  #yr_part <- x[, "year"] + (x[, "month"] - 0.5) / 12
+  yr_part <- x[, "year"] + (2 * x[, "month"] - 1) / 24
+
+  if (add)
+    return (cbind(x, yr_part = yr_part))
+  else
+    return (yr_part)
 }
 
 
