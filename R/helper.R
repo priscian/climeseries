@@ -960,23 +960,23 @@ make_yearly_data <- function(x, na_rm=TRUE, unwrap=TRUE, baseline=FALSE)
 
 
 #' @export
-get_yearly_difference <- function(series, start, end=current_year - 1, data, unit="\u00b0C", loess=FALSE, ...)
+get_yearly_difference <- function(series, start, end=current_year - 1, data, digits = 3, unit = "\u00b0C", loess = FALSE, ...)
 {
   if (missing(data))
-    data <- get_climate_data(download=FALSE, baseline=FALSE)
+    data <- get_climate_data(download = FALSE, baseline = FALSE)
 
   if (loess)
     data <- add_loess_variables(data, series, ...)
 
   g <- make_yearly_data(data)
-  h <- g[year %in% c(start, end), series %_% ifelse(loess, " (LOESS fit)", ""), with=FALSE]
+  h <- g[year %in% c(start, end), series %_% ifelse(loess, " (LOESS fit)", ""), with = FALSE]
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
-  cat("Difference in ", unit ," from ", start, "\u2013", end, sep="", fill=TRUE)
-  print(t(h[2] - h[1]), digits=3, row.names=FALSE)
-  cat(fill=TRUE)
-  cat("Decadal rate in ", unit ,"/dec. from ", start, "\u2013", end, sep="", fill=TRUE)
-  print(10 * t(h[2] - h[1]) / (end - start), digits=3, row.names=FALSE)
+  cat("Difference in ", unit ," from ", start, "\u2013", end, sep = "", fill = TRUE)
+  print(t(h[2] - h[1]), digits = digits, row.names = FALSE)
+  cat(fill = TRUE)
+  cat("Decadal rate in ", unit ,"/dec. from ", start, "\u2013", end, sep = "", fill = TRUE)
+  print(10 * t(h[2] - h[1]) / (end - start), digits = digits, row.names = FALSE)
 
   attr(h, "range") <- c(start=start, end=end)
 

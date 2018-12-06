@@ -210,8 +210,8 @@ data_urls <- list(
   `NOAA Sunspot No.` = list(path="http://www.sidc.be/silso/DATA/SN_m_tot_V2.0.txt", type="solar"),
   # http://www.sidc.be/silso/datafiles
   # https://www.ngdc.noaa.gov/stp/solar/ssndata.html
-  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"), # Not updated monthly!
-  #`CSIRO Global Mean Sea Level` = list(path="http://www.hpc.csiro.au/users/326141/Sea_Level_data/ftp.marine.csiro.au/pub/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"),
+  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.csiro.au/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"), # Not updated monthly!
+  #`CSIRO Global Mean Sea Level` = list(path="https://hpc.csiro.au/users/326141/Sea_Level_data_201810/CSIRO_Alt.csv", type="sea level"),
   `NOAA Global Mean Sea Level` = list(path="https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv", type="sea level"),
   `CSIRO Reconstructed Global Mean Sea Level` = list(path="http://www.cmar.csiro.au/sealevel/downloads/church_white_gmsl_2011_up.zip", type="sea level"),
   # ftp://podaac.jpl.nasa.gov/allData/merged_alt/L2/TP_J1_OSTM/global_mean_sea_level/GMSL_TPJAOS_V4_199209_201704.txt
