@@ -1294,8 +1294,12 @@ make_met_year <- function(x, add = TRUE)
   met_year[metRow] <- max(x[, "year"], na.rm = TRUE)
   if (x[, "month"][metRow] == 12)
     met_year[metRow] <- met_year[metRow] + 1
-  if (add)
-    return (cbind(x, met_year = met_year))
+  if (add) {
+    #return (cbind(x, met_year = met_year))
+    x$met_year <- met_year
+
+    return (x)
+  }
   else
     return (met_year)
 }

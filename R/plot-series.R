@@ -271,7 +271,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (loess) {
     for (s in series) {
       loessArgs = list(
-        formula = eval(substitute(s ~ yr_part, list(s=as.name(s)))),
+        formula = eval(substitute(s ~ yr_part, list(s = as.name(s)))),
         data = y,
         span = 0.2
       )
@@ -279,7 +279,10 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
       l <- do.call("loess", loessArgs)
 
-      lines(l$x, l$fit, col=col[s], lwd=2)
+      lwd <- 2
+      if (!is.null(loessArgs$lwd))
+        lwd <- loessArgs$lwd
+      lines(l$x, l$fit, col = col[s], lwd = lwd)
     }
   }
 
