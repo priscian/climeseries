@@ -534,3 +534,4 @@ add_months <- function(x, m)
 ## usage:
 # add_months(1880.458, -7)
 # add_months(c(1880, 6), 8)
+

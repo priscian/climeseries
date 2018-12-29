@@ -1463,3 +1463,4 @@ create_hadcrut4_zonal_data <- function(x,
 # g <- create_hadcrut4_zonal_data()
 # series <- c("Cowtan & Way Krig. Global", "Cowtan & Way Krig. (90S-90N, 180W-180E)")
 # plot_climate_data(g, series, yearly = TRUE) # These should overlap entirely.
+

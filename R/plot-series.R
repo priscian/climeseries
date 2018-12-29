@@ -979,3 +979,4 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   return (nop())
 }
+
