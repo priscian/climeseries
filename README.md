@@ -8,8 +8,8 @@ Okay! It's [here](inst/extdata/latest/climate-series_20181221.zip?raw=true).
 The *climeseries* R package is fairly easy to set up. In an R session:
 ```
 install.packages("devtools") # If necessary.
-library(devtools)
-install_github("priscian/climeseries")
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true")
+devtools::install_github("priscian/climeseries")
 library(climeseries)
 
 ## Once the package has been installed as described above, all you need to use it is:
@@ -19,15 +19,15 @@ library(climeseries)
 ## Using *climeseries*
 *climeseries* will by default store downloaded data sets in the current working directory (i.e. `getwd()`) of your R session, and will also load existing data sets from that directory. If you want to change *climeseries*'s default directory, set the following option (with a directory of your choice) before you use *climeseries*:
 ```
-options(climeseries_data_dir="C:/common/data/climate/climeseries")
+options(climeseries_data_dir = "C:/common/data/climate/climeseries")
 ```
 Now you're ready to go:
 ```
 ## Download a current climatological data set from the Internet.
-inst <- get_climate_data(download=TRUE)
+inst <- get_climate_data(download = TRUE)
 
 ## Try loading this most recent data set from the default directory.
-inst <- get_climate_data(download=FALSE, baseline=TRUE)
+inst <- get_climate_data(download = FALSE, baseline = TRUE)
 
 ## Description of the data set returned by 'get_climate_data()'.
 ?get_climate_data
@@ -41,11 +41,11 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 ## Plot several global instrumental temperature series.
 ########################################
 
-inst <- get_climate_data(download=FALSE, baseline=TRUE)
+inst <- get_climate_data(download = FALSE, baseline = TRUE)
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
   "ERA-Interim 2m Global", "NCEP Surface Air Global")
-plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.0), save_png=FALSE)
+plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
 
 ![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-recent_yearly_baseline1981-2010.png)
@@ -55,10 +55,10 @@ plot_climate_data(inst, series=series, 1880, yearly=TRUE, lwd=1, ylim=c(-1.0, 1.
 ## Plot global instrumental temperature series with 95% confidence intervals.
 ########################################
 
-inst <- get_climate_data(download=FALSE, baseline=TRUE)
+inst <- get_climate_data(download = FALSE, baseline = TRUE)
 series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
-plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, col=c("red", "blue"), alpha=0.2,
-  ci_alpha=0.1, save_png=FALSE)
+plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int = TRUE, col = c("red", "blue"),
+  alpha = 0.2, ci_alpha = 0.1, save_png = FALSE)
 ```
 
 ![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/cw14.ci-hadcrut4.ci_1850.1-recent_yearly_baseline1981-2010.png)
@@ -68,10 +68,11 @@ plot_climate_data(inst, series=series, 1850, yearly=TRUE, lwd=2, conf_int=TRUE, 
 ## Plot all CMIP5 scenario realizations, no instrumental temperature series.
 ########################################
 
-inst <- get_climate_data(download=FALSE, baseline=TRUE)
-cmip5 <- get_models_data(ensemble="cmip5")
-plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950, end=2100.99, ma=12,
-  baseline=1981:2010, center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5), save_png=FALSE)
+inst <- get_climate_data(download = FALSE, baseline = TRUE)
+cmip5 <- get_models_data(ensemble = "cmip5")
+plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start = 1950, end = 2100.99, ma = 12,
+  baseline = 1981:2010, center_fun = "mean", smooth_envelope = TRUE, col_m_mean = "red", ylim = c(-1, 5),
+  save_png = FALSE)
 ```
 
 ![CMIP5 scenario realizations.](inst/images/cmip5-realizations_1950.1-2100.1_ma12_baseline1981-2010.png)
@@ -82,14 +83,14 @@ plot_models_and_climate_data(inst, cmip5, series=NULL, scenario=NULL, start=1950
 ## Cf. Fig. 4(a) of Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888
 ########################################
 
-inst <- get_climate_data(download=FALSE, baseline=TRUE)
-cmip5 <- get_models_data(ensemble="cmip5", subdir="tas + tos")
+inst <- get_climate_data(download = FALSE, baseline = TRUE)
+cmip5 <- get_models_data(ensemble = "cmip5", subdir = "tas + tos")
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global")
-plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", start=1880, end=2020.99, yearly=TRUE,
-  ma=12, baseline=1970:2000, scenario_text="Scenario TAS + TOS Realizations", center_fun="mean",
-  smooth_envelope=FALSE, envelope_type="range", envelope_text="range", ylim=c(-1.0, 1.5), conf_int_i=FALSE,
-  save_png=FALSE)
+plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5", start = 1880, end = 2020.99,
+  yearly = TRUE, ma = 12, baseline = 1970:2000, scenario_text = "Scenario TAS + TOS Realizations",
+  center_fun = "mean", smooth_envelope = FALSE, envelope_type = "range", envelope_text = "range",
+  ylim = c(-1.0, 1.5), conf_int_i = FALSE, save_png = FALSE)
 ```
 
 ![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp85-realizations.range+land-sst_1880.1-2020.1_yearly_baseline1970-2000.png)
@@ -103,10 +104,11 @@ plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 8.5", sta
 series <- c("RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global", "JMA Global",
   "GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global")
 start <- 1970; end <- NULL
-g <- remove_exogenous_influences(series=series, start=start, end=end, max_lag=12)
+g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
 main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
-plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, baseline=TRUE, save_png=FALSE)
+plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 19, baseline = TRUE,
+  save_png = FALSE)
 ```
 
 ![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1970.1-recent_yearly_baseline1981-2010.png)
@@ -117,10 +119,10 @@ plot_climate_data(g, series_adj, yearly=TRUE, main=main, type="o", pch=19, basel
 ## Cf. Figure 1 of Cahill et al. 2015, dx.doi.org/10.1088/1748-9326/10/8/084002
 ########################################
 
-inst <- get_climate_data(download=FALSE, baseline=TRUE)
+inst <- get_climate_data(download = FALSE, baseline = TRUE)
 series <- c("HadCRUT4 Global", "NCEI Global", "GISTEMP Global", "Cowtan & Way Krig. Global")
-plot_climate_data(inst, series, yearly=TRUE, col=c("red", "purple", "blue", "green"), lwd=1, segmented=TRUE,
-  save_png=FALSE)
+plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green"), lwd = 1, segmented = TRUE,
+  save_png = FALSE)
 ```
 
 ![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/hadcrut4+ncei+gistemp+cw14_1850.1-recent_yearly_baseline1981-2010_seg.png)
@@ -131,15 +133,16 @@ plot_climate_data(inst, series, yearly=TRUE, col=c("red", "purple", "blue", "gre
 ## V. Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1.
 ########################################
 
-inst <- get_climate_data(download=FALSE, baseline=FALSE)
+inst <- get_climate_data(download = FALSE, baseline = FALSE)
 series <- c("CSIRO Reconstructed Global Mean Sea Level")
-g <- remove_periodic_cycle(inst, series, fit_unc=FALSE)
+g <- remove_periodic_cycle(inst, series, fit_unc = FALSE)
 series_adj <- series %_% " (anomalies)"
 ylab <- "Global Mean Sea Level (mm)"
 main <- "Reconstructed GMSL"
-plot_climate_data(g, series_adj, yearly=TRUE, ylab=ylab, main=main, col="blue", conf_int=TRUE, segmented=TRUE,
-  mark_segments=TRUE, vline...=list(text...=list(y=125)), segmented...=list(yearly=FALSE,
-  breakpoints...=list(h=360, breaks=NULL)), plot.segmented...=list(col="red"), save_png=FALSE)
+plot_climate_data(g, series_adj, yearly = TRUE, ylab = ylab, main = main, col = "blue", conf_int = TRUE,
+  segmented = TRUE, mark_segments = TRUE, vline... = list(text... = list(y = 125)),
+  segmented... = list(yearly = FALSE, breakpoints... = list(h = 360, breaks = NULL)),
+  plot.segmented... = list(col = "red"), save_png = FALSE)
 ```
 
 ![Has past sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-anomalies_1880.1-recent_yearly_seg.png)
@@ -150,15 +153,15 @@ plot_climate_data(g, series_adj, yearly=TRUE, ylab=ylab, main=main, col="blue", 
 ## V. https://tamino.wordpress.com/2017/10/24/what-is-sea-level-up-to-lately
 ########################################
 
-inst <- get_climate_data(download=FALSE, baseline=FALSE)
+inst <- get_climate_data(download = FALSE, baseline = FALSE)
 series <- c("NOAA Global Mean Sea Level")
 g <- remove_periodic_cycle(subset(inst, inst$year >= 1993), series)
 series_adj <- series %_% " (anomalies)"
 ylab <- "Global Mean Sea Level (mm)"
 main <- "GMSL from TOPEX/Poseidon, Jason-1, & Jason-2 Satellite Altimetry"
-plot_climate_data(g, series_adj, ylab=ylab, main=main, col="blue", segmented=TRUE, mark_segments=TRUE,
-  segmented...=list(yearly=FALSE, breakpoints...=list(h=120, breaks=NULL)), plot.segmented...=list(col="red"),
-  save_png=FALSE)
+plot_climate_data(g, series_adj, ylab = ylab, main = main, col = "blue", segmented = TRUE, mark_segments = TRUE,
+  segmented... = list(yearly = FALSE, breakpoints... = list(h = 120, breaks = NULL)),
+  plot.segmented... = list(col = "red"), save_png = FALSE)
 ```
 
 ![Has recent sea-level rise accelerated?](inst/images/noaa-gmsl-anomalies_1993.1-recent_ma0_seg.png)
@@ -166,7 +169,7 @@ plot_climate_data(g, series_adj, ylab=ylab, main=main, col="blue", segmented=TRU
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
 ```
-library(help=climeseries)
+library(help = climeseries)
 ```
 from the R command line.
 

@@ -1606,4 +1606,3 @@ window_ts <- function(x, start = NULL, end = NULL, ...)
 
   z
 }
-
