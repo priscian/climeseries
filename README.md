@@ -8,7 +8,7 @@ Okay! It's [here](inst/extdata/latest/climate-series_20181221.zip?raw=true).
 The *climeseries* R package is fairly easy to set up. In an R session:
 ```
 install.packages("devtools") # If necessary.
-Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true")
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true") # https://github.com/r-lib/remotes#environment-variables
 devtools::install_github("priscian/climeseries")
 library(climeseries)
 

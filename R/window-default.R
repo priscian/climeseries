@@ -114,7 +114,10 @@ FillBlankDates <- function(y)
   z <- z %>% make_yr_part %>% make_met_year
 
   ycols <- intersect(colnames(y), common_columns)
-  y[!nau, ycols] <- z[, ycols]
+  if (!is.matrix(y))
+    y[!nau, ycols] <- z[, ycols]
+  else
+    y[!nau, ycols] <- data.matrix(z[, ycols])
 
   y
 }

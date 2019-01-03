@@ -1296,6 +1296,7 @@ make_met_year <- function(x, add = TRUE)
     met_year[metRow] <- met_year[metRow] + 1
   if (add) {
     #return (cbind(x, met_year = met_year))
+    x <- dataframe(x)
     x$met_year <- met_year
 
     return (x)
