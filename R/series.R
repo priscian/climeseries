@@ -1057,6 +1057,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    ## This processing is obsolete. ERA5 monthly data coming soon at https://cds.climate.copernicus.eu
     `ERA-Interim 2m` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
       if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
@@ -1094,6 +1095,27 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       #flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
       flit <- x[, -1]; colnames(flit) <- paste(series, c("Global", "European"))
       d <- cbind(d, flit)
+
+      return (d)
+    })(path),
+
+    `ERA-Interim 2m Global` =,
+    `ERA5 2m Global` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        x <- read.table(p, header = FALSE, as.is = TRUE, skip = skip, check.names = FALSE)
+      }, error = Error, warning = Error)
+
+      flit <- reshape2::melt(x, id.vars = "V1", variable.name = "month", value.name = "temp")
+      for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+      flit <- dplyr::arrange(flit, V1, month)
+
+      d <- data.frame(year = flit$V1, yr_part = flit$V1 + (2 * flit$month - 1)/24, month = flit$month, temp = flit$temp, check.names = FALSE, stringsAsFactors = FALSE)
+      ## Missing values are given as "-999.9".
+      is.na(d$temp) <- d$temp == -999.9
 
       return (d)
     })(path),

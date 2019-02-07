@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20181221.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20190206.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -44,7 +44,7 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "ERA-Interim 2m Global", "NCEP Surface Air Global")
+  "ERA-Interim 2m Global", "ERA5 2m Global", "NCEP Surface Air Global")
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
 
@@ -101,8 +101,9 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
 ########################################
 
-series <- c("RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "ERA-Interim 2m Global", "JMA Global",
-  "GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global")
+series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
+  "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
+  "ERA-Interim 2m Global", "ERA5 2m Global", "NCEP Surface Air Global")
 start <- 1970; end <- NULL
 g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
@@ -174,7 +175,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20181221.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20190206.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -212,7 +213,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. CSIRO Reconstructed Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
 1. ERA-Interim 2m Global
-1. ERA-Interim 2m European
+1. ERA5 2m Global
 1. ERSSTv4 Land 00N-30N
 1. ERSSTv4 Land 00N-90N
 1. ERSSTv4 Land 20N-90N

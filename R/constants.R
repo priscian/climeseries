@@ -78,7 +78,9 @@ nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/R
 data_urls <- list(
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
-  `ERA-Interim 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ei_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@.csv",
+  #`ERA-Interim 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ei_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@.csv",
+  `ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
+  `ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),

@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=RColorBrewer::brewer.pal, col_fun...=list(name="Paired"), alpha=0.5, lwd=2, add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -109,7 +109,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   w <- interpNA(y, "linear", unwrap=TRUE)
 
   climateSeriesNames <- setdiff(allNames, common_columns)
-  w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma)
+  w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma, sides=ma_sides)
   ## [13 Oct. 2017] Make sure to window the time series only AFTER applying the moving average.
   y <- window_ts(y, start, end, extend=TRUE)
   w <- window_ts(w, start, end, extend=TRUE)
@@ -639,7 +639,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -711,9 +711,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   if (plotInstrumental) {
     climateSeriesNames <- setdiff(allNames, common_columns)
-    wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames, drop=FALSE], ma_i)
+    wi[, climateSeriesNames] <- MA(wi[, climateSeriesNames, drop=FALSE], ma_i, sides=ma_sides)
   }
-  wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm), drop=FALSE], ma)
+  wm[, get_climate_series_names(wm)] <- MA(wm[, get_climate_series_names(wm), drop=FALSE], ma, sides=ma_sides)
 
   m <- window_ts(m, start[1], end[1], extend=TRUE) # Not necessary?
   wm <- window_ts(wm, start[1], end[1], extend=TRUE)
