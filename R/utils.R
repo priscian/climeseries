@@ -489,6 +489,15 @@ are_same <- function(x, y)
 }
 
 
+## These fuzzy equalities are necessary or useful sometimes.
+#' @export
+all_equal <- function(...) Vectorize(all.equal, "target", SIMPLIFY = FALSE)(...)
+
+
+#' @export
+is_equal <- function(..., simplify = TRUE) sapply(all_equal(...), function(x) is.logical(x) && x, simplify = simplify)
+
+
 #' @export
 is_invalid <- function(x, ...)
 {

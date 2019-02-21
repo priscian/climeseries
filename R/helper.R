@@ -1357,13 +1357,18 @@ nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("neares
     x <- x[1]
     flit <- rev(expand.grid(month = 1:12, year = seq(floor(r[1]), floor(r[2]), by = 1)))
     flit$yr_part <- flit$year + (2 * flit$month - 1)/24
-    flit <- flit[flit$yr_part >= r[1] & flit$yr_part <= r[2], ]
+
+    ## Allow fuzzy equality of the start- & endpoints (sometimes necessary).
+    isEqualStart <- is_equal(flit$yr_part, r[1])
+    isEqualEnd <- is_equal(flit$yr_part, r[2])
+    flit <- flit[(isEqualStart | flit$yr_part > r[1]) & (flit$yr_part < r[2] | isEqualEnd), ]
   }
 
+  isEqual <- is_equal(flit$yr_part, x)
   egrid <- switch(nearest_type,
-    `above` = flit[flit$yr_part >= x, ],
+    `above` = flit[isEqual | flit$yr_part > x, ],
 
-    `below` = flit[flit$yr_part <= x, ],
+    `below` = flit[flit$yr_part < x | isEqual, ],
 
     flit
   )
