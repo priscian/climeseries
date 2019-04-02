@@ -893,8 +893,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       tryCatch({
         flit <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
         flit <- flit[trimws(flit) != ""]
-        flit <- flit[grep("^\\d{4}\\t", flit, perl=TRUE)]
-        x <- read.delim(header=FALSE, skip=0L, text=flit, check.names=FALSE)
+        flit <- flit[grep("^\\d{4}\\s+", flit, perl=TRUE)]
+        flit <- gsub("\t", " ", flit)
+        x <- read.table(header=FALSE, skip=1L, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
       flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
@@ -902,6 +903,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       flit <- dplyr::arrange(flit, V1, month)
 
       d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
+      is.na(d$temp) <- d$temp == -999.00
 
       return (d)
     })(path),

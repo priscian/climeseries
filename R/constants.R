@@ -84,7 +84,7 @@ data_urls <- list(
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
-  `Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei/table.html", type="ENSO"),
+  `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
   `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_", type="land ice"),
