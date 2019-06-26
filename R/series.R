@@ -858,12 +858,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0L
 
       tryCatch({
-        fileNames <- strsplit(getURL(dirname(p) %_% "/", dirlistonly=TRUE), "\r*\n")[[1L]]
-        ## The second date embedded in the file names will probably change, so find the correct file:
-        p1 <- paste(dirname(p), head(sort(grep(basename(p), fileNames, value=TRUE), decreasing=TRUE), 1), sep="/")
+        ## Workaround for new PO.DAAC drive.
+        creds <- options("climeseries_podaac_creds")[[1]]
+        x0 <- httr::GET(p, httr::authenticate(user = creds$user, password = creds$password))
 
-        x <- read.table(p1, header=FALSE, skip=skip, check.names=FALSE, comment.char="H")
-      }, error=Error, warning=Error)
+        x <- read.table(text = httr::content(x0), header = FALSE, skip = skip, check.names = FALSE, comment.char = "H")
+      }, error = Error, warning = Error)
 
       x <- x[, 1:3] # Ocean mass has more than 3 columns.
       colnames(x) <- c("yr_part", series, "_uncertainty")
