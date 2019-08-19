@@ -235,6 +235,8 @@ data_urls <- list(
   # NOAA STAR: ftp://ftp.star.nesdis.noaa.gov/pub/smcd/emb/mscat/data/MSU_AMSU_v4.0/Monthly_Atmospheric_Layer_Mean_Temperature/
   # MASIE sea ice: ftp://sidads.colorado.edu/DATASETS/NOAA/G02186/masie_4km_allyears_extent_sqkm.csv
   # Australia: http://www.bom.gov.au/web01/ncc/www/cli_chg/timeseries/tmean/allmonths/aus/latest.txt
+  # JRA-55 reanalysis: https://jra.kishou.go.jp/JRA-55/index_en.html
+  #   https://s-rip.ees.hokudai.ac.jp/resources/links.html
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.

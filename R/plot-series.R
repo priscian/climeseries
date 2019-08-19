@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
 
@@ -101,7 +101,11 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   endTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
   textRange <- paste(paste(startTS_abo, collapse="."), paste(endTS_abo, collapse="."), sep="-"); flit <- NULL
   if (yearly) {
-    y <- make_yearly_data(y)
+    make_yearly_dataArgs <- list(
+      x = y
+    )
+    make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data...)
+    y <- do.call("make_yearly_data", make_yearly_dataArgs)
     y$yr_part <- y$year
     y <- make_time_series_from_anomalies(y, frequency=1L, conf_int=conf_int)
     ma <- NULL
@@ -341,7 +345,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       series = series,
       col = col,
       start = start,
-      end = end
+      end = end,
+      make_yearly_data... = make_yearly_data...
     )
     segmentedArgs <- modifyList(segmentedArgs, segmented...)
     sm <- do.call("fit_segmented_model", segmentedArgs)
@@ -840,8 +845,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   if (length(modelColors) < length(scenario))
     modelColors <- rep(modelColors, length.out=length(scenario))
   eachModelColor <- as.vector(unlist(tapply(as.numeric(attr(models, "scenario")), attr(models, "scenario"), function (a) modelColors[a])))
-  par(new=TRUE)
-  plot(wmz[, get_climate_series_names(wmz), drop=FALSE], screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", ylim=ylim, col=eachModelColor, ...) # I.e. 'plot.zoo()'.
+  #par(new = TRUE); plot(wmz[, get_climate_series_names(wmz), drop=FALSE], screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", col=eachModelColor, ...) # I.e. 'plot.zoo()'.
+  a_ply(wmz[, get_climate_series_names(wmz), drop = FALSE], 2, function(a) { lines(a, col = eachModelColor) }) # I.e. 'lines.zoo()'.
 
   grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
   abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
@@ -935,8 +940,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
       }
     }
 
-    par(new=TRUE)
-    do.call("plot", plot_iArgs) # I.e. "plot.zoo".
+    par(new=TRUE); do.call("plot", plot_iArgs) # I.e. "plot.zoo".
+    #a_ply(wiz[, get_climate_series_names(wiz, conf_int = FALSE), drop = FALSE], 2, function(a) { lines(a, col = plot_iArgs$col, lwd = plot_iArgs$lwd) }) # I.e. 'lines.zoo()'.
   }
 
   ## Make legend.

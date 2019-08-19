@@ -939,12 +939,21 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 
 
 #' @export
-make_yearly_data <- function(x, na_rm=TRUE, unwrap=TRUE, baseline=FALSE)
+make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, incomplete_years_to_na = FALSE)
 {
   if (missing(x))
-    x <- get_climate_data(download=FALSE, baseline=baseline)
+    x <- get_climate_data(download = FALSE, baseline = baseline)
 
-  r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by=year]
+  if (incomplete_years_to_na) {
+    series <- get_climate_series_names(x, conf_int = TRUE)
+    yearTab <- table(x[, "year"])
+    incompleteYears <- as.numeric(names(yearTab)[yearTab != 12])
+
+    ## For incomplete years, make all elements NA.
+    dev_null <- sapply(series, function(a) { is.na(x[, a]) <<- x[, "year"] %in% incompleteYears; nop() }); rm(dev_null)
+  }
+
+  r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by = year]
   if (unwrap)
     r <- r[na_unwrap(r), ]
 
@@ -1248,7 +1257,7 @@ add_loess_variables <- function(inst, series, ...)
 
 ## Fit segmented linear models to selected climate data.
 #' @export
-fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(length(series),"Paired")), start=NULL, end=NULL, yearly=TRUE, breakpoints...=list(), segmented...=list(), seg.control...=list(seed=100), ...)
+fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(length(series),"Paired")), start=NULL, end=NULL, yearly=TRUE, breakpoints...=list(), segmented...=list(), seg.control...=list(seed=100), make_yearly_data...=list(), ...)
 {
   r <- list(data=x, series=series)
   r$range <- list(start=start, end=end)
@@ -1259,7 +1268,11 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
     g <- r$data
   }
   else {
-    g <- as.data.frame(make_yearly_data(r$data))
+    make_yearly_dataArgs <- list(
+      x = r$data
+    )
+    make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data...)
+    g <- as.data.frame(do.call("make_yearly_data", make_yearly_dataArgs))
     if (!is.null(start)) start <- trunc(start)
     if (!is.null(end)) end <- trunc(end)
   }
