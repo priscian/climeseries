@@ -237,6 +237,7 @@ data_urls <- list(
   # Australia: http://www.bom.gov.au/web01/ncc/www/cli_chg/timeseries/tmean/allmonths/aus/latest.txt
   # JRA-55 reanalysis: https://jra.kishou.go.jp/JRA-55/index_en.html
   #   https://s-rip.ees.hokudai.ac.jp/resources/links.html
+  # ftp://ftp.ncdc.noaa.gov/pub/data/cirs/climdiv/
 )
 
 ## Omit by default some series whose downloading or processing takes a very long time.

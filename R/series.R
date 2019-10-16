@@ -422,7 +422,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         flit <- flit[trimws(flit) != ""]
         flit <- split_at(flit, which(duplicated(flit)))[[1]]
         flit <- gsub("(\\d)(-\\d)", "\\1 \\2", flit)
-        x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE)
+        x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE, comment.char = "*")
       }, error=Error, warning=Error)
 
       d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
@@ -769,7 +769,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 1L # Ignore header
 
       tryCatch({
-        CSIRO_down <- FALSE # Set to TRUE if the CSIRO FTP site fails.
+        CSIRO_down <- TRUE # Set to TRUE if the CSIRO FTP site fails.
         alt_p <- system.file("extdata/latest/CSIRO_Alt.csv", package="climeseries")
         if (!CSIRO_down)
           download.file(p, alt_p, mode = "wb", quiet = TRUE)
