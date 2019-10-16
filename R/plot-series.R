@@ -74,9 +74,10 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=FALSE, vline...=list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
+  mark_segments <- match.arg(mark_segments)
 
   ## This is to avoid an roxygen error described here: https://github.com/klutometis/roxygen/issues/592
   if (is.null(unit))
@@ -339,7 +340,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     r$trend <- m
   }
 
-  if (segmented) {
+  if (segmented) local({
     segmentedArgs <- list(
       x = x,
       series = series,
@@ -361,7 +362,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
       x <- sm$piecewise[[i]]$sm
 
-      if (!is.null(x)) {
+      if (!is.null(x) && inherits(x, "segmented")) {
         plot.segmentedArgs <- list(
           x = x,
           add = TRUE,
@@ -374,12 +375,28 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
         dev_null <- do.call("plot", plot.segmentedArgs)
 
-        if (mark_segments) {
-          vlineArgs <- list(
-            mark_years = sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f")
-          )
-          vlineArgs <- modifyList(vlineArgs, vline...)
-          do.call("vline", vlineArgs)
+        if (mark_segments != "none") {
+          ## Reset clipping to whole plot region.
+          do.call("clip", as.list(usr))
+
+          if (mark_segments == "lines") {
+            vlineArgs <- list(
+              mark_years = sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f")
+            )
+            vlineArgs <- modifyList(vlineArgs, vline...)
+            do.call("vline", vlineArgs)
+          } else if (mark_segments == "points") {
+            points.segmentedArgs <- list(
+              x = sm$piecewise[[i]]$sm,
+              col = col[i],
+              pch = 4 # Like '×'
+            )
+            points.segmentedArgs <- modifyList(points.segmentedArgs, points.segmented...)
+            do.call("points", points.segmentedArgs)
+          }
+
+          ## Turn clipping back on for any further plotting.
+          clip(xRange[1], xRange[2], yRange[1], yRange[2])
         }
       } else {
         lwd <- ifelse(is.null(plot.segmented...$lwd), 2, plot.segmented...$lwd)
@@ -390,8 +407,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       do.call("clip", as.list(usr))
     }
 
-    r$segmented <- sm
-  }
+    r$segmented <<- sm
+  })
 
   if (!is.null(end_callback))
     eval(end_callback)
