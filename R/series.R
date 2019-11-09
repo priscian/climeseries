@@ -27,12 +27,18 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
   ## N.B. The monthly midpoint calculations below would be clearer, though no more correct, as (month_num - 0.5)/12; v. http://davidappell.blogspot.com/2015/05/wood-for-trees-you-cant-trust-it.html for an example.
   d <- switch(series,
-    `GISTEMP SH Land` =,
-    `GISTEMP NH Land` =,
-    `GISTEMP Global Land` =,
-    `GISTEMP SH` =,
-    `GISTEMP NH` =,
-    `GISTEMP Global` = (function(p) { # GISS .TXT files are weirdly formatted, so use the .CSVs instead.
+    `GISTEMP v3 SH Land` =,
+    `GISTEMP v3 NH Land` =,
+    `GISTEMP v3 Global Land` =,
+    `GISTEMP v3 SH` =,
+    `GISTEMP v3 NH` =,
+    `GISTEMP v3 Global` =,
+    `GISTEMP v4 SH Land` =,
+    `GISTEMP v4 NH Land` =,
+    `GISTEMP v4 Global Land` =,
+    `GISTEMP v4 SH` =,
+    `GISTEMP v4 NH` =,
+    `GISTEMP v4 Global` = (function(p) { # GISS .TXT files are weirdly formatted, so use the .CSVs instead.
       x <- NULL
 
       skip <- 1L
@@ -56,8 +62,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `GISTEMP Zonal` =,
-    `GISTEMP Zonal Land` = (function(p) {
+    `GISTEMP v3 Zonal` =,
+    `GISTEMP v3 Zonal Land` =,
+    `GISTEMP v4 Zonal` =,
+    `GISTEMP v4 Zonal Land` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -123,7 +131,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `ERSSTv4` = (function(p) {
+    #`ERSSTv4` =,
+    `ERSSTv5` = (function(p) {
       skip <- 0L
 
       tryCatch({
@@ -138,7 +147,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         l <- apply(namedMatches, 1,
           function(y)
           {
-            seriesName <- paste("ERSSTv4", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
+            seriesName <- paste("ERSSTv5", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
             cat("    Processing file", y["file"], fill=TRUE); flush.console()
             x <- read.table(p %_% y["file"], header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
             d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
@@ -205,7 +214,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `Cowtan & Way Krig. Global` = (function(p) {
+    `Cowtan & Way Krig. Global` =,
+    `Cowtan & Way Krig. Global Land` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -222,7 +232,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
       ## Add value of 95% total uncertainty to data frame.
       ## 'x$V3' is 1 × sigma, so 1.96 × sigma is a 95% CI. V. http://www-users.york.ac.uk/~kdc3/papers/coverage2013/series.html for details, http://www.skepticalscience.com/kevin_cowtan_agu_fall_2014.html for a plot with uncertainty bands.
-      d[[series %_% "_uncertainty"]] <- 1.96 * x$V3
+      if (NCOL(x) > 2)
+        d[[series %_% "_uncertainty"]] <- 1.96 * x$V3
 
       return (d)
     })(path),
@@ -769,7 +780,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 1L # Ignore header
 
       tryCatch({
-        CSIRO_down <- TRUE # Set to TRUE if the CSIRO FTP site fails.
+        CSIRO_down <- FALSE # Set to TRUE if the CSIRO FTP site fails.
         alt_p <- system.file("extdata/latest/CSIRO_Alt.csv", package="climeseries")
         if (!CSIRO_down)
           download.file(p, alt_p, mode = "wb", quiet = TRUE)
@@ -1060,8 +1071,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    ## This processing is obsolete. ERA5 monthly data coming soon at https://cds.climate.copernicus.eu
-    `ERA-Interim 2m` = (function(p) {
+    `ERA5 2m` =,
+    `ERA5 Sea Ice` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
       if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
       else currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear
@@ -1081,12 +1092,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       x <- NULL
 
-      skip <- 2
+      skip <- 1
 
       tryCatch({
         flit <- trimws(readLines(uri))
         flit <- flit[flit != ""]
-        x <- read.csv(header=FALSE, skip=skip, text=flit, check.names=FALSE)
+        x <- read.csv(header=TRUE, skip=skip, text=flit, check.names=FALSE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
@@ -1096,7 +1107,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
       #flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
-      flit <- x[, -1]; colnames(flit) <- paste(series, c("Global", "European"))
+      flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
       d <- cbind(d, flit)
 
       return (d)

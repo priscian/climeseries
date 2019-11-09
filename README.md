@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20191016.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20191109.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -42,9 +42,9 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "ERA-Interim 2m Global", "ERA5 2m Global", "NCEP Surface Air Global")
+  "ERA5 2m Global", "NCEP Surface Air Global")
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
 
@@ -85,7 +85,7 @@ plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start 
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5", subdir = "tas + tos")
-series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global")
 plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5", start = 1880, end = 2020.99,
   yearly = TRUE, ma = 12, baseline = 1970:2000, scenario_text = "Scenario TAS + TOS Realizations",
@@ -101,9 +101,9 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
 ########################################
 
-series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "ERA-Interim 2m Global", "ERA5 2m Global", "NCEP Surface Air Global")
+  "ERA5 2m Global", "NCEP Surface Air Global")
 start <- 1970; end <- NULL
 g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
@@ -121,7 +121,7 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("HadCRUT4 Global", "NCEI Global", "GISTEMP Global", "Cowtan & Way Krig. Global")
+series <- c("HadCRUT4 Global", "NCEI Global", "GISTEMP v4 Global", "Cowtan & Way Krig. Global")
 plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green"), lwd = 1, segmented = TRUE,
   save_png = FALSE)
 ```
@@ -141,7 +141,7 @@ series_adj <- series %_% " (anomalies)"
 ylab <- "Global Mean Sea Level (mm)"
 main <- "Reconstructed GMSL"
 plot_climate_data(g, series_adj, yearly = TRUE, ylab = ylab, main = main, col = "blue", conf_int = TRUE,
-  segmented = TRUE, mark_segments = TRUE, vline... = list(text... = list(y = 125)),
+  segmented = TRUE, mark_segments = "lines", vline... = list(text... = list(y = 125)),
   segmented... = list(yearly = FALSE, breakpoints... = list(h = 360, breaks = NULL)),
   plot.segmented... = list(col = "red"), save_png = FALSE)
 ```
@@ -160,7 +160,7 @@ g <- remove_periodic_cycle(subset(inst, inst$year >= 1993), series)
 series_adj <- series %_% " (anomalies)"
 ylab <- "Global Mean Sea Level (mm)"
 main <- "GMSL from TOPEX/Poseidon, Jason-1, & Jason-2 Satellite Altimetry"
-plot_climate_data(g, series_adj, ylab = ylab, main = main, col = "blue", segmented = TRUE, mark_segments = TRUE,
+plot_climate_data(g, series_adj, ylab = ylab, main = main, col = "blue", segmented = TRUE, mark_segments = "lines",
   segmented... = list(yearly = FALSE, breakpoints... = list(h = 120, breaks = NULL)),
   plot.segmented... = list(col = "red"), save_png = FALSE)
 ```
@@ -175,7 +175,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191016.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191109.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -209,128 +209,165 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. CO2 NOAA ESRL
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
+1. Cowtan & Way Krig. Global Land
 1. CSIRO Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
-1. ERA-Interim 2m Global
 1. ERA5 2m Global
-1. ERSSTv4 Land 00N-30N
-1. ERSSTv4 Land 00N-90N
-1. ERSSTv4 Land 20N-90N
-1. ERSSTv4 Land 20S-20N
-1. ERSSTv4 Land 30N-60N
-1. ERSSTv4 Land 30S-00N
-1. ERSSTv4 Land 60N-90N
-1. ERSSTv4 Land 60S-30S
-1. ERSSTv4 Land 60S-60N
-1. ERSSTv4 Land 90S-00N
-1. ERSSTv4 Land 90S-20S
-1. ERSSTv4 Land 90S-60S
-1. ERSSTv4 Land 90S-90N
-1. ERSSTv4 Land + Ocean 00N-30N
-1. ERSSTv4 Land + Ocean 00N-90N
-1. ERSSTv4 Land + Ocean 20N-90N
-1. ERSSTv4 Land + Ocean 20S-20N
-1. ERSSTv4 Land + Ocean 30N-60N
-1. ERSSTv4 Land + Ocean 30S-00N
-1. ERSSTv4 Land + Ocean 60N-90N
-1. ERSSTv4 Land + Ocean 60S-30S
-1. ERSSTv4 Land + Ocean 60S-60N
-1. ERSSTv4 Ocean 00N-30N
-1. ERSSTv4 Land + Ocean 90S-00N
-1. ERSSTv4 Land + Ocean 90S-20S
-1. ERSSTv4 Land + Ocean 90S-60S
-1. ERSSTv4 Land + Ocean 90S-90N
-1. ERSSTv4 Ocean 00N-90N
-1. ERSSTv4 Ocean 20N-90N
-1. ERSSTv4 Ocean 20S-20N
-1. ERSSTv4 Ocean 30N-60N
-1. ERSSTv4 Ocean 30S-00N
-1. ERSSTv4 Ocean 60N-90N
-1. ERSSTv4 Ocean 60S-30S
-1. ERSSTv4 Ocean 60S-60N
-1. ERSSTv4 Ocean 90S-00N
-1. ERSSTv4 Ocean 90S-20S
-1. ERSSTv4 Ocean 90S-60S
-1. ERSSTv4 Ocean 90S-90N
-1. ERSSTv4 Land 00N-30N_uncertainty
-1. ERSSTv4 Land 00N-90N_uncertainty
-1. ERSSTv4 Land 20N-90N_uncertainty
-1. ERSSTv4 Land 20S-20N_uncertainty
-1. ERSSTv4 Land 30N-60N_uncertainty
-1. ERSSTv4 Land 30S-00N_uncertainty
-1. ERSSTv4 Land 60N-90N_uncertainty
-1. ERSSTv4 Land 60S-30S_uncertainty
-1. ERSSTv4 Land 60S-60N_uncertainty
-1. ERSSTv4 Land 90S-00N_uncertainty
-1. ERSSTv4 Land 90S-20S_uncertainty
-1. ERSSTv4 Land 90S-60S_uncertainty
-1. ERSSTv4 Land 90S-90N_uncertainty
-1. ERSSTv4 Land + Ocean 00N-30N_uncertainty
-1. ERSSTv4 Land + Ocean 00N-90N_uncertainty
-1. ERSSTv4 Land + Ocean 20N-90N_uncertainty
-1. ERSSTv4 Land + Ocean 20S-20N_uncertainty
-1. ERSSTv4 Land + Ocean 30N-60N_uncertainty
-1. ERSSTv4 Land + Ocean 30S-00N_uncertainty
-1. ERSSTv4 Land + Ocean 60N-90N_uncertainty
-1. ERSSTv4 Land + Ocean 60S-30S_uncertainty
-1. ERSSTv4 Land + Ocean 60S-60N_uncertainty
-1. ERSSTv4 Ocean 00N-30N_uncertainty
-1. ERSSTv4 Land + Ocean 90S-00N_uncertainty
-1. ERSSTv4 Land + Ocean 90S-20S_uncertainty
-1. ERSSTv4 Land + Ocean 90S-60S_uncertainty
-1. ERSSTv4 Land + Ocean 90S-90N_uncertainty
-1. ERSSTv4 Ocean 00N-90N_uncertainty
-1. ERSSTv4 Ocean 20N-90N_uncertainty
-1. ERSSTv4 Ocean 20S-20N_uncertainty
-1. ERSSTv4 Ocean 30N-60N_uncertainty
-1. ERSSTv4 Ocean 30S-00N_uncertainty
-1. ERSSTv4 Ocean 60N-90N_uncertainty
-1. ERSSTv4 Ocean 60S-30S_uncertainty
-1. ERSSTv4 Ocean 60S-60N_uncertainty
-1. ERSSTv4 Ocean 90S-00N_uncertainty
-1. ERSSTv4 Ocean 90S-20S_uncertainty
-1. ERSSTv4 Ocean 90S-60S_uncertainty
-1. ERSSTv4 Ocean 90S-90N_uncertainty
+1. ERA5 2m European
+1. ERA5 Sea Ice Arctic
+1. ERA5 Sea Ice Antarctic
+1. ERSSTv5 Land 00N-30N
+1. ERSSTv5 Land 00N-90N
+1. ERSSTv5 Land 20N-90N
+1. ERSSTv5 Land 20S-20N
+1. ERSSTv5 Land 30N-60N
+1. ERSSTv5 Land 30S-00N
+1. ERSSTv5 Land 60N-90N
+1. ERSSTv5 Land 60S-30S
+1. ERSSTv5 Land 60S-60N
+1. ERSSTv5 Land 90S-00N
+1. ERSSTv5 Land 90S-20S
+1. ERSSTv5 Land 90S-60S
+1. ERSSTv5 Land 90S-90N
+1. ERSSTv5 Land + Ocean 00N-30N
+1. ERSSTv5 Land + Ocean 00N-90N
+1. ERSSTv5 Land + Ocean 20N-90N
+1. ERSSTv5 Land + Ocean 20S-20N
+1. ERSSTv5 Land + Ocean 30N-60N
+1. ERSSTv5 Land + Ocean 30S-00N
+1. ERSSTv5 Land + Ocean 60N-90N
+1. ERSSTv5 Land + Ocean 60S-30S
+1. ERSSTv5 Land + Ocean 60S-60N
+1. ERSSTv5 Ocean 00N-30N
+1. ERSSTv5 Land + Ocean 90S-00N
+1. ERSSTv5 Land + Ocean 90S-20S
+1. ERSSTv5 Land + Ocean 90S-60S
+1. ERSSTv5 Land + Ocean 90S-90N
+1. ERSSTv5 Ocean 00N-90N
+1. ERSSTv5 Ocean 20N-90N
+1. ERSSTv5 Ocean 20S-20N
+1. ERSSTv5 Ocean 30N-60N
+1. ERSSTv5 Ocean 30S-00N
+1. ERSSTv5 Ocean 60N-90N
+1. ERSSTv5 Ocean 60S-30S
+1. ERSSTv5 Ocean 60S-60N
+1. ERSSTv5 Ocean 90S-00N
+1. ERSSTv5 Ocean 90S-20S
+1. ERSSTv5 Ocean 90S-60S
+1. ERSSTv5 Ocean 90S-90N
+1. ERSSTv5 Land 00N-30N_uncertainty
+1. ERSSTv5 Land 00N-90N_uncertainty
+1. ERSSTv5 Land 20N-90N_uncertainty
+1. ERSSTv5 Land 20S-20N_uncertainty
+1. ERSSTv5 Land 30N-60N_uncertainty
+1. ERSSTv5 Land 30S-00N_uncertainty
+1. ERSSTv5 Land 60N-90N_uncertainty
+1. ERSSTv5 Land 60S-30S_uncertainty
+1. ERSSTv5 Land 60S-60N_uncertainty
+1. ERSSTv5 Land 90S-00N_uncertainty
+1. ERSSTv5 Land 90S-20S_uncertainty
+1. ERSSTv5 Land 90S-60S_uncertainty
+1. ERSSTv5 Land 90S-90N_uncertainty
+1. ERSSTv5 Land + Ocean 00N-30N_uncertainty
+1. ERSSTv5 Land + Ocean 00N-90N_uncertainty
+1. ERSSTv5 Land + Ocean 20N-90N_uncertainty
+1. ERSSTv5 Land + Ocean 20S-20N_uncertainty
+1. ERSSTv5 Land + Ocean 30N-60N_uncertainty
+1. ERSSTv5 Land + Ocean 30S-00N_uncertainty
+1. ERSSTv5 Land + Ocean 60N-90N_uncertainty
+1. ERSSTv5 Land + Ocean 60S-30S_uncertainty
+1. ERSSTv5 Land + Ocean 60S-60N_uncertainty
+1. ERSSTv5 Ocean 00N-30N_uncertainty
+1. ERSSTv5 Land + Ocean 90S-00N_uncertainty
+1. ERSSTv5 Land + Ocean 90S-20S_uncertainty
+1. ERSSTv5 Land + Ocean 90S-60S_uncertainty
+1. ERSSTv5 Land + Ocean 90S-90N_uncertainty
+1. ERSSTv5 Ocean 00N-90N_uncertainty
+1. ERSSTv5 Ocean 20N-90N_uncertainty
+1. ERSSTv5 Ocean 20S-20N_uncertainty
+1. ERSSTv5 Ocean 30N-60N_uncertainty
+1. ERSSTv5 Ocean 30S-00N_uncertainty
+1. ERSSTv5 Ocean 60N-90N_uncertainty
+1. ERSSTv5 Ocean 60S-30S_uncertainty
+1. ERSSTv5 Ocean 60S-60N_uncertainty
+1. ERSSTv5 Ocean 90S-00N_uncertainty
+1. ERSSTv5 Ocean 90S-20S_uncertainty
+1. ERSSTv5 Ocean 90S-60S_uncertainty
+1. ERSSTv5 Ocean 90S-90N_uncertainty
 1. ESRL AMO
 1. Extended Multivariate ENSO Index
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) Global
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) NH
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) SH
-1. GISTEMP Global
-1. GISTEMP Global Land
-1. GISTEMP NH
-1. GISTEMP NH Land
-1. GISTEMP SH
-1. GISTEMP SH Land
-1. GISTEMP Zonal Glob
-1. GISTEMP Zonal NHem
-1. GISTEMP Zonal SHem
-1. GISTEMP Zonal 24N-90N
-1. GISTEMP Zonal 24S-24N
-1. GISTEMP Zonal 90S-24S
-1. GISTEMP Zonal 64N-90N
-1. GISTEMP Zonal 44N-64N
-1. GISTEMP Zonal 24N-44N
-1. GISTEMP Zonal EQU-24N
-1. GISTEMP Zonal 24S-EQU
-1. GISTEMP Zonal 44S-24S
-1. GISTEMP Zonal 64S-44S
-1. GISTEMP Zonal 90S-64S
-1. GISTEMP Zonal Land Glob
-1. GISTEMP Zonal Land NHem
-1. GISTEMP Zonal Land SHem
-1. GISTEMP Zonal Land 24N-90N
-1. GISTEMP Zonal Land 24S-24N
-1. GISTEMP Zonal Land 90S-24S
-1. GISTEMP Zonal Land 64N-90N
-1. GISTEMP Zonal Land 44N-64N
-1. GISTEMP Zonal Land 24N-44N
-1. GISTEMP Zonal Land EQU-24N
-1. GISTEMP Zonal Land 24S-EQU
-1. GISTEMP Zonal Land 44S-24S
-1. GISTEMP Zonal Land 64S-44S
-1. GISTEMP Zonal Land 90S-64S
+1. GISTEMP v3 Global
+1. GISTEMP v3 Global Land
+1. GISTEMP v3 NH
+1. GISTEMP v3 NH Land
+1. GISTEMP v3 SH
+1. GISTEMP v3 SH Land
+1. GISTEMP v3 Zonal Glob
+1. GISTEMP v3 Zonal NHem
+1. GISTEMP v3 Zonal SHem
+1. GISTEMP v3 Zonal 24N-90N
+1. GISTEMP v3 Zonal 24S-24N
+1. GISTEMP v3 Zonal 90S-24S
+1. GISTEMP v3 Zonal 64N-90N
+1. GISTEMP v3 Zonal 44N-64N
+1. GISTEMP v3 Zonal 24N-44N
+1. GISTEMP v3 Zonal EQU-24N
+1. GISTEMP v3 Zonal 24S-EQU
+1. GISTEMP v3 Zonal 44S-24S
+1. GISTEMP v3 Zonal 64S-44S
+1. GISTEMP v3 Zonal 90S-64S
+1. GISTEMP v3 Zonal Land Glob
+1. GISTEMP v3 Zonal Land NHem
+1. GISTEMP v3 Zonal Land SHem
+1. GISTEMP v3 Zonal Land 24N-90N
+1. GISTEMP v3 Zonal Land 24S-24N
+1. GISTEMP v3 Zonal Land 90S-24S
+1. GISTEMP v3 Zonal Land 64N-90N
+1. GISTEMP v3 Zonal Land 44N-64N
+1. GISTEMP v3 Zonal Land 24N-44N
+1. GISTEMP v3 Zonal Land EQU-24N
+1. GISTEMP v3 Zonal Land 24S-EQU
+1. GISTEMP v3 Zonal Land 44S-24S
+1. GISTEMP v3 Zonal Land 64S-44S
+1. GISTEMP v3 Zonal Land 90S-64S
+1. GISTEMP v4 Global
+1. GISTEMP v4 Global Land
+1. GISTEMP v4 NH
+1. GISTEMP v4 NH Land
+1. GISTEMP v4 SH
+1. GISTEMP v4 SH Land
+1. GISTEMP v4 Zonal Glob
+1. GISTEMP v4 Zonal NHem
+1. GISTEMP v4 Zonal SHem
+1. GISTEMP v4 Zonal 24N-90N
+1. GISTEMP v4 Zonal 24S-24N
+1. GISTEMP v4 Zonal 90S-24S
+1. GISTEMP v4 Zonal 64N-90N
+1. GISTEMP v4 Zonal 44N-64N
+1. GISTEMP v4 Zonal 24N-44N
+1. GISTEMP v4 Zonal EQU-24N
+1. GISTEMP v4 Zonal 24S-EQU
+1. GISTEMP v4 Zonal 44S-24S
+1. GISTEMP v4 Zonal 64S-44S
+1. GISTEMP v4 Zonal 90S-64S
+1. GISTEMP v4 Zonal Land Glob
+1. GISTEMP v4 Zonal Land NHem
+1. GISTEMP v4 Zonal Land SHem
+1. GISTEMP v4 Zonal Land 24N-90N
+1. GISTEMP v4 Zonal Land 24S-24N
+1. GISTEMP v4 Zonal Land 90S-24S
+1. GISTEMP v4 Zonal Land 64N-90N
+1. GISTEMP v4 Zonal Land 44N-64N
+1. GISTEMP v4 Zonal Land 24N-44N
+1. GISTEMP v4 Zonal Land EQU-24N
+1. GISTEMP v4 Zonal Land 24S-EQU
+1. GISTEMP v4 Zonal Land 44S-24S
+1. GISTEMP v4 Zonal Land 64S-44S
+1. GISTEMP v4 Zonal Land 90S-64S
 1. Greenland Land Ice Mass Variation
 1. Greenland Land Ice Mass Variation_uncertainty
 1. HadCET

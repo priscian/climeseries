@@ -46,11 +46,13 @@ filenameBase <- "climate-series_"
 defaultBaseline <- 1981:2010
 
 ## Some climatological time-series base URLs.
-gistempBase <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
+gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
+gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncdc.noaa.gov/cag/time-series/"
 nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
+cowtanWayBase <- "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/"
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
 rssBase <- "http://data.remss.com/msu/monthly_time_series/"
 #rssBase <- "ftp://priscian%40gmail.com:priscian%40gmail.com@ftp.remss.com/msu/monthly_time_series/"
@@ -79,9 +81,10 @@ nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/te
 data_urls <- list(
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
-  #`ERA-Interim 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ei_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@.csv",
-  `ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
-  `ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
+  `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ea_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv",
+  #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
+  #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
+  `ERA5 Sea Ice` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CIA_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv",
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
@@ -91,15 +94,24 @@ data_urls <- list(
   `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_201706.txt", type="land ice"),
   `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_201706.txt", type="land ice"),
   `Ocean Mass Variation` = list(path=nasaLandIceMassBase %_% "ocean_mass_200204_201706.txt", type="ocean mass"),
-  ## GISTEMP
-  `GISTEMP Global` = gistempBase %_% "GLB.Ts+dSST.csv",
-  `GISTEMP SH` = gistempBase %_% "SH.Ts+dSST.csv",
-  `GISTEMP NH` = gistempBase %_% "NH.Ts+dSST.csv",
-  `GISTEMP Global Land` = gistempBase %_% "GLB.Ts.csv",
-  `GISTEMP SH Land` = gistempBase %_% "SH.Ts.csv",
-  `GISTEMP NH Land` = gistempBase %_% "NH.Ts.csv",
-  `GISTEMP Zonal` = gistempBase %_% "ZonAnn.Ts+dSST.csv",
-  `GISTEMP Zonal Land` = gistempBase %_% "ZonAnn.Ts.csv",
+  ## GISTEMP v3
+  `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
+  `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
+  `GISTEMP v3 NH` = gistempBaseV3 %_% "NH.Ts+dSST.csv",
+  `GISTEMP v3 Global Land` = gistempBaseV3 %_% "GLB.Ts.csv",
+  `GISTEMP v3 SH Land` = gistempBaseV3 %_% "SH.Ts.csv",
+  `GISTEMP v3 NH Land` = gistempBaseV3 %_% "NH.Ts.csv",
+  `GISTEMP v3 Zonal` = gistempBaseV3 %_% "ZonAnn.Ts+dSST.csv",
+  `GISTEMP v3 Zonal Land` = gistempBaseV3 %_% "ZonAnn.Ts.csv",
+  ## GISTEMP v4
+  `GISTEMP v4 Global` = gistempBaseV4 %_% "GLB.Ts+dSST.csv",
+  `GISTEMP v4 SH` = gistempBaseV4 %_% "SH.Ts+dSST.csv",
+  `GISTEMP v4 NH` = gistempBaseV4 %_% "NH.Ts+dSST.csv",
+  `GISTEMP v4 Global Land` = gistempBaseV4 %_% "GLB.Ts.csv",
+  `GISTEMP v4 SH Land` = gistempBaseV4 %_% "SH.Ts.csv",
+  `GISTEMP v4 NH Land` = gistempBaseV4 %_% "NH.Ts.csv",
+  `GISTEMP v4 Zonal` = gistempBaseV4 %_% "ZonAnn.Ts+dSST.csv",
+  `GISTEMP v4 Zonal Land` = gistempBaseV4 %_% "ZonAnn.Ts.csv",
   ## NCEI
   `NCEI Global` = nceiBase %_% "global/globe/land_ocean" %_% nceiGlobalMonthly,
   `NCEI SH` = nceiBase %_% "global/shem/land_ocean" %_% nceiGlobalMonthly,
@@ -121,8 +133,9 @@ data_urls <- list(
   ## USCRN (individual sites)
   ## https://www1.ncdc.noaa.gov/pub/data/uscrn/products/monthly01/
   ## ERSSTv4
-  ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
+  #ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## ERSSTv5
+  ERSSTv5 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## https://www.ncdc.noaa.gov/data-access/marineocean-data/extended-reconstructed-sea-surface-temperature-ersst-v5
   ## Single file: ftp://ftp.cdc.noaa.gov/Datasets/noaa.ersst.v5/sst.mnmean.nc
   ## ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/v5/beta/
@@ -137,7 +150,8 @@ data_urls <- list(
   `HadSST3 Tropics` = hadsstBase %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Cowtan & Way
-  `Cowtan & Way Krig. Global` = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.txt",
+  `Cowtan & Way Krig. Global` = cowtanWayBase %_% "had4_krig_v2_0_0.txt",
+  `Cowtan & Way Krig. Global Land` = cowtanWayBase %_% "cru4_krig_v2_0_0.txt",
   ## BEST
   `BEST Global` = bestBase %_% "Global/Land_and_Ocean_complete.txt",
   `BEST Global Land` = bestBase %_% "Global/Complete_TAVG_complete.txt",
@@ -197,7 +211,7 @@ data_urls <- list(
   `NCEP Surface Air USA 48` = sub("@@LON1", "-125", sub("@@LON2@@", "-70", sub("@@LAT1@@", "50", sub("@@LAT2@@", "25", sub("@@VAR@@", "Air+Temperature", esrlBase))))),
   ## China: CMA-LSAT, dx.doi.org/10.1007/s00382-017-3755-1
   ## CO2
-  `CO2 Mauna Loa` = list(path="http://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
+  `CO2 Mauna Loa` = list(path="https://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
   `CO2 NOAA ESRL` = list(path="ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt", type="CO2"),
   `CO2 Cape Grim` = list(path="http://capegrim.csiro.au/GreenhouseGas/data/CapeGrim_CO2_data_download.csv", type="CO2"),
   ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
@@ -237,6 +251,7 @@ data_urls <- list(
   # Australia: http://www.bom.gov.au/web01/ncc/www/cli_chg/timeseries/tmean/allmonths/aus/latest.txt
   # JRA-55 reanalysis: https://jra.kishou.go.jp/JRA-55/index_en.html
   #   https://s-rip.ees.hokudai.ac.jp/resources/links.html
+  #   ftp://ds.data.jma.go.jp/JRA-55/Hist/Monthly/anl_surf125
   # ftp://ftp.ncdc.noaa.gov/pub/data/cirs/climdiv/
 )
 

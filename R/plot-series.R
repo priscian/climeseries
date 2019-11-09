@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), loess=FALSE, loess...=list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -283,8 +283,11 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   do.call("legend", legendArgs)
 
   ## LOESS smooth.
-  if (loess) {
-    for (s in series) {
+  if (loess) local({
+    loessSeries <- series
+    if (!is_invalid(loess_series))
+      loessSeries <- loess_series
+    for (s in loessSeries) {
       loessArgs = list(
         formula = eval(substitute(s ~ yr_part, list(s = as.name(s)))),
         data = y,
@@ -294,62 +297,99 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
       l <- do.call("loess", loessArgs)
 
-      lwd <- 2
-      if (!is.null(loessArgs$lwd))
-        lwd <- loessArgs$lwd
-      lines(l$x, l$fit, col = col[s], lwd = lwd)
+      lines.loessArgs <- list(
+        x = drop(l$x),
+        y = l$fit,
+        lwd = 2
+      )
+      lines.loessArgs <- modifyList(lines.loessArgs, lines.loess...)
+      if (is_invalid(lines.loessArgs$col))
+        lines.loessArgs$col = col[s]
+
+      do.call(graphics::lines, lines.loessArgs)
     }
-  }
+  })
 
   r <- list()
 
   ## Decadal linear trends.
-  if (trend) {
-    m <- list()
-    m$series <- series
-    m$range <- list(start=startTS, end=endTS)
-    m$col <- col
-    m$data <- y[, c(intersect(common_columns, colnames(y)), series)]
-    for (s in m$series) {
-      m[[s]]$lm <- lm(eval(substitute(b ~ yr_part, list(b=as.symbol(s)))), data=m$data, x=TRUE)
-      m[[s]]$warming <- coef(m[[s]]$lm)[2] * diff(range(m[[s]]$lm$model[, 2]))
-      m[[s]]$rate <- coef(m[[s]]$lm)[2] * 10
-      m[[s]]$rateText <- eval(substitute(expression(paste(Delta, " = ", r, phantom(l), unit, "/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="%+1.3f"), unit=unit)))
-      m[[s]]$col <- m$col[s]
+  if (trend) local({
+    trendArgs <- list(
+      data = as.data.frame(y[, c(intersect(common_columns, colnames(y)), series)]),
+      range = range(as.data.frame(w)[, "yr_part"], na.rm = TRUE),
+      lwd = trend_lwd,
+      legend_inset = trend_legend_inset,
+      fmt = "%+1.2f",
+      unit = unit,
+      trend_multiplier = 10,
+      denom_text = "/dec.",
+      keep_default_trends = TRUE,
+      sort_by_name = FALSE
+    )
+    if (!is_invalid(trend...$keep_default_trends))
+      trendArgs$keep_default_trends <- trend...$keep_default_trends
+    if (trendArgs$keep_default_trends) {
+      if (is_invalid(trendArgs$m))
+        trendArgs$m <- list()
+      length(trendArgs$m) <- length(series); names(trendArgs$m) <- series
     }
+    trendArgs <- utils::modifyList(trendArgs, trend...)
+    if (!is_invalid(extra_trends))
+      trendArgs$m <- append(trendArgs$m, extra_trends)
+
+    for (i in seq_along(trendArgs$m)) {
+      if (is_invalid(trendArgs$m[[i]]$range))
+        trendArgs$m[[i]]$range <- trendArgs$range
+      if (is_invalid(trendArgs$m[[i]]$col))
+        trendArgs$m[[i]]$col <- col[names(trendArgs$m)[i]]
+      if (is_invalid(trendArgs$m[[i]]$lwd))
+        trendArgs$m[[i]]$lwd <- trendArgs$lwd
+
+      trendArgs$m[[i]]$sdata <- trendArgs$data %>%
+        dplyr::select(c(intersect(common_columns, colnames(trendArgs$data)), names(trendArgs$m)[i])) %>%
+        dplyr::filter(yr_part >= trendArgs$m[[i]]$range[1] & yr_part <= trendArgs$m[[i]]$range[2])
+      trendArgs$m[[i]]$lm <- lm(eval(substitute(b ~ yr_part, list(b = as.symbol(names(trendArgs$m)[i])))), data = trendArgs$m[[i]]$sdata, x = TRUE)
+      trendArgs$m[[i]]$change <- coef(trendArgs$m[[i]]$lm)[2] * diff(range(trendArgs$m[[i]]$lm$model[, 2]))
+      trendArgs$m[[i]]$rate <- coef(trendArgs$m[[i]]$lm)[2] * trendArgs$trend_multiplier
+      trendArgs$m[[i]]$rateText <- eval(substitute(expression(paste(Delta, " = ", r, phantom(l), unit, denom_text, sep = "")), list(r = sprintf(trendArgs$m[[i]]$rate, fmt = trendArgs$fmt), unit = trendArgs$unit, denom_text = trendArgs$denom_text)))
+    }
+    if (trendArgs$sort_by_name)
+      trendArgs$m <- trendArgs$m[sort(names(trendArgs$m))]
 
     legendText <- NULL
-    for (s in m$series) {
+    for (i in seq_along(trendArgs$m)) {
       ## Set clipping region for 'abline()'.
-      xRange <- range(wz[!is.na(wz[, s]), "yr_part"], na.rm = TRUE)
-      yRange <- range(wz[, s], na.rm = TRUE)
+      xRange <- range(trendArgs$m[[i]]$sdata[!is.na(trendArgs$m[[i]]$sdata[, names(trendArgs$m)[i]]), "yr_part"], na.rm = TRUE)
+      yRange <- range(trendArgs$m[[i]]$sdata[, names(trendArgs$m)[i]], na.rm = TRUE)
+
       usr <- par("usr")
       clip(xRange[1], xRange[2], yRange[1], yRange[2])
 
-      abline(m[[s]]$lm, col=m[[s]]$col, lwd=trend_lwd)
+      abline(trendArgs$m[[i]]$lm, col = trendArgs$m[[i]]$col, lwd = trendArgs$m[[i]]$lwd)
 
       ## Reset clipping to plot region.
       do.call("clip", as.list(usr))
 
-      legendText <- c(legendText, m[[s]]$rateText)
+      legendText <- c(legendText, trendArgs$m[[i]]$rateText)
     }
 
-    if (!is.null(trend_legend_inset))
-      legend("bottomright", inset=trend_legend_inset, legend=legendText, col=m$col, lwd=trend_lwd, bty="n", cex=0.8)
+    if (!is.null(trendArgs$legend_inset))
+      legend("bottomright", inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col), lwd = sapply(trendArgs$m, function(a) a$lwd), bty = "n", cex = 0.8)
 
-    r$trend <- m
-  }
+    r$trend <<- trendArgs$m
+  })
 
   if (segmented) local({
     segmentedArgs <- list(
       x = x,
       series = series,
-      col = col,
       start = start,
       end = end,
       make_yearly_data... = make_yearly_data...
     )
     segmentedArgs <- modifyList(segmentedArgs, segmented...)
+    if (is_invalid(segmentedArgs$col))
+      segmentedArgs$col <- col[segmentedArgs$series]
     sm <- do.call("fit_segmented_model", segmentedArgs)
     # sapply(sm$piecewise, function(a) a$sm$psi, simplify=FALSE)
 
@@ -362,17 +402,18 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
       x <- sm$piecewise[[i]]$sm
 
+      plot.segmentedArgs <- list(
+        x = x,
+        add = TRUE,
+        rug = FALSE,
+        lwd = 2,
+        #lty = "longdash",
+        col = col[i],
+        alpha = alpha
+      )
+      plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
+
       if (!is.null(x) && inherits(x, "segmented")) {
-        plot.segmentedArgs <- list(
-          x = x,
-          add = TRUE,
-          rug = FALSE,
-          lwd = 2,
-          #lty = "longdash",
-          col = col[i],
-          alpha = alpha
-        )
-        plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
         dev_null <- do.call("plot", plot.segmentedArgs)
 
         if (mark_segments != "none") {
@@ -399,8 +440,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
           clip(xRange[1], xRange[2], yRange[1], yRange[2])
         }
       } else {
-        lwd <- ifelse(is.null(plot.segmented...$lwd), 2, plot.segmented...$lwd)
-        abline(sm$piecewise[[i]]$lm, col=col[i], lwd=lwd)
+        abline(sm$piecewise[[i]]$lm, col = scales::alpha(plot.segmentedArgs$col, plot.segmentedArgs$alpha), lwd = plot.segmentedArgs$lwd)
       }
 
       ## Reset clipping to plot region.

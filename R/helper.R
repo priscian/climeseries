@@ -75,7 +75,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
   d3 <- dplyr::arrange(data.table::melt(d2, id.vars=c("year"), variable.name="month", value.name="YTD mean temp."), year, month)
   d4 <- data.table::copy(d2)
   d4[, `latest YTD mean temp.` := as.list((function(x) { y <- as.matrix(x)[1, ]; tail(y[!is.na(y)], 1) })(.SD)), .SDcols=names(d4[, !1, with=FALSE]), by=1:nrow(d4)]
-  d4 <- dplyr::arrange(d4[, .(year, `latest YTD mean temp.`)], dplyr::desc(`latest YTD mean temp.`))
+  d4 <- dplyr::arrange(d4[, .(year, `latest YTD mean temp.`)], desc(`latest YTD mean temp.`))
 
   ## Top n warmest years:
   if (!is.null(top_n_years)) {
@@ -98,16 +98,17 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
   subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep="")
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
   g <- ggplot(d3, aes(x=month, y=`YTD mean temp.`, group=factor(year), color=factor(year))) +
+    theme_bw() +
     geom_line(size=size) +
-    scale_colour_discrete(guide="none") +
+    #scale_colour_discrete(guide = "none") +
+    labs(color = "Year") +
     scale_x_discrete(expand=c(0, 1)) +
     directlabels::geom_dl(aes(label=year), method = list(directlabels::dl.trans(x=x + 0.2), "last.points", cex = 0.8)) +
-    # coord_cartesian(ylim(c(-4, 4)) + # No clipping.
-    labs(list(title="Year-to-Date Temperature Anomalies", subtitle=subtitle, y=ylab))
+    labs(title="Year-to-Date Temperature Anomalies", subtitle=subtitle, y=ylab)
 
   print(g)
 
-  return(d4)
+  return (list(data = d4, grob = g))
 }
 
 ## usage:
@@ -115,6 +116,9 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 # ytd <- plot_horse_race("UAH TLT 6.0 Global", 10)
 # ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
 # print(as.data.frame(ytd), digits=3, row.names=FALSE, right=FALSE)
+## Zoom in w/out clipping data:
+# ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+# ytd$grob + coord_cartesian(ylim = c(-1, 2.5))
 
 
 #' @export
@@ -340,7 +344,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
   uncycled <- d[[series %_% ifelse(!is_unc, "", unc_suffix)]] - rfit$fit
 
   if (is.logical(center))
-    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center=center, scale=FALSE)
+    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center=center, scale=FALSE)[, 1]
   else
     d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm=TRUE)
 
@@ -482,6 +486,7 @@ remove_exogenous_influences <- function(x, series,
   aggregate_vars_fun = add_default_aggregate_variables,
   period = 1, num_harmonics = 4,
   max_lag = 12, bs_df = NULL, bs_degree = 3,
+  center_on_mean = TRUE,
   suffix = " (adj.)")
 {
   if (missing(x))
@@ -555,7 +560,8 @@ remove_exogenous_influences <- function(x, series,
     partialValues <- Reduce(cbind, partialValuesList)
     partial <- (partialValues %*% partialCoefs)[, , drop = TRUE] + coef(m)["(Intercept)"]
     adj <- m$residuals + partial
-    adj <- adj - mean(adj)
+    if (center_on_mean)
+      adj <- adj - mean(adj)
 
     flit <- dataframe(yr_part = yr_part)
     flit[[i %_% suffix]] <- adj
