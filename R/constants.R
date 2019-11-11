@@ -51,7 +51,8 @@ gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncdc.noaa.gov/cag/time-series/"
 nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
-hadsstBase <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
+hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
+hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/csv/"
 cowtanWayBase <- "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/"
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
 rssBase <- "http://data.remss.com/msu/monthly_time_series/"
@@ -144,10 +145,14 @@ data_urls <- list(
   `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_sh.txt",
   `HadCRUT4 NH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_nh.txt",
   `HadCRUT4 Tropics` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_30S_30N.txt",
-  `HadSST3 Global` = hadsstBase %_% "HadSST.3.1.1.0_monthly_globe_ts.txt",
-  `HadSST3 SH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
-  `HadSST3 NH` = hadsstBase %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
-  `HadSST3 Tropics` = hadsstBase %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
+  `HadSST3 Global` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_globe_ts.txt",
+  `HadSST3 SH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
+  `HadSST3 NH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
+  `HadSST3 Tropics` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
+  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_GLOBE.csv",
+  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_SHEM.csv",
+  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_NHEM.csv",
+  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Cowtan & Way
   `Cowtan & Way Krig. Global` = cowtanWayBase %_% "had4_krig_v2_0_0.txt",

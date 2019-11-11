@@ -948,7 +948,7 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, incomplete_years_to_na = FALSE)
 {
   if (missing(x))
-    x <- get_climate_data(download = FALSE, baseline = baseline)
+    x <- get_climate_data(download = FALSE)
 
   if (incomplete_years_to_na) {
     series <- get_climate_series_names(x, conf_int = TRUE)
@@ -962,6 +962,8 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
   r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by = year]
   if (unwrap)
     r <- r[na_unwrap(r), ]
+
+  r <- recenter_anomalies(as.data.frame(r), baseline = baseline, by_month = FALSE)
 
   r
 }

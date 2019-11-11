@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20191109.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20191111.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -175,7 +175,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191109.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191111.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -387,6 +387,14 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. HadSST3 SH_uncertainty
 1. HadSST3 Tropics
 1. HadSST3 Tropics_uncertainty
+1. HadSST4 Global
+1. HadSST4 Global_uncertainty
+1. HadSST4 NH
+1. HadSST4 NH_uncertainty
+1. HadSST4 SH
+1. HadSST4 SH_uncertainty
+1. HadSST4 Tropics
+1. HadSST4 Tropics_uncertainty
 1. JMA Global
 1. Multivariate ENSO Index
 1. NCEI Global
@@ -525,6 +533,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. PIOMAS Arctic Sea Ice Volume
 1. PMOD TSI (new VIRGO)
 1. PMOD TSI (orig. VIRGO)
+1. RATPAC-A Surface NH
 1. RATPAC-A 850 mb NH
 1. RATPAC-A 700 mb NH
 1. RATPAC-A 500 mb NH
@@ -537,6 +546,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RATPAC-A 70 mb NH
 1. RATPAC-A 50 mb NH
 1. RATPAC-A 30 mb NH
+1. RATPAC-A Surface SH
 1. RATPAC-A 850 mb SH
 1. RATPAC-A 700 mb SH
 1. RATPAC-A 500 mb SH
@@ -549,6 +559,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RATPAC-A 70 mb SH
 1. RATPAC-A 50 mb SH
 1. RATPAC-A 30 mb SH
+1. RATPAC-A Surface GLOBE
 1. RATPAC-A 850 mb GLOBE
 1. RATPAC-A 700 mb GLOBE
 1. RATPAC-A 500 mb GLOBE
@@ -561,6 +572,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RATPAC-A 70 mb GLOBE
 1. RATPAC-A 50 mb GLOBE
 1. RATPAC-A 30 mb GLOBE
+1. RATPAC-A Surface TROPICS (30S-30N)
 1. RATPAC-A 850 mb TROPICS (30S-30N)
 1. RATPAC-A 700 mb TROPICS (30S-30N)
 1. RATPAC-A 500 mb TROPICS (30S-30N)
@@ -573,6 +585,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RATPAC-A 70 mb TROPICS (30S-30N)
 1. RATPAC-A 50 mb TROPICS (30S-30N)
 1. RATPAC-A 30 mb TROPICS (30S-30N)
+1. RATPAC-A Surface NH Extratropics
 1. RATPAC-A 850 mb NH Extratropics
 1. RATPAC-A 700 mb NH Extratropics
 1. RATPAC-A 500 mb NH Extratropics
@@ -585,6 +598,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RATPAC-A 70 mb NH Extratropics
 1. RATPAC-A 50 mb NH Extratropics
 1. RATPAC-A 30 mb NH Extratropics
+1. RATPAC-A Surface SH Extratropics
 1. RATPAC-A 850 mb SH Extratropics
 1. RATPAC-A 700 mb SH Extratropics
 1. RATPAC-A 500 mb SH Extratropics
@@ -597,6 +611,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RATPAC-A 70 mb SH Extratropics
 1. RATPAC-A 50 mb SH Extratropics
 1. RATPAC-A 30 mb SH Extratropics
+1. RATPAC-A Surface TROPICS (20S-20N)
 1. RATPAC-A 850 mb TROPICS (20S-20N)
 1. RATPAC-A 700 mb TROPICS (20S-20N)
 1. RATPAC-A 500 mb TROPICS (20S-20N)

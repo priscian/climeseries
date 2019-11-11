@@ -196,6 +196,25 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `HadSST4 SH` =,
+    `HadSST4 NH` =,
+    `HadSST4 Tropics` =,
+    `HadSST4 Global` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        x <- rio::import(p, fread = FALSE, header = TRUE, as.is = TRUE, na.strings = c("-99.9", "-99.99"), skip = skip, check.names = FALSE, stringsAsFactors = FALSE)
+      }, error=Error, warning=Error)
+
+      d <- data.frame(year = x$year, yr_part = x$year + (2 * x$month - 1)/24, month = x$month, temp = x$anomaly, check.names = FALSE, stringsAsFactors = FALSE)
+
+      d[[series %_% "_uncertainty"]] <- x[[10]] - x[[9]]
+
+      return (d)
+    })(path),
+
     `HadCET` = (function(p) {
       x <- NULL
 
@@ -529,10 +548,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           flit <- expand.grid(month=1:12, year=unique(y$year))
           flit <- merge(flit, y, by=c("year", "month"), all.x=TRUE)
           d <- data.frame(year=flit$year, yr_part=flit$year + (2 * flit$month - 1)/24, month=flit$month, check.names=FALSE, stringsAsFactors=FALSE)
-          flit <- data.matrix(flit[, -(1:3)])
+          flit <- data.matrix(flit[, -(1:2)])
           is.na(flit) <- flit == 999.000
           d <- cbind(d, flit)
           names(d)[!(names(d) %in% common_columns)] <- paste("RATPAC-A", names(d)[!(names(d) %in% common_columns)], "mb", l)
+          names(d) <- sub("surf mb", "Surface", names(d))
 
           d
         }, SIMPLIFY = FALSE
