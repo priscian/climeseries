@@ -210,7 +210,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       d <- data.frame(year = x$year, yr_part = x$year + (2 * x$month - 1)/24, month = x$month, temp = x$anomaly, check.names = FALSE, stringsAsFactors = FALSE)
 
-      d[[series %_% "_uncertainty"]] <- x[[10]] - x[[9]]
+      #d[[series %_% "_uncertainty"]] <- x[[10]] - x[[9]]
+      d[[series %_% "_uncertainty"]] <- 1.96 * x$total_uncertainty
 
       return (d)
     })(path),
