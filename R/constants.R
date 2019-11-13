@@ -223,7 +223,8 @@ data_urls <- list(
   `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
   `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),
-  `TSI Reconstructed` = list(path="http://spot.colorado.edu/~koppg/TSI/TIM_TSI_Reconstruction.txt", type="solar"),
+  `TSI Reconstructed` = list(path="http://spot.colorado.edu/~koppg/TSI/TIM_TSI_Reconstruction.txt", type="solar"), # Now a bad link
+  # https://web.archive.org/web/20190711132454/https://spot.colorado.edu/~koppg/TSI/TIM_TSI_Reconstruction.txt
   `SORCE TSI` = list(path="http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt", type="solar"),
   `Rutgers NH Snow Cover` = list(path=rutgerssnowBase %_% "nhland.txt", type="snow"),
   `Rutgers Eurasia Snow Cover` = list(path=rutgerssnowBase %_% "eurasia.txt", type="snow"),
