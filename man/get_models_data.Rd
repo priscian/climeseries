@@ -4,9 +4,15 @@
 \alias{get_models_data}
 \title{Get CMIP Phase 3 or 5 Data from Stored Data}
 \usage{
-get_models_data(ensemble = c("cmip3", "cmip5"), baseline = NULL,
-  save = FALSE, data_dir, subdir = NULL, cmip3_raw = FALSE,
-  center_fun = "mean")
+get_models_data(
+  ensemble = c("cmip3", "cmip5"),
+  baseline = NULL,
+  save = FALSE,
+  data_dir,
+  subdir = NULL,
+  cmip3_raw = FALSE,
+  center_fun = "mean"
+)
 }
 \arguments{
 \item{ensemble}{One of "cmip3" or "cmip5" coresponding to the appropriate IPCC model ensemble.}

@@ -224,8 +224,10 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
 
-  if (!add)
+  if (!add) {
+    op <- par(mar = c(5, 5, 4, 2) + 0.1)
     plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, frame.plot=FALSE, ...) # I.e. 'plot.ts()'.
+  }
   if (xaxt == "n")
     axis(1, xaxisTicks)
   else
@@ -319,10 +321,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       range = range(as.data.frame(w)[, "yr_part"], na.rm = TRUE),
       lwd = trend_lwd,
       legend_inset = trend_legend_inset,
-      fmt = "%+1.2f",
-      unit = unit,
       trend_multiplier = 10,
-      denom_text = "/dec.",
+      rate_expression = sprintf("expression(Delta ~ \"= %%+1.2f %s/dec.\")", unit),
       keep_default_trends = TRUE,
       sort_by_name = FALSE
     )
@@ -351,7 +351,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       trendArgs$m[[i]]$lm <- lm(eval(substitute(b ~ yr_part, list(b = as.symbol(names(trendArgs$m)[i])))), data = trendArgs$m[[i]]$sdata, x = TRUE)
       trendArgs$m[[i]]$change <- coef(trendArgs$m[[i]]$lm)[2] * diff(range(trendArgs$m[[i]]$lm$model[, 2]))
       trendArgs$m[[i]]$rate <- coef(trendArgs$m[[i]]$lm)[2] * trendArgs$trend_multiplier
-      trendArgs$m[[i]]$rateText <- eval(substitute(expression(paste(Delta, " = ", r, phantom(l), unit, denom_text, sep = "")), list(r = sprintf(trendArgs$m[[i]]$rate, fmt = trendArgs$fmt), unit = trendArgs$unit, denom_text = trendArgs$denom_text)))
+      trendArgs$m[[i]]$rateText <- eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate))
     }
     if (trendArgs$sort_by_name)
       trendArgs$m <- trendArgs$m[sort(names(trendArgs$m))]
@@ -455,6 +455,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   if (save_png)
     dev.off()
+
+  if (!add)
+    par(op)
 
   cat("Standardized file name:", filename, fill=TRUE); flush.console()
 

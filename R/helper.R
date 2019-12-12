@@ -67,7 +67,7 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 
   d <- inst[, c("year", "month", series)]
   d <- subset(d, na_unwrap(d[, series]))
-  d1 <- tbl_dt(dcast(d, year ~ month, value.var=series))
+  d1 <- data.table::data.table(dcast(d, year ~ month, value.var=series))
   d2 <- data.table::copy(d1)
   ## Calculate cumulative average by row.
   d2[, names(d2[, !1, with=FALSE]) := as.list((function(x) { cumsum(as.matrix(x)[1, ]) / seq_along(x) })(.SD)), .SDcols=names(d2[, !1, with=FALSE]), by=1:nrow(d2)]
@@ -959,7 +959,7 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
     dev_null <- sapply(series, function(a) { is.na(x[, a]) <<- x[, "year"] %in% incompleteYears; nop() }); rm(dev_null)
   }
 
-  r <- tbl_dt(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by = year]
+  r <- data.table::data.table(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by = year]
   if (unwrap)
     r <- r[na_unwrap(r), ]
 
@@ -1066,7 +1066,7 @@ show_single_value <- function(series, baseline=TRUE, data, fun=which.max, ..., v
     data <- get_climate_data(download=FALSE, baseline=baseline)
 
   baseline <- attr(data, "baseline")
-  g <- make_yearly_data(data)[, c("year", series), with=FALSE]
+  g <- make_yearly_data(data)[, c("year", series)]
 
   single <- t(sapply(series,
     function(a)

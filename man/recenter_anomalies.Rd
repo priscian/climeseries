@@ -4,8 +4,14 @@
 \alias{recenter_anomalies}
 \title{Recenter Climate-Series Anomalies on a Different Baseline}
 \usage{
-recenter_anomalies(x, baseline = defaultBaseline, digits = 4L,
-  by_month = TRUE, return_baselines_only = FALSE, ...)
+recenter_anomalies(
+  x,
+  baseline = defaultBaseline,
+  digits = 4L,
+  by_month = TRUE,
+  return_baselines_only = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{A data frame (down)loaded by function \code{\link{get_climate_data}}.}

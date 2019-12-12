@@ -543,3 +543,30 @@ add_months <- function(x, m)
 ## usage:
 # add_months(1880.458, -7)
 # add_months(c(1880, 6), 8)
+
+
+#' @export
+eval_js <- function(..., envir = parent.frame(), enclos = if(is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())
+{
+  dots <- get_dots(..., evaluate = TRUE)
+  expr <- unlist(dots$evaluated)
+
+  if (is.list(expr)) {
+    if (is.function(expr[[1L]])) # If first '...' argument is a function, execute it with other '...' arguments as its own.
+      return (do.call(expr[[1L]], tail(expr, -1L)))
+
+    for (i in expr) {
+      if (is.expression(i) || is.language(i)) {
+        return (eval(i, envir, enclos)) # Returns only the first expression found.
+      }
+    }
+  }
+
+  expr <- paste(expr, collapse = " ")
+
+  if (typeof(expr) != "character")
+    return (expr)
+
+  expr <- parse(text = expr)
+  eval(expr, envir, enclos)
+}

@@ -476,7 +476,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         tempFile <- tempfile()
-        download.file(p, tempFile, quiet=TRUE)
+        httr::GET(p, httr::write_disk(tempFile, overwrite = TRUE))
+        #download.file(p, tempFile, quiet=TRUE)
         con <- unz(tempFile, "RATPAC-A-seasonal-layers.txt")
         flit <- readLines(con)
         close(con); unlink(tempFile)
@@ -524,7 +525,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         tempFile <- tempfile()
-        download.file(p, tempFile, quiet=TRUE)
+        #download.file(p, tempFile, quiet=TRUE)
+        httr::GET(p, httr::write_disk(tempFile, overwrite = TRUE))
         con <- unz(tempFile, "RATPAC-A-annual-levels.txt")
         flit <- readLines(con)
         close(con); unlink(tempFile)
@@ -562,13 +564,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `NCEP Surface Air SH` =,
-    `NCEP Surface Air SH Polar` =,
-    `NCEP Surface Air NH` =,
-    `NCEP Surface Air NH Polar` =,
-    `NCEP Surface Air Tropics` =,
-    `NCEP Surface Air USA 48` =,
-    `NCEP Surface Air Global` = (function(p) {
+    `NCEP/NCAR Surface Air SH` =,
+    `NCEP/NCAR Surface Air SH Polar` =,
+    `NCEP/NCAR Surface Air NH` =,
+    `NCEP/NCAR Surface Air NH Polar` =,
+    `NCEP/NCAR Surface Air Tropics` =,
+    `NCEP/NCAR Surface Air USA 48` =,
+    `NCEP/NCAR Surface Air Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -827,19 +829,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE, comment.char="#")
       }, error=Error, warning=Error)
 
-      l <- na.omit(tbl_dt(melt(x, id="year")), cols="value")
+      l <- na.omit(data.table::data.table(melt(x, id="year")), cols="value")
       setnames(l, c("yr_part", "source", "temp"))
       setcolorder(l, c(1, 3, 2))
 
       r <- range(trunc(l$yr_part))
       flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
       flit$yr_part <- flit$year + (2 * flit$month - 1)/24
-      flit <- tbl_dt(flit)
+      flit <- data.table::data.table(flit)
       data.table::setkey(flit, yr_part)
 
       m <- copy(l)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
-      m <- dplyr::full_join(flit, m, by=c("year", "month"))
+      m <- data.table::data.table(dplyr::full_join(flit, m, by=c("year", "month")))
 
       ## Don't use, but keep available. I may have to switch entirely to data tables to add it as a column attribute to the final data set.
       satSources <- m[!duplicated(m, by=c("year", "month")), .(year, month, source)]
@@ -869,12 +871,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       r <- range(trunc(x$yr_part))
       flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
       flit$yr_part <- flit$year + (2 * flit$month - 1)/24
-      flit <- tbl_dt(flit)
+      flit <- data.table::data.table(flit)
       data.table::setkey(flit, yr_part)
 
       m <- copy(x)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
-      m <- dplyr::full_join(flit, m, by=c("year", "month"))
+      m <- data.table::data.table(dplyr::full_join(flit, m, by=c("year", "month")))
       ## Uncertainties are 1 × sigma (Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1), so 1.96 × sigma is a 95% CI.
       m[, `_uncertainty` := 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
@@ -904,13 +906,14 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       r <- range(trunc(x$yr_part))
       flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
       flit$yr_part <- flit$year + (2 * flit$month - 1)/24
-      flit <- tbl_dt(flit)
+      flit <- data.table::data.table(flit)
       data.table::setkey(flit, yr_part)
 
       m <- copy(x)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
       m <- m[, lapply(.SD, mean, na.rm=TRUE), by=.(year, month), .SDcols=c(series, "_uncertainty")] # Remove year/month duplicates by averaging.
       m <- dplyr::full_join(flit, m, by=c("year", "month"))
+      m <- data.table::data.table(m) # This need optimization for the future "climeseries" update.
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
       m[, `_uncertainty` := 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
@@ -1093,7 +1096,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     })(path),
 
     `ERA5 2m` =,
-    `ERA5 Sea Ice` = (function(p) {
+    `ERA5 Sea Ice Extent` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
       if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
       else currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear
@@ -1113,12 +1116,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       x <- NULL
 
-      skip <- 1
+      skip <- 2L
 
       tryCatch({
-        flit <- trimws(readLines(uri))
-        flit <- flit[flit != ""]
-        x <- read.csv(header=TRUE, skip=skip, text=flit, check.names=FALSE)
+        x <- read.csv(uri, header=TRUE, skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
@@ -1155,6 +1156,179 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `JRA-55 Surface Air SH` =,
+    `JRA-55 Surface Air SH Land` =,
+    `JRA-55 Surface Air SH Ocean` =,
+    `JRA-55 Surface Air SH Polar` =,
+    `JRA-55 Surface Air SH Polar Land` =,
+    `JRA-55 Surface Air SH Polar Ocean` =,
+    `JRA-55 Surface Air NH` =,
+    `JRA-55 Surface Air NH Land` =,
+    `JRA-55 Surface Air NH Ocean` =,
+    `JRA-55 Surface Air NH Polar` =,
+    `JRA-55 Surface Air NH Polar Land` =,
+    `JRA-55 Surface Air NH Polar Ocean` =,
+    `JRA-55 Surface Air Global` =,
+    `JRA-55 Surface Air Global Land` =,
+    `JRA-55 Surface Air Global Ocean` =,
+    `JRA-55 Surface Air Tropics` =,
+    `JRA-55 Surface Air Tropics Land` =,
+    `JRA-55 Surface Air Tropics Ocean` =,
+    `JRA-55 Surface Air USA 48` =,
+    `JRA-55 Surface Air USA 48 Land` =,
+    `JRA-55 Surface Air USA 48 Ocean` =,
+    `ERA5 Surface Air SH` =,
+    `ERA5 Surface Air SH Land` =,
+    `ERA5 Surface Air SH Ocean` =,
+    `ERA5 Surface Air SH Polar` =,
+    `ERA5 Surface Air SH Polar Land` =,
+    `ERA5 Surface Air SH Polar Ocean` =,
+    `ERA5 Surface Air NH` =,
+    `ERA5 Surface Air NH Land` =,
+    `ERA5 Surface Air NH Ocean` =,
+    `ERA5 Surface Air NH Polar` =,
+    `ERA5 Surface Air NH Polar Land` =,
+    `ERA5 Surface Air NH Polar Ocean` =,
+    `ERA5 Surface Air Global` =,
+    `ERA5 Surface Air Global Land` =,
+    `ERA5 Surface Air Global Ocean` =,
+    `ERA5 Surface Air Tropics` =,
+    `ERA5 Surface Air Tropics Land` =,
+    `ERA5 Surface Air Tropics Ocean` =,
+    `ERA5 Surface Air USA 48` =,
+    `ERA5 Surface Air USA 48 Land` =,
+    `ERA5 Surface Air USA 48 Ocean` =,
+    `NCEP/NCAR R1 Surface Air SH` =,
+    `NCEP/NCAR R1 Surface Air SH Land` =,
+    `NCEP/NCAR R1 Surface Air SH Ocean` =,
+    `NCEP/NCAR R1 Surface Air SH Polar` =,
+    `NCEP/NCAR R1 Surface Air SH Polar Land` =,
+    `NCEP/NCAR R1 Surface Air SH Polar Ocean` =,
+    `NCEP/NCAR R1 Surface Air NH` =,
+    `NCEP/NCAR R1 Surface Air NH Land` =,
+    `NCEP/NCAR R1 Surface Air NH Ocean` =,
+    `NCEP/NCAR R1 Surface Air NH Polar` =,
+    `NCEP/NCAR R1 Surface Air NH Polar Land` =,
+    `NCEP/NCAR R1 Surface Air NH Polar Ocean` =,
+    `NCEP/NCAR R1 Surface Air Global` =,
+    `NCEP/NCAR R1 Surface Air Global Land` =,
+    `NCEP/NCAR R1 Surface Air Global Ocean` =,
+    `NCEP/NCAR R1 Surface Air Tropics` =,
+    `NCEP/NCAR R1 Surface Air Tropics Land` =,
+    `NCEP/NCAR R1 Surface Air Tropics Ocean` =,
+    `NCEP/NCAR R1 Surface Air USA 48` =,
+    `NCEP/NCAR R1 Surface Air USA 48 Land` =,
+    `NCEP/NCAR R1 Surface Air USA 48 Ocean` =,
+    `NCEP/DOE R2 Surface Air SH` =,
+    `NCEP/DOE R2 Surface Air SH Land` =,
+    `NCEP/DOE R2 Surface Air SH Ocean` =,
+    `NCEP/DOE R2 Surface Air SH Polar` =,
+    `NCEP/DOE R2 Surface Air SH Polar Land` =,
+    `NCEP/DOE R2 Surface Air SH Polar Ocean` =,
+    `NCEP/DOE R2 Surface Air NH` =,
+    `NCEP/DOE R2 Surface Air NH Land` =,
+    `NCEP/DOE R2 Surface Air NH Ocean` =,
+    `NCEP/DOE R2 Surface Air NH Polar` =,
+    `NCEP/DOE R2 Surface Air NH Polar Land` =,
+    `NCEP/DOE R2 Surface Air NH Polar Ocean` =,
+    `NCEP/DOE R2 Surface Air Global` =,
+    `NCEP/DOE R2 Surface Air Global Land` =,
+    `NCEP/DOE R2 Surface Air Global Ocean` =,
+    `NCEP/DOE R2 Surface Air Tropics` =,
+    `NCEP/DOE R2 Surface Air Tropics Land` =,
+    `NCEP/DOE R2 Surface Air Tropics Ocean` =,
+    `NCEP/DOE R2 Surface Air USA 48` =,
+    `NCEP/DOE R2 Surface Air USA 48 Land` =,
+    `NCEP/DOE R2 Surface Air USA 48 Ocean` =,
+    `NCEP/CSFR Surface Air SH` =,
+    `NCEP/CSFR Surface Air SH Land` =,
+    `NCEP/CSFR Surface Air SH Ocean` =,
+    `NCEP/CSFR Surface Air SH Polar` =,
+    `NCEP/CSFR Surface Air SH Polar Land` =,
+    `NCEP/CSFR Surface Air SH Polar Ocean` =,
+    `NCEP/CSFR Surface Air NH` =,
+    `NCEP/CSFR Surface Air NH Land` =,
+    `NCEP/CSFR Surface Air NH Ocean` =,
+    `NCEP/CSFR Surface Air NH Polar` =,
+    `NCEP/CSFR Surface Air NH Polar Land` =,
+    `NCEP/CSFR Surface Air NH Polar Ocean` =,
+    `NCEP/CSFR Surface Air Global` =,
+    `NCEP/CSFR Surface Air Global Land` =,
+    `NCEP/CSFR Surface Air Global Ocean` =,
+    `NCEP/CSFR Surface Air Tropics` =,
+    `NCEP/CSFR Surface Air Tropics Land` =,
+    `NCEP/CSFR Surface Air Tropics Ocean` =,
+    `NCEP/CSFR Surface Air USA 48` =,
+    `NCEP/CSFR Surface Air USA 48 Land` =,
+    `NCEP/CSFR Surface Air USA 48 Ocean` =,
+    `MERRA-2 Surface Air SH` =,
+    `MERRA-2 Surface Air SH Land` =,
+    `MERRA-2 Surface Air SH Ocean` =,
+    `MERRA-2 Surface Air SH Polar` =,
+    `MERRA-2 Surface Air SH Polar Land` =,
+    `MERRA-2 Surface Air SH Polar Ocean` =,
+    `MERRA-2 Surface Air NH` =,
+    `MERRA-2 Surface Air NH Land` =,
+    `MERRA-2 Surface Air NH Ocean` =,
+    `MERRA-2 Surface Air NH Polar` =,
+    `MERRA-2 Surface Air NH Polar Land` =,
+    `MERRA-2 Surface Air NH Polar Ocean` =,
+    `MERRA-2 Surface Air Global` =,
+    `MERRA-2 Surface Air Global Land` =,
+    `MERRA-2 Surface Air Global Ocean` =,
+    `MERRA-2 Surface Air Tropics` =,
+    `MERRA-2 Surface Air Tropics Land` =,
+    `MERRA-2 Surface Air Tropics Ocean` =,
+    `MERRA-2 Surface Air USA 48` =,
+    `MERRA-2 Surface Air USA 48 Land` =,
+    `MERRA-2 Surface Air USA 48 Ocean` =,
+    `20th C. Reanalysis V3 Surface Air SH` =,
+    `20th C. Reanalysis V3 Surface Air SH Land` =,
+    `20th C. Reanalysis V3 Surface Air SH Ocean` =,
+    `20th C. Reanalysis V3 Surface Air SH Polar` =,
+    `20th C. Reanalysis V3 Surface Air SH Polar Land` =,
+    `20th C. Reanalysis V3 Surface Air SH Polar Ocean` =,
+    `20th C. Reanalysis V3 Surface Air NH` =,
+    `20th C. Reanalysis V3 Surface Air NH Land` =,
+    `20th C. Reanalysis V3 Surface Air NH Ocean` =,
+    `20th C. Reanalysis V3 Surface Air NH Polar` =,
+    `20th C. Reanalysis V3 Surface Air NH Polar Land` =,
+    `20th C. Reanalysis V3 Surface Air NH Polar Ocean` =,
+    `20th C. Reanalysis V3 Surface Air Global` =,
+    `20th C. Reanalysis V3 Surface Air Global Land` =,
+    `20th C. Reanalysis V3 Surface Air Global Ocean` =,
+    `20th C. Reanalysis V3 Surface Air Tropics` =,
+    `20th C. Reanalysis V3 Surface Air Tropics Land` =,
+    `20th C. Reanalysis V3 Surface Air Tropics Ocean` =,
+    `20th C. Reanalysis V3 Surface Air USA 48` =,
+    `20th C. Reanalysis V3 Surface Air USA 48 Land` =,
+    `20th C. Reanalysis V3 Surface Air USA 48 Ocean` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        flit <- httr::GET(p)
+        localPath <- drop(stringr::str_match(content(flit, "text"), stringr::regex("/psd/tmp/.*?\\.txt", ignore_case = TRUE)))
+        if (length(localPath) > 1)
+          warning("Web scrape found multiple hits for local data path (should only find one).")
+        purl <- httr::parse_url(p)
+        dataPath <- paste(purl$scheme %_% "://" %_% purl$hostname, localPath, sep = "/")
+        flit1 <- stringr::str_extract(readLines(dataPath), "^\\d{4}\\s+.*$") %>% stringi::stri_remove_na()
+        x <- read.table(text = flit1, header = FALSE, skip = skip, check.names = FALSE)
+      }, error = Error, warning = Error)
+
+      flit2 <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
+      for (i in names(flit2)) flit2[[i]] <- as.numeric(flit2[[i]])
+      flit2 <- dplyr::arrange(flit2, V1, month)
+
+      d <- dataframe(year = flit2$V1, yr_part = flit2$V1 + (2 * flit2$month - 1)/24, month = flit2$month, temp = flit2$temp)
+      ## Missing values are given as "-9999".
+      is.na(d$temp) <- d$temp == -9999
+
+      return (d)
+    })(path),
+
     `NCEI Ocean Heat Content` = (function(p) {
       ma <- c("3month", "pentad")
       basins <- c(a="Atlantic", i="Indian", p="Pacific", w="Global")
@@ -1179,7 +1353,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           l <- alply(a, 1,
             function(aa) {
               tryCatch({
-                x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
+                #x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
+                x <- read.table(text = httr::content(httr::GET(aa$url), "text"), header=TRUE, skip=skip, check.names=FALSE)
               }, error=Error, warning=Error)
 
               x
@@ -1210,7 +1385,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           l <- alply(a, 1,
             function(aa) {
               tryCatch({
-                x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
+                #x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
+                x <- read.table(text = httr::content(httr::GET(aa$url), "text"), header=TRUE, skip=skip, check.names=FALSE)
               }, error=Error, warning=Error)
 
               x
@@ -1228,10 +1404,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           r <- range(trunc(l$yr_part))
           flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
           flit$yr_part <- flit$year + (2 * flit$month - 1)/24
-          flit <- tbl_dt(flit)
+          flit <- data.table::data.table(flit)
           data.table::setkey(flit, yr_part)
 
-          m <- tbl_dt(l)
+          m <- data.table::data.table(l)
           m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
           m <- dplyr::full_join(flit, m, by=c("year", "month"))
 

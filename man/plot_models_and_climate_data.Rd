@@ -4,21 +4,46 @@
 \alias{plot_models_and_climate_data}
 \title{Plot Climatological Time Series with Model Results}
 \usage{
-plot_models_and_climate_data(instrumental, models, series = NULL,
-  scenario = NULL, start = 1880, end = NULL, ma = NULL,
-  ma_i = ma, baseline = NULL, yearly = FALSE, ma_sides = 1L,
-  ylim = c(-1, 1), scenario_text = "Scenario Realizations",
-  center_fun = "mean", smooth_center = FALSE,
-  envelope_coverage = 0.95, envelope_type = c("quantiles", "range",
-  "normal"), plot_envelope = TRUE, smooth_envelope = TRUE,
-  unit = NULL, col_m = NULL, col_m_mean = NULL,
-  alpha_envelope = 0.2, envelope_text = "model coverage",
-  legend... = list(), plot_i... = list(),
-  col_i_fun = RColorBrewer::brewer.pal, col_i_fun... = list(name =
-  "Paired"), alpha_i = 0.5, conf_int_i = FALSE, ci_alpha_i = 0.3,
-  make_standardized_plot_filename... = list(), start_callback = NULL,
-  end_callback = NULL, save_png = FALSE, save_png_dir,
-  png... = list(), ...)
+plot_models_and_climate_data(
+  instrumental,
+  models,
+  series = NULL,
+  scenario = NULL,
+  start = 1880,
+  end = NULL,
+  ma = NULL,
+  ma_i = ma,
+  baseline = NULL,
+  yearly = FALSE,
+  ma_sides = 1L,
+  ylim = c(-1, 1),
+  scenario_text = "Scenario Realizations",
+  center_fun = "mean",
+  smooth_center = FALSE,
+  envelope_coverage = 0.95,
+  envelope_type = c("quantiles", "range", "normal"),
+  plot_envelope = TRUE,
+  smooth_envelope = TRUE,
+  unit = NULL,
+  col_m = NULL,
+  col_m_mean = NULL,
+  alpha_envelope = 0.2,
+  envelope_text = "model coverage",
+  legend... = list(),
+  plot_i... = list(),
+  col_i_fun = RColorBrewer::brewer.pal,
+  col_i_fun... = list(name = "Paired"),
+  alpha_i = 0.5,
+  conf_int_i = FALSE,
+  ci_alpha_i = 0.3,
+  make_standardized_plot_filename... = list(),
+  start_callback = NULL,
+  end_callback = NULL,
+  save_png = FALSE,
+  save_png_dir,
+  png... = list(),
+  ...
+)
 }
 \arguments{
 \item{instrumental}{An instrumental-temperature dataset (down)loaded by function \code{\link{get_climate_data}}.}

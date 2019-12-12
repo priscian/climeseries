@@ -73,19 +73,90 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 ## https://climate.copernicus.eu/surface-air-temperature-maps
 ## https://confluence.ecmwf.int/display/CKB/How+to+download+ERA-Interim+data+from+the+ECMWF+data+archive
 eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/"
-noaaOhcBase <- "http://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
+noaaOhcBase <- "https://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 #nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
 nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
 
+## Reanalyses:
+make_reanalysis_urls <- function()
+{
+  writBase <- "https://www.esrl.noaa.gov/psd/cgi-bin/data/testdap/timeseries.proc.pl?dataset1=@@SERIES@@&var=2m+Air+Temperature&fyear=1840&fyear2=2019&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@"
+  reanalyses <- list(
+    `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
+    `ERA5` = sub("@@SERIES@@", "ERA-5", writBase),
+    `NCEP/NCAR R1` = sub("@@SERIES@@", "NCEP%2FNCAR+R1", writBase),
+    `NCEP/DOE R2` = sub("@@SERIES@@", "NCEP%2FDOE+R2", writBase),
+    `NCEP/CSFR` = sub("@@SERIES@@", "NCEP%2FCFSR", writBase),
+    `MERRA-2` = sub("@@SERIES@@", "MERRA-2", writBase),
+    `20th C. Reanalysis V3` = sub("@@SERIES@@", "20th+Century+Reanalysis+V3", writBase)
+  )
+
+  reanalysisSeriesSuffixes <- c(
+    "Surface Air SH",
+    "Surface Air SH Polar",
+    "Surface Air NH",
+    "Surface Air NH Polar",
+    "Surface Air Global",
+    "Surface Air Tropics",
+    "Surface Air USA 48"
+  )
+
+  reanalysisMaskSuffixes <- c("All" = 0, "Land" = 1, "Ocean" = 2)
+
+  r <- sapply(names(reanalyses),
+    function(a)
+    {
+      uri <- reanalyses[[a]]
+
+      r <- list(
+        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "0", "-90")),
+        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "-60", "-90")),
+        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "90", "0")),
+        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "90", "60")),
+        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "90", "-90")),
+        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "20", "-20")),
+        ## For the US: https://www.quora.com/What-is-the-longitude-and-latitude-of-a-bounding-box-around-the-continental-United-States
+        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-125", "-70", "50", "25"))
+      )
+      names(r) <- paste(a, reanalysisSeriesSuffixes)
+
+      r
+    }, simplify = FALSE)
+
+  ## Flatten list 'r' to a single level.
+  ## These don't quite work: rr <- lapply(r, rapply, f = c); rr <- rlist::list.flatten(r)
+  rr <- purrr::flatten(r)
+
+  ## Now apply different masks:
+  rrr <- sapply(names(rr),
+    function(a) {
+      r <- sapply(names(reanalysisMaskSuffixes),
+        function(b) {
+          mask <- reanalysisMaskSuffixes[b]
+          mgsub::mgsub(rr[[a]], "@@MASK@@", mask)
+        }, simplify = FALSE)
+
+      names(r) <- paste0(a, c("", " Land", " Ocean"))
+
+      #browser()
+      r
+    }, simplify = FALSE)
+
+  purrr::flatten(rrr)
+}
+reanalysis_urls <- make_reanalysis_urls()
+## Make list of switch strings from these URLs:
+# cat(backtick(names(reanalysis_urls)) %_% " =,", sep = "\n")
+
 #' @rdname constants
 #' @export
-data_urls <- list(
+data_urls <- c(list(
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ea_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
-  `ERA5 Sea Ice` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CIA_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv",
+  `ERA5 Sea Ice Extent` = list(path = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CIA_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv", type = "sea ice"),
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
@@ -203,17 +274,18 @@ data_urls <- list(
   `UAH TMT 6.0` = uahBase %_% "v6.0/tmt/uahncdc_mt_6.0.txt",
   `UAH TTP 6.0` = uahBase %_% "v6.0/ttp/uahncdc_tp_6.0.txt",
   ## RATPAC
-  `RATPAC-A Seasonal Layers` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt.zip", # Version 2; Version 1 is now deprecated (6 Sep. 2016).
-  `RATPAC-A Annual Levels` = "http://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-annual-levels.txt.zip",
+  `RATPAC-A Seasonal Layers` = "https://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-seasonal-layers.txt.zip", # Version 2; Version 1 is now deprecated (6 Sep. 2016).
+  `RATPAC-A Annual Levels` = "https://www1.ncdc.noaa.gov/pub/data/ratpac/ratpac-a/RATPAC-A-annual-levels.txt.zip",
   ## NCEP
-  `NCEP Surface Air SH` = sub("@@LAT1@@", "0", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
-  `NCEP Surface Air SH Polar` = sub("@@LAT1@@", "-60", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
-  `NCEP Surface Air NH` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "0", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
-  `NCEP Surface Air NH Polar` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "60", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
-  `NCEP Surface Air Global` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
-  `NCEP Surface Air Tropics` = sub("@@LAT1@@", "20", sub("@@LAT2@@", "-20", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
-  ## For the US: https://www.quora.com/What-is-the-longitude-and-latitude-of-a-bounding-box-around-the-continental-United-States
-  `NCEP Surface Air USA 48` = sub("@@LON1", "-125", sub("@@LON2@@", "-70", sub("@@LAT1@@", "50", sub("@@LAT2@@", "25", sub("@@VAR@@", "Air+Temperature", esrlBase))))),
+  ## N.B. These appear to be NCEP/NCAR R1 1000 mb temps, so I'll leave them out. I can get them from WRIT (above) if necessasry.
+  # `NCEP/NCAR Surface Air SH` = sub("@@LAT1@@", "0", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
+  # `NCEP/NCAR Surface Air SH Polar` = sub("@@LAT1@@", "-60", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
+  # `NCEP/NCAR Surface Air NH` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "0", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
+  # `NCEP/NCAR Surface Air NH Polar` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "60", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
+  # `NCEP/NCAR Surface Air Global` = sub("@@LAT1@@", "90", sub("@@LAT2@@", "-90", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
+  # `NCEP/NCAR Surface Air Tropics` = sub("@@LAT1@@", "20", sub("@@LAT2@@", "-20", sub("@@VAR@@", "Air+Temperature", esrlLatOnlyBase))),
+  # ## For the US: https://www.quora.com/What-is-the-longitude-and-latitude-of-a-bounding-box-around-the-continental-United-States
+  # `NCEP/NCAR Surface Air USA 48` = sub("@@LON1@@", "-125", sub("@@LON2@@", "-70", sub("@@LAT1@@", "50", sub("@@LAT2@@", "25", sub("@@VAR@@", "Air+Temperature", esrlBase))))),
   ## China: CMA-LSAT, dx.doi.org/10.1007/s00382-017-3755-1
   ## CO2
   `CO2 Mauna Loa` = list(path="https://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
@@ -258,8 +330,9 @@ data_urls <- list(
   # JRA-55 reanalysis: https://jra.kishou.go.jp/JRA-55/index_en.html
   #   https://s-rip.ees.hokudai.ac.jp/resources/links.html
   #   ftp://ds.data.jma.go.jp/JRA-55/Hist/Monthly/anl_surf125
+  #   https://www.esrl.noaa.gov/psd/cgi-bin/data/testdap/timeseries.pl # This is probably the easiest if it works!
   # ftp://ftp.ncdc.noaa.gov/pub/data/cirs/climdiv/
-)
+), reanalysis_urls)
 
 ## Omit by default some series whose downloading or processing takes a very long time.
 omitUrlNames <- c(

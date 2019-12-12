@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20191111.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20191211.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -44,7 +44,7 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "ERA5 2m Global", "NCEP Surface Air Global")
+  "JRA-55 Surface Air Global", "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global")
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
 
@@ -103,7 +103,7 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "ERA5 2m Global", "NCEP Surface Air Global")
+  "JRA-55 Surface Air Global", "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global")
 start <- 1970; end <- NULL
 g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
@@ -175,7 +175,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191111.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191211.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -187,6 +187,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. met_year
 1. yr_part
 1. month
+1. 20th C. Reanalysis V3 Surface Air Global
+1. 20th C. Reanalysis V3 Surface Air Global Land
+1. 20th C. Reanalysis V3 Surface Air Global Ocean
+1. 20th C. Reanalysis V3 Surface Air NH
+1. 20th C. Reanalysis V3 Surface Air NH Land
+1. 20th C. Reanalysis V3 Surface Air NH Ocean
+1. 20th C. Reanalysis V3 Surface Air NH Polar
+1. 20th C. Reanalysis V3 Surface Air NH Polar Land
+1. 20th C. Reanalysis V3 Surface Air NH Polar Ocean
+1. 20th C. Reanalysis V3 Surface Air SH
+1. 20th C. Reanalysis V3 Surface Air SH Land
+1. 20th C. Reanalysis V3 Surface Air SH Ocean
+1. 20th C. Reanalysis V3 Surface Air SH Polar
+1. 20th C. Reanalysis V3 Surface Air SH Polar Land
+1. 20th C. Reanalysis V3 Surface Air SH Polar Ocean
+1. 20th C. Reanalysis V3 Surface Air Tropics
+1. 20th C. Reanalysis V3 Surface Air Tropics Land
+1. 20th C. Reanalysis V3 Surface Air Tropics Ocean
+1. 20th C. Reanalysis V3 Surface Air USA 48
+1. 20th C. Reanalysis V3 Surface Air USA 48 Land
+1. 20th C. Reanalysis V3 Surface Air USA 48 Ocean
 1. Antarctica Land Ice Mass Variation
 1. Antarctica Land Ice Mass Variation_uncertainty
 1. BEST Global (Air Ice Temp.)
@@ -215,8 +236,29 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
 1. ERA5 2m Global
 1. ERA5 2m European
-1. ERA5 Sea Ice Arctic
-1. ERA5 Sea Ice Antarctic
+1. ERA5 Sea Ice Extent Arctic
+1. ERA5 Sea Ice Extent Antarctic
+1. ERA5 Surface Air Global
+1. ERA5 Surface Air Global Land
+1. ERA5 Surface Air Global Ocean
+1. ERA5 Surface Air NH
+1. ERA5 Surface Air NH Land
+1. ERA5 Surface Air NH Ocean
+1. ERA5 Surface Air NH Polar
+1. ERA5 Surface Air NH Polar Land
+1. ERA5 Surface Air NH Polar Ocean
+1. ERA5 Surface Air SH
+1. ERA5 Surface Air SH Land
+1. ERA5 Surface Air SH Ocean
+1. ERA5 Surface Air SH Polar
+1. ERA5 Surface Air SH Polar Land
+1. ERA5 Surface Air SH Polar Ocean
+1. ERA5 Surface Air Tropics
+1. ERA5 Surface Air Tropics Land
+1. ERA5 Surface Air Tropics Ocean
+1. ERA5 Surface Air USA 48
+1. ERA5 Surface Air USA 48 Land
+1. ERA5 Surface Air USA 48 Ocean
 1. ERSSTv5 Land 00N-30N
 1. ERSSTv5 Land 00N-90N
 1. ERSSTv5 Land 20N-90N
@@ -396,6 +438,48 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. HadSST4 Tropics
 1. HadSST4 Tropics_uncertainty
 1. JMA Global
+1. JRA-55 Surface Air Global
+1. JRA-55 Surface Air Global Land
+1. JRA-55 Surface Air Global Ocean
+1. JRA-55 Surface Air NH
+1. JRA-55 Surface Air NH Land
+1. JRA-55 Surface Air NH Ocean
+1. JRA-55 Surface Air NH Polar
+1. JRA-55 Surface Air NH Polar Land
+1. JRA-55 Surface Air NH Polar Ocean
+1. JRA-55 Surface Air SH
+1. JRA-55 Surface Air SH Land
+1. JRA-55 Surface Air SH Ocean
+1. JRA-55 Surface Air SH Polar
+1. JRA-55 Surface Air SH Polar Land
+1. JRA-55 Surface Air SH Polar Ocean
+1. JRA-55 Surface Air Tropics
+1. JRA-55 Surface Air Tropics Land
+1. JRA-55 Surface Air Tropics Ocean
+1. JRA-55 Surface Air USA 48
+1. JRA-55 Surface Air USA 48 Land
+1. JRA-55 Surface Air USA 48 Ocean
+1. MERRA-2 Surface Air Global
+1. MERRA-2 Surface Air Global Land
+1. MERRA-2 Surface Air Global Ocean
+1. MERRA-2 Surface Air NH
+1. MERRA-2 Surface Air NH Land
+1. MERRA-2 Surface Air NH Ocean
+1. MERRA-2 Surface Air NH Polar
+1. MERRA-2 Surface Air NH Polar Land
+1. MERRA-2 Surface Air NH Polar Ocean
+1. MERRA-2 Surface Air SH
+1. MERRA-2 Surface Air SH Land
+1. MERRA-2 Surface Air SH Ocean
+1. MERRA-2 Surface Air SH Polar
+1. MERRA-2 Surface Air SH Polar Land
+1. MERRA-2 Surface Air SH Polar Ocean
+1. MERRA-2 Surface Air Tropics
+1. MERRA-2 Surface Air Tropics Land
+1. MERRA-2 Surface Air Tropics Ocean
+1. MERRA-2 Surface Air USA 48
+1. MERRA-2 Surface Air USA 48 Land
+1. MERRA-2 Surface Air USA 48 Ocean
 1. Multivariate ENSO Index
 1. NCEI Global
 1. NCEI Global Land
@@ -510,13 +594,69 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEI US PHDI
 1. NCEI US PMDI
 1. NCEI US Precip.
-1. NCEP Surface Air Global
-1. NCEP Surface Air NH
-1. NCEP Surface Air NH Polar
-1. NCEP Surface Air SH
-1. NCEP Surface Air SH Polar
-1. NCEP Surface Air Tropics
-1. NCEP Surface Air USA 48
+1. NCEP/CSFR Surface Air Global
+1. NCEP/CSFR Surface Air Global Land
+1. NCEP/CSFR Surface Air Global Ocean
+1. NCEP/CSFR Surface Air NH
+1. NCEP/CSFR Surface Air NH Land
+1. NCEP/CSFR Surface Air NH Ocean
+1. NCEP/CSFR Surface Air NH Polar
+1. NCEP/CSFR Surface Air NH Polar Land
+1. NCEP/CSFR Surface Air NH Polar Ocean
+1. NCEP/CSFR Surface Air SH
+1. NCEP/CSFR Surface Air SH Land
+1. NCEP/CSFR Surface Air SH Ocean
+1. NCEP/CSFR Surface Air SH Polar
+1. NCEP/CSFR Surface Air SH Polar Land
+1. NCEP/CSFR Surface Air SH Polar Ocean
+1. NCEP/CSFR Surface Air Tropics
+1. NCEP/CSFR Surface Air Tropics Land
+1. NCEP/CSFR Surface Air Tropics Ocean
+1. NCEP/CSFR Surface Air USA 48
+1. NCEP/CSFR Surface Air USA 48 Land
+1. NCEP/CSFR Surface Air USA 48 Ocean
+1. NCEP/DOE R2 Surface Air Global
+1. NCEP/DOE R2 Surface Air Global Land
+1. NCEP/DOE R2 Surface Air Global Ocean
+1. NCEP/DOE R2 Surface Air NH
+1. NCEP/DOE R2 Surface Air NH Land
+1. NCEP/DOE R2 Surface Air NH Ocean
+1. NCEP/DOE R2 Surface Air NH Polar
+1. NCEP/DOE R2 Surface Air NH Polar Land
+1. NCEP/DOE R2 Surface Air NH Polar Ocean
+1. NCEP/DOE R2 Surface Air SH
+1. NCEP/DOE R2 Surface Air SH Land
+1. NCEP/DOE R2 Surface Air SH Ocean
+1. NCEP/DOE R2 Surface Air SH Polar
+1. NCEP/DOE R2 Surface Air SH Polar Land
+1. NCEP/DOE R2 Surface Air SH Polar Ocean
+1. NCEP/DOE R2 Surface Air Tropics
+1. NCEP/DOE R2 Surface Air Tropics Land
+1. NCEP/DOE R2 Surface Air Tropics Ocean
+1. NCEP/DOE R2 Surface Air USA 48
+1. NCEP/DOE R2 Surface Air USA 48 Land
+1. NCEP/DOE R2 Surface Air USA 48 Ocean
+1. NCEP/NCAR R1 Surface Air Global
+1. NCEP/NCAR R1 Surface Air Global Land
+1. NCEP/NCAR R1 Surface Air Global Ocean
+1. NCEP/NCAR R1 Surface Air NH
+1. NCEP/NCAR R1 Surface Air NH Land
+1. NCEP/NCAR R1 Surface Air NH Ocean
+1. NCEP/NCAR R1 Surface Air NH Polar
+1. NCEP/NCAR R1 Surface Air NH Polar Land
+1. NCEP/NCAR R1 Surface Air NH Polar Ocean
+1. NCEP/NCAR R1 Surface Air SH
+1. NCEP/NCAR R1 Surface Air SH Land
+1. NCEP/NCAR R1 Surface Air SH Ocean
+1. NCEP/NCAR R1 Surface Air SH Polar
+1. NCEP/NCAR R1 Surface Air SH Polar Land
+1. NCEP/NCAR R1 Surface Air SH Polar Ocean
+1. NCEP/NCAR R1 Surface Air Tropics
+1. NCEP/NCAR R1 Surface Air Tropics Land
+1. NCEP/NCAR R1 Surface Air Tropics Ocean
+1. NCEP/NCAR R1 Surface Air USA 48
+1. NCEP/NCAR R1 Surface Air USA 48 Land
+1. NCEP/NCAR R1 Surface Air USA 48 Ocean
 1. NOAA Global Mean Sea Level
 1. NOAA Sunspot No.
 1. NSIDC Sea Ice NH Extent

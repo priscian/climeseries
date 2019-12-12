@@ -4,21 +4,56 @@
 \alias{plot_climate_data}
 \title{Plot Climatological Time Series}
 \usage{
-plot_climate_data(x, series, start = NULL, end = NULL, ma = NULL,
-  baseline = NULL, yearly = FALSE, make_yearly_data... = list(),
-  ma_sides = 1L, plot_type = c("single", "multiple"), as_zoo = TRUE,
-  type = "l", xlab = "Year", ylab = NULL, unit = NULL,
-  main = NULL, col = NULL, col_fun = colorspace::rainbow_hcl,
-  col_fun... = list(l = 65), alpha = 0.5, lwd = 2,
-  legend... = list(), add = FALSE, conf_int = FALSE,
-  ci_alpha = 0.3, trend = FALSE, trend_lwd = lwd,
-  trend_legend_inset = c(0.2, 0.2), loess = FALSE, loess... = list(),
-  get_x_axis_ticks... = list(), segmented = FALSE,
-  segmented... = list(), plot.segmented... = list(),
-  mark_segments = FALSE, vline... = list(),
-  make_standardized_plot_filename... = list(), start_callback = NULL,
-  end_callback = NULL, save_png = FALSE, save_png_dir,
-  png... = list(), ...)
+plot_climate_data(
+  x,
+  series,
+  start = NULL,
+  end = NULL,
+  ma = NULL,
+  baseline = NULL,
+  yearly = FALSE,
+  make_yearly_data... = list(),
+  ma_sides = 1L,
+  plot_type = c("single", "multiple"),
+  as_zoo = TRUE,
+  type = "l",
+  xlab = "Year",
+  ylab = NULL,
+  unit = NULL,
+  main = NULL,
+  col = NULL,
+  col_fun = colorspace::rainbow_hcl,
+  col_fun... = list(l = 65),
+  alpha = 0.5,
+  lwd = 2,
+  legend... = list(),
+  add = FALSE,
+  conf_int = FALSE,
+  ci_alpha = 0.3,
+  trend = FALSE,
+  trend_lwd = lwd,
+  trend_legend_inset = c(0.2, 0.2),
+  trend... = list(),
+  extra_trends = list(),
+  loess = FALSE,
+  loess... = list(),
+  loess_series = NULL,
+  lines.loess... = list(),
+  get_x_axis_ticks... = list(),
+  segmented = FALSE,
+  segmented... = list(),
+  plot.segmented... = list(),
+  mark_segments = c("none", "lines", "points"),
+  vline... = list(),
+  points.segmented... = list(),
+  make_standardized_plot_filename... = list(),
+  start_callback = NULL,
+  end_callback = NULL,
+  save_png = FALSE,
+  save_png_dir,
+  png... = list(),
+  ...
+)
 }
 \arguments{
 \item{x}{A data set (down)loaded by function \code{\link{get_climate_data}}.}
@@ -64,7 +99,7 @@ series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Kr
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 
 ########################################
-## Plot instrumental series with 95\% confidence intervals.
+## Plot instrumental series with 95% confidence intervals.
 ########################################
 
 series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
@@ -95,7 +130,7 @@ for (s in m$series) {
   summary(m[[s]]$lm)
   m[[s]]$warming <- coef(m[[s]]$lm)[2L] * diff(range(m[[s]]$lm$model[, 2L]))
   m[[s]]$rate <- coef(m[[s]]$lm)[2L] * 10
-  m[[s]]$rateText <- eval(substitute(expression(paste(Delta, "T = ", r, phantom(l) * degree, "C/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="\%+1.3f"))))
+  m[[s]]$rateText <- eval(substitute(expression(paste(Delta, "T = ", r, phantom(l) * degree, "C/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="%+1.3f"))))
   m[[s]]$col <- m$col[s]
 }
 ## Plot series.
