@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20191211.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20191216.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -175,7 +175,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191211.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191216.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -410,6 +410,74 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. GISTEMP v4 Zonal Land 44S-24S
 1. GISTEMP v4 Zonal Land 64S-44S
 1. GISTEMP v4 Zonal Land 90S-64S
+1. GRACE-FO Antarctic Ice Mass AIS
+1. GRACE-FO Antarctic Ice Mass AIS_301
+1. GRACE-FO Antarctic Ice Mass AIS_302
+1. GRACE-FO Antarctic Ice Mass AIS_303
+1. GRACE-FO Antarctic Ice Mass AIS_304
+1. GRACE-FO Antarctic Ice Mass AIS_305
+1. GRACE-FO Antarctic Ice Mass AIS_306
+1. GRACE-FO Antarctic Ice Mass AIS_307
+1. GRACE-FO Antarctic Ice Mass AIS_308
+1. GRACE-FO Antarctic Ice Mass AIS_309
+1. GRACE-FO Antarctic Ice Mass AIS_310
+1. GRACE-FO Antarctic Ice Mass AIS_311
+1. GRACE-FO Antarctic Ice Mass AIS_312
+1. GRACE-FO Antarctic Ice Mass AIS_313
+1. GRACE-FO Antarctic Ice Mass AIS_314
+1. GRACE-FO Antarctic Ice Mass AIS_315
+1. GRACE-FO Antarctic Ice Mass AIS_316
+1. GRACE-FO Antarctic Ice Mass AIS_317
+1. GRACE-FO Antarctic Ice Mass AIS_318
+1. GRACE-FO Antarctic Ice Mass AIS_319
+1. GRACE-FO Antarctic Ice Mass AIS_320
+1. GRACE-FO Antarctic Ice Mass AIS_321
+1. GRACE-FO Antarctic Ice Mass AIS_322
+1. GRACE-FO Antarctic Ice Mass AIS_323
+1. GRACE-FO Antarctic Ice Mass AIS_324
+1. GRACE-FO Antarctic Ice Mass AIS_325
+1. GRACE-FO Antarctic Ice Mass AIS_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_301_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_302_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_303_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_304_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_305_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_306_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_307_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_308_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_309_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_310_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_311_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_312_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_313_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_314_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_315_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_316_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_317_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_318_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_319_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_320_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_321_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_322_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_323_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_324_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_325_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS
+1. GRACE-FO Greenland Ice Mass GIS_301
+1. GRACE-FO Greenland Ice Mass GIS_302
+1. GRACE-FO Greenland Ice Mass GIS_303
+1. GRACE-FO Greenland Ice Mass GIS_304
+1. GRACE-FO Greenland Ice Mass GIS_305
+1. GRACE-FO Greenland Ice Mass GIS_306
+1. GRACE-FO Greenland Ice Mass GIS_307
+1. GRACE-FO Greenland Ice Mass GIS_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_301_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_302_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_303_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_304_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_305_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_306_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_307_uncertainty
 1. Greenland Land Ice Mass Variation
 1. Greenland Land Ice Mass Variation_uncertainty
 1. HadCET

@@ -1329,6 +1329,41 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `GRACE-FO Greenland Ice Mass` =,
+    `GRACE-FO Antarctic Ice Mass` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        x <- rio::import(p, format = "csv", skip = skip)
+      }, error = Error, warning = Error)
+
+      matches <- stringr::str_match(x$time, "^(\\d{4})_(\\d+)$")
+      yearTemp <- lubridate::date_decimal(as.numeric(matches[, 2]))
+      lubridate::day(yearTemp) <- as.numeric(matches[, 3])
+      y <- lubridate::year(yearTemp)
+      m <- lubridate::month(yearTemp)
+
+      flit <- x[, -1, drop = FALSE]
+      flitNames <- names(flit)
+      names(flit) <- paste(series, stringr::str_replace(flitNames, "^error_(.*?)$", "\\1_uncertainty"))
+
+      r <- range(y)
+      flit2 <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
+
+      d0 <- data.table::data.table(dataframe(year = y, month = m, flit))
+      d0 <- d0[, lapply(.SD, mean, na.rm = TRUE), by = .(year, month), .SDcols = names(flit)] # Remove year/month duplicates by averaging.
+      d0 <- dplyr::full_join(flit2, d0, by = c("year", "month"))
+      #m <- data.table::data.table(m) # This needs optimization for the future "climeseries" update.
+
+      ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
+      d <- d0 %>% dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_uncertainty")), function(a) { a * 1.96 }) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24)
+
+      return (d)
+    })(path),
+
     `NCEI Ocean Heat Content` = (function(p) {
       ma <- c("3month", "pentad")
       basins <- c(a="Atlantic", i="Indian", p="Pacific", w="Global")

@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -111,10 +111,30 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     y <- make_time_series_from_anomalies(y, frequency=1L, conf_int=conf_int)
     ma <- NULL
   }
-  w <- interpNA(y, "linear", unwrap=TRUE)
+
+  w <- y
+  if (is.null(ma)) local({
+    interpCols <- NULL
+    if (is.logical(interpolate)) {
+      if (all(interpolate))
+        w <<- interpNA(w, "linear", unwrap = TRUE)
+      else if (any(interpolate)) {
+        interpCols <- series[interpolate]
+      }
+    }
+    else {
+      interpCols <- interpolate
+    }
+
+    if (!is.null(interpCols)) {
+      for (i in interpCols)
+        w[, i] <<- drop(interpNA(w[, i], "linear", unwrap = TRUE))
+    }
+  })
 
   climateSeriesNames <- setdiff(allNames, common_columns)
-  w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma, sides=ma_sides)
+  if (!is.null(ma))
+    w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma, sides=ma_sides)
   ## [13 Oct. 2017] Make sure to window the time series only AFTER applying the moving average.
   y <- window_ts(y, start, end, extend=TRUE)
   w <- window_ts(w, start, end, extend=TRUE)

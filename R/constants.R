@@ -76,6 +76,7 @@ eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/"
 noaaOhcBase <- "https://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 #nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
 nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
+graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
 
 ## Reanalyses:
 make_reanalysis_urls <- function()
@@ -151,6 +152,8 @@ reanalysis_urls <- make_reanalysis_urls()
 #' @rdname constants
 #' @export
 data_urls <- c(list(
+  `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/dm/", type = "land ice"),
+  `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/dm/", type = "land ice"),
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ea_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv",
@@ -332,6 +335,10 @@ data_urls <- c(list(
   #   ftp://ds.data.jma.go.jp/JRA-55/Hist/Monthly/anl_surf125
   #   https://www.esrl.noaa.gov/psd/cgi-bin/data/testdap/timeseries.pl # This is probably the easiest if it works!
   # ftp://ftp.ncdc.noaa.gov/pub/data/cirs/climdiv/
+  # GRACE-FO:
+  #   http://gravis.gfz-potsdam.de/csvdata/GIS/dm/ # Greenland Ice Mass
+  #   http://gravis.gfz-potsdam.de/csvdata/AIS/dm/ # Antarctica Ice Mass
+  #   ftp://isdcftp.gfz-potsdam.de/grace/GravIS/GFZ/Level-3/ICE/
 ), reanalysis_urls)
 
 ## Omit by default some series whose downloading or processing takes a very long time.
