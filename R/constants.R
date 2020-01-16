@@ -50,6 +50,7 @@ gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
 gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncdc.noaa.gov/cag/time-series/"
 nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
+crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/csv/"
@@ -152,6 +153,7 @@ reanalysis_urls <- make_reanalysis_urls()
 #' @rdname constants
 #' @export
 data_urls <- c(list(
+  `AIRS Surface Skin Global` = "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/",
   `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/dm/", type = "land ice"),
   `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/dm/", type = "land ice"),
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
@@ -215,6 +217,12 @@ data_urls <- c(list(
   ## Single file: ftp://ftp.cdc.noaa.gov/Datasets/noaa.ersst.v5/sst.mnmean.nc
   ## ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/v5/beta/
   ## Hadley
+  `CRUTEM4 Global` = crutemBase %_% "CRUTEM4-gl.dat",
+  `CRUTEM4 NH` = crutemBase %_% "CRUTEM4-nh.dat",
+  `CRUTEM4 SH` = crutemBase %_% "CRUTEM4-sh.dat",
+  `CRUTEM4v Global` = crutemBase %_% "CRUTEM4v-gl.dat",
+  `CRUTEM4v NH` = crutemBase %_% "CRUTEM4v-nh.dat",
+  `CRUTEM4v SH` = crutemBase %_% "CRUTEM4v-sh.dat",
   `HadCRUT4 Global` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_ns_avg.txt",
   `HadCRUT4 SH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_sh.txt",
   `HadCRUT4 NH` = hadcrutBase %_% "HadCRUT.4.6.0.0.monthly_nh.txt",

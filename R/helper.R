@@ -771,6 +771,206 @@ find_planetary_grid_square <- function(p, lat, long)
 
 
 #' @export
+convert_hdf4_to_h5 <- function(
+  hdf4_path = ".", # Can be a single directory or vector of file paths.
+  h5_path = NULL, # If a list of file paths, must be same length as no. files given/listed by 'hdf4_path'.
+  re = "^.*?\\.hdf$", # Case ignored unless overridden in 'list.files...'.
+  list.files... = list(),
+  converter_path = "h4toh5convert.exe",
+  overwrite = FALSE,
+  verbose = TRUE
+)
+{
+  hdf4Path <- hdf4_path
+  ## Is 'hdf4_path' a directory?
+  if (utils::file_test("-d", hdf4_path[1])) { # Keep only 1st element; 'Vectorize()' if needed.
+    list.filesArgs <- list(
+      path = hdf4_path[1],
+      pattern = re,
+      full.names = TRUE,
+      recursive = TRUE,
+      ignore.case = TRUE
+    )
+    list.filesArgs <- utils::modifyList(list.filesArgs, list.files..., keep.null = TRUE)
+    hdf4Path <- do.call(list.files, list.filesArgs)
+  }
+
+  h5Path <- h5_path
+  if (!is.null(h5_path) && utils::file_test("-d", h5_path[1])) { # N.B. Directory must already exist.
+    h5Path <- paste(h5_path[1], basename(tools::file_path_sans_ext(hdf4Path)) %_% ".h5", sep = "/")
+  }
+
+  r <- sapply(seq_along(hdf4Path),
+    function (i)
+    {
+      if (verbose) {
+        cat(sprintf("Converting file %s to HD5...", basename(hdf4Path[i]))); utils::flush.console()
+      }
+
+      hdf4File <- hdf4Path[i]
+      if (is.null(h5_path))
+        h5File <- "" # Convert in same directory w/ ext "h5".
+      else
+        h5File <- h5Path[i]
+
+      ## Conversion software here: https://portal.hdfgroup.org/display/support/Download+h4h5tools
+      cmd <- trimws(sprintf("\"%s\" \"%s\" \"%s\"", converter_path, hdf4File, h5File))
+      rv <- NA
+      if (!file.exists(h5File) || overwrite)
+        rv <- system(cmd, intern = TRUE)
+
+      if (verbose) {
+        cat(". Done.", fill = TRUE); utils::flush.console()
+      }
+
+      rv
+    }, simplify = TRUE)
+
+  invisible(r)
+}
+
+## usage:
+## V. https://disc.gsfc.nasa.gov/data-access
+## Update AIRS gridded data. From the WSL Bash shell:
+# wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -N -np -r --accept='*.hdf' -P /mnt/v/data/climate/AIRS-Level3 --content-disposition https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/
+## Now convert HDF4 files to HD5 in R:
+# r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006", "V:/data/climate/AIRS-Level3/h5")
+
+
+#' @export
+create_airs_monthly_data <- function(
+  data_path = ".",
+  files_re = "^.*?\\.h5$", # Case ignored unless overridden in 'list.files...'.
+  list.files... = list(),
+  group_name = "/ascending/Data Fields/SurfSkinTemp_A", # Or "/descending/Data Fields/SurfSkinTemp_D"
+  baseline = 2003:2018,
+  apply_lat_weights = TRUE,
+  series = "AIRS Surface Skin Global"
+)
+{
+  list.filesArgs <- list(
+    path = data_path,
+    pattern = files_re,
+    full.names = TRUE,
+    recursive = TRUE,
+    ignore.case = TRUE
+  )
+  list.filesArgs <- utils::modifyList(list.filesArgs, list.files..., keep.null = TRUE)
+  files <- do.call(list.files, list.filesArgs)
+
+  l <- sapply(files,
+    function(i)
+    {
+      latitude <- t(rhdf5::h5read(i, "/location/Data Fields/Latitude"))
+      longitude <- t(rhdf5::h5read(i, "/location/Data Fields/Longitude"))
+      m <- rhdf5::h5read(i, "/location/Grid Attributes/Month")[1, 1]
+      y <- rhdf5::h5read(i, "/location/Grid Attributes/Year")[1, 1]
+      value <- t(rhdf5::h5read(i, group_name))
+
+      attr(value, "metadata") <- list(year = y, month = m, lat = latitude[, 1], lon = longitude[1, ])
+
+      value
+    }, simplify = FALSE)
+
+  d <- Reduce(rbind, sapply(l, function(x) { m <- attr(x, "metadata"); dataframe(year = m$year, month = m$month) }, simplify = FALSE))
+  g <- Reduce(function(x, y) abind::abind(x, y, along = 3), l)
+
+  p <- make_planetary_grid(grid_size = c(1, 1))
+
+  i <- get_index_from_element(seq_along(g[, , 1]), g[, , 1])
+  ## Put full time series into each grid cell.
+  utils::flush.console()
+  plyr::a_ply(i, 1,
+    function(x)
+    {
+      d$temp <- g[x[1], x[2], ]
+      is.na(d$temp) <- d$temp == -9999
+
+      p[[x[1], x[2]]][[1]] <<- d
+    }, .progress = "text")
+
+  ## Calculate time-series anomalies for each cell.
+  flit <- expand.grid(month = 1:12, year = seq(min(d$year), max(d$year)))
+
+  utils::flush.console()
+  plyr::a_ply(i, 1,
+    function(x)
+    {
+      e <- p[[x[1], x[2]]][[1]]
+      e <- merge(flit, e, by = c("year", "month"), all.x = TRUE)
+
+      p[[x[1], x[2]]][[1]] <<- recenter_anomalies(e, baseline)
+    }, .progress = "text")
+
+  w <- sapply(p, function(x) { x[[1]]$temp * ifelse(apply_lat_weights, attr(x, "weight"), 1) }, simplify = TRUE)
+  temp <- apply(w, 1, function(x) { r <- NA; if (!all(is.na(x))) r <- mean(x, na.rm = TRUE); r })
+
+  r <- flit
+  r[[series]] <- temp
+
+  r
+}
+
+## usage:
+#create_airs_monthly_data("E:/Users/priscian/my_documents/oversize/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/2002/hd5")
+#create_airs_monthly_data("V:/data/climate/AIRS-Level3/h5")
+
+
+#' @export
+create_combined_airs_series <- function(
+  data_path = NULL,
+  ascending = "/ascending/Data Fields/SurfSkinTemp_A",
+  descending = "/descending/Data Fields/SurfSkinTemp_D",
+  series = "AIRS Surface Skin Global",
+  node_weights = 1,
+  multiplier = 0.8,
+  baseline = NULL,
+  ...
+)
+{
+  if (is.null(data_path)) {
+    if (!is.null(getOption("climeseries_airs_data_dir")))
+      data_path <- getOption("climeseries_airs_data_dir")
+    else
+      data_path <- "."
+  }
+
+  a <- create_airs_monthly_data(data_path = data_path, group_name = ascending, series = series, ...)
+  d <- create_airs_monthly_data(data_path = data_path, group_name = descending, series = series, ...)
+
+  w <- rep(node_weights, length.out = 2)
+
+  ad <- a; ad[[series]] <- (w[1] * a[[series]] + w[2] * d[[series]]) * multiplier
+  ad$yr_part <- ad$year + (2 * ad$month - 1)/24
+
+  if (!is.null(baseline)) {
+    if (min(baseline) < min(ad$year)) {
+      e <- get_climate_data(download = FALSE, baseline = FALSE)
+      g <- merge(e, ad[, c("year", "month", series)], by = c("year", "month"), all.x = TRUE)
+
+      ade <- g[, c("year", "month", "yr_part", series)] %>%
+        dplyr::filter(year >= min(baseline))
+
+      is_na_ade <- is.na(ade[[series]])
+      m <- stats::lm(substitute(s ~ yr_part, list(s = as.name(series))), data = ad)
+      ## Calculate linear prediction back to start of baseline (don't go back further than about 1970).
+      ade[[series]][is.na(ade[[series]])] <- stats::predict(m, dataframe(yr_part = ade$yr_part))[is.na(ade[[series]])]
+      adeb <- recenter_anomalies(ade, baseline)
+      is.na(adeb[[series]]) <- is_na_ade
+
+      r <- merge(ad[, c("year", "month")], adeb, all.x = TRUE)
+    } else {
+      r <- recenter_anomalies(ad, baseline)
+    }
+  } else {
+    r <- ad
+  }
+
+  dplyr::arrange(r, year, month)
+}
+
+
+#' @export
 create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", daily_filename="OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", planetary_grid=NULL, extract=FALSE)
 {
   if (extract) {
@@ -974,6 +1174,40 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
 # series <- "Rutgers NH Snow Cover"
 # h <- eval(substitute(g[na_unwrap(SERIES)][year >= min(year) & !is.na(SERIES)], list(SERIES=as.name(series))))
 # plot(h$year, h[[series]]/1e6, lwd=2, pch=19, type="o")
+
+
+#' @export
+show_warmest_years <- function(
+  x,
+  series,
+  num_top_years = 10,
+  start_year = NULL, end_year = current_year - 1,
+  baseline = FALSE,
+  simplify = TRUE # TRUE to include the actual anomaly values
+)
+{
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = baseline)
+
+  if (is.null(start_year)) start_year <- min(x$year, na.rm = TRUE)
+  xx <- x %>% dplyr::filter(year >= start_year & year <= end_year)
+
+  y <- make_yearly_data(oss(x, series))
+
+  l <- sapply(y[, -1],
+    function(x)
+    {
+      r <- dplyr::arrange(dataframe(year = y$year, temp = x), desc(temp))[seq(no_top_years), ]
+
+      if (simplify) r$year else r
+    }, simplify = simplify)
+
+  l
+}
+
+## usage:
+# series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global")
+# show_warmest_years(series = series)
 
 
 #' @export
@@ -1489,3 +1723,34 @@ create_hadcrut4_zonal_data <- function(x,
 # g <- create_hadcrut4_zonal_data()
 # series <- c("Cowtan & Way Krig. Global", "Cowtan & Way Krig. (90S-90N, 180W-180E)")
 # plot_climate_data(g, series, yearly = TRUE) # These should overlap entirely.
+
+
+## https://crudata.uea.ac.uk/cru/data/temperature/read_cru_hemi.r
+read_cru_hemi <- function(filename)
+{
+  # read in whole file as table
+  tab <- read.table(filename, fill = TRUE)
+  nrows <- nrow(tab)
+  # create frame
+  hemi <- data.frame(
+    year = tab[seq(1, nrows, 2), 1],
+    annual = tab[seq(1, nrows, 2), 14],
+    month = array(tab[seq(1, nrows, 2), 2:13]),
+    cover = array(tab[seq(2, nrows, 2), 2:13])
+  )
+  # mask out months with 0 coverage
+  hemi$month.1[which(hemi$cover.1 == 0)] <- NA
+  hemi$month.2[which(hemi$cover.2 == 0)] <- NA
+  hemi$month.3[which(hemi$cover.3 == 0)] <- NA
+  hemi$month.4[which(hemi$cover.4 == 0)] <- NA
+  hemi$month.5[which(hemi$cover.5 == 0)] <- NA
+  hemi$month.6[which(hemi$cover.6 == 0)] <- NA
+  hemi$month.7[which(hemi$cover.7 == 0)] <- NA
+  hemi$month.8[which(hemi$cover.8 == 0)] <- NA
+  hemi$month.9[which(hemi$cover.9 == 0)] <- NA
+  hemi$month.10[which(hemi$cover.10 == 0)] <- NA
+  hemi$month.11[which(hemi$cover.11 == 0)] <- NA
+  hemi$month.12[which(hemi$cover.12 == 0)] <- NA
+  #
+  return(hemi)
+}

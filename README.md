@@ -2,14 +2,14 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20191216.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20200115.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
 ```
-install.packages("devtools") # If necessary.
+install.packages("remotes") # If necessary.
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true") # https://github.com/r-lib/remotes#environment-variables
-devtools::install_github("priscian/climeseries")
+remotes::install_github("priscian/climeseries")
 library(climeseries)
 
 ## Once the package has been installed as described above, all you need to use it is:
@@ -41,10 +41,13 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 ## Plot several global instrumental temperature series.
 ########################################
 
+inst_raw <- get_climate_data(download = FALSE, baseline = FALSE)
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
+airs <- "AIRS Surface Skin Global"
+inst[[airs]] <- inst_raw[[airs]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "JRA-55 Surface Air Global", "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global")
+  "JRA-55 Surface Air Global", "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global", airs)
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
 
@@ -175,7 +178,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20191216.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20200115.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -208,6 +211,7 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. 20th C. Reanalysis V3 Surface Air USA 48
 1. 20th C. Reanalysis V3 Surface Air USA 48 Land
 1. 20th C. Reanalysis V3 Surface Air USA 48 Ocean
+1. AIRS Surface Skin Global
 1. Antarctica Land Ice Mass Variation
 1. Antarctica Land Ice Mass Variation_uncertainty
 1. BEST Global (Air Ice Temp.)
@@ -231,6 +235,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
 1. Cowtan & Way Krig. Global Land
+1. CRUTEM4 Global
+1. CRUTEM4 NH
+1. CRUTEM4 SH
+1. CRUTEM4v Global
+1. CRUTEM4v NH
+1. CRUTEM4v SH
 1. CSIRO Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty

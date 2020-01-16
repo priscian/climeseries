@@ -570,3 +570,16 @@ eval_js <- function(..., envir = parent.frame(), enclos = if(is.list(envir) || i
   expr <- parse(text = expr)
   eval(expr, envir, enclos)
 }
+
+
+## Cf. https://stackoverflow.com/questions/7414657/find-the-corresponding-row-and-column-number-to-an-indexed-element-in-a-matrix/7414764#7414764
+#' @export
+get_index_from_element <- function(i, m)
+{
+  x <- array(seq_along(m), dim = dim(m))
+  which(x == i, arr.ind = TRUE)
+}
+
+## usage:
+# m <- array(1:24, dim = 2:4)
+# get_index_from_element(1:24, m)

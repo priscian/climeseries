@@ -11,7 +11,8 @@ get_models_data(
   data_dir,
   subdir = NULL,
   cmip3_raw = FALSE,
-  center_fun = "mean"
+  center_fun = "mean",
+  convert_fun = kelvin_to_celsius
 )
 }
 \arguments{

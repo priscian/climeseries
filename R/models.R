@@ -49,7 +49,7 @@
 #' }
 #'
 #' @export
-get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FALSE, data_dir, subdir=NULL, cmip3_raw=FALSE, center_fun="mean")
+get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FALSE, data_dir, subdir=NULL, cmip3_raw=FALSE, center_fun="mean", convert_fun = kelvin_to_celsius)
 {
   if (missing(data_dir)) {
     if (!is.null(getOption("climeseries_models_dir")))
@@ -110,7 +110,7 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
 
   files <- list.files(path, "^.*?\\.dat$", recursive=TRUE, ignore.case=TRUE, full.names=TRUE)
 
-  KtoC <- function(k) k - 273.15
+  #KtoC <- function(k) k - 273.15
 
   e <- new.env()
 
@@ -122,7 +122,7 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
     for (j in names(flit)) flit[[j]] <- as.numeric(flit[[j]])
     flit <- arrange(flit, V1, month)
 
-    x <- data.frame(year=flit$V1, met_year=NA, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=KtoC(flit$temp), check.names=FALSE, stringsAsFactors=FALSE)
+    x <- data.frame(year=flit$V1, met_year=NA, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=convert_fun(flit$temp), check.names=FALSE, stringsAsFactors=FALSE)
 
     modelDesignation <- "m" %_% sprintf("%04d", i)
     x[[modelDesignation]] <- x$temp

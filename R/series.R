@@ -163,6 +163,27 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (l)
     })(path),
 
+    `CRUTEM4 Global` =,
+    `CRUTEM4 NH` =,
+    `CRUTEM4 SH` =,
+    `CRUTEM4v Global` =,
+    `CRUTEM4v NH` =,
+    `CRUTEM4v SH` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read_cru_hemi(p)
+      }, error = Error, warning = Error)
+
+      flit <- x %>% dplyr::select(tidyselect::matches("^(year|month)"))
+      flit <- reshape2::melt(flit[, 1L:13L], id.vars = "year", variable.name = "month", value.name = "temp")
+      for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+      d <- dplyr::arrange(flit, year, month)
+      d <- d %>% dplyr::mutate(yr_part = d$year + (2 * d$month - 1)/24)
+
+      d
+    })(path),
+
     `HadSST3 SH` =,
     `HadSST3 NH` =,
     `HadSST3 Tropics` =,
@@ -593,6 +614,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year=flit$V1, yr_part=flit$V1 + (2 * flit$month - 1)/24, month=flit$month, temp=flit$temp, check.names=FALSE, stringsAsFactors=FALSE)
       ## Missing values are given as "-999.999".
       is.na(d$temp) <- d$temp == -999.999
+
+      return (d)
+    })(path),
+
+    `AIRS Surface Skin Global` = (function(p) {
+      d <- create_combined_airs_series(baseline = 1981:2010, series = series)
 
       return (d)
     })(path),
@@ -1099,7 +1126,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `ERA5 Sea Ice Extent` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
       if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
-      else currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear
+      else { currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear }
 
       uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
       uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
@@ -1526,10 +1553,14 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
   for (i in ls(env)) {
     uncertainty <- grep("_uncertainty$", names(env[[i]]), value=TRUE)
     climeNames <- names(env[[i]])[!grepl("^yr_|^met_|^year|^month|_uncertainty$|^temp$", names(env[[i]]))]
-    if (is.null(d))
+    cat(sprintf("Merging series %s...", i))
+    if (is.null(d)) {
       d <- env[[i]][, c(common_columns, climeNames, uncertainty)]
-    else
+    }
+    else {
       d <- merge(d, env[[i]][, c(common_columns, climeNames, uncertainty)], by=common_columns, all=TRUE)
+    }
+    cat(". Done.", fill = TRUE); utils::flush.console()
   }
 
   # attr(d, "baseline") <- NULL

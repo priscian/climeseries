@@ -14,6 +14,7 @@ plot_climate_data(
   yearly = FALSE,
   make_yearly_data... = list(),
   ma_sides = 1L,
+  interpolate = FALSE,
   plot_type = c("single", "multiple"),
   as_zoo = TRUE,
   type = "l",
@@ -99,7 +100,7 @@ series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Kr
 plot_climate_data(inst, series=series, 1880, ma=12, lwd=2)
 
 ########################################
-## Plot instrumental series with 95% confidence intervals.
+## Plot instrumental series with 95\% confidence intervals.
 ########################################
 
 series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
@@ -130,7 +131,7 @@ for (s in m$series) {
   summary(m[[s]]$lm)
   m[[s]]$warming <- coef(m[[s]]$lm)[2L] * diff(range(m[[s]]$lm$model[, 2L]))
   m[[s]]$rate <- coef(m[[s]]$lm)[2L] * 10
-  m[[s]]$rateText <- eval(substitute(expression(paste(Delta, "T = ", r, phantom(l) * degree, "C/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="%+1.3f"))))
+  m[[s]]$rateText <- eval(substitute(expression(paste(Delta, "T = ", r, phantom(l) * degree, "C/dec.", sep="")), list(r=sprintf(m[[s]]$rate, fmt="\%+1.3f"))))
   m[[s]]$col <- m$col[s]
 }
 ## Plot series.

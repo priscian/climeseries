@@ -479,7 +479,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (!add)
     par(op)
 
-  cat("Standardized file name:", filename, fill=TRUE); flush.console()
+  cat("Standardized file name:", stringr::str_replace_all(filename, "%%", "%"), fill=TRUE); flush.console()
 
   if (length(r) > 0L)
     return (invisible(r))
@@ -489,7 +489,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
 
 ## Make a standardized file name. Primarily for internal use in 'plot_climate_data()' and 'plot_models_and_climate_data()'.
-make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_int, ma, ma_i, yearly, range, baseline, loess, trend, segmented, series_max_length=Inf, series_override, series_sep="+", sep="_", conf_int_id=".ci", loess_id="loess", trend_id="trend", segmented_id="seg", ext="png", model_details)
+make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_int, ma, ma_i, yearly, range, baseline, loess, trend, segmented, series_max_length=Inf, series_override, series_sep="+", sep="_", conf_int_id=".ci", loess_id="loess", trend_id="trend", segmented_id="seg", ext="png", model_details, illegal_replacement = "%%")
 {
   modelString <- NULL
   if (!missing(model_details))
@@ -565,6 +565,11 @@ make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_in
     parts$segmented <- segmented_id
 
   r <- paste(paste0(prefix, paste(parts, collapse=sep), suffix), ext, sep=".")
+
+  if (is.logical(illegal_replacement) && illegal_replacement)
+    illegal_replacement <- "%%"
+  if (!is.logical(illegal_replacement))
+    r <- stringr::str_replace_all(r, "[\\\\/:\"\\*\\?<>\\|]+", illegal_replacement)
 
   r
 }
@@ -734,7 +739,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -909,6 +914,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   xaxt <- "n"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
+  op <- par(mar = c(5, 5, 4, 2) + 0.1)
   plot(wiz[, get_climate_series_names(wiz, conf_int=FALSE), drop=FALSE], screens=1L, bty="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
   if (xaxt == "n")
     axis(1, xaxisTicks)
@@ -962,8 +968,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   lowerEnvelope <- sapply(modelsRange, function(x) x[1L, ], simplify=FALSE); upperEnvelope <- sapply(modelsRange, function(x) x[2L, ], simplify=FALSE)
   ## Smooth the envelope.
   if (smooth_envelope) {
-    lowerEnvelope <- sapply(lowerEnvelope, function(e) predict(loess(e ~ year), data.frame(year=year)), simplify=FALSE)
-    upperEnvelope <- sapply(upperEnvelope, function(e) predict(loess(e ~ year), data.frame(year=year)), simplify=FALSE)
+    lowerEnvelope <- sapply(lowerEnvelope, function(e) predict(loess(e ~ year, span = smooth_span), data.frame(year=year)), simplify=FALSE)
+    upperEnvelope <- sapply(upperEnvelope, function(e) predict(loess(e ~ year, span = smooth_span), data.frame(year=year)), simplify=FALSE)
   }
 
   ## Plot the envelope.
@@ -1038,7 +1044,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   }
   if (plotInstrumental) {
     legendText <- c(legendText, paste(series, ma_iText, sep=""))
-    legendColors <- c(legendColors, instrumentalColors[seq_along(series)])
+    #legendColors <- c(legendColors, instrumentalColors[seq_along(series)])
+    legendColors <- c(legendColors, plot_iArgs$col)
     legendLwd <- c(legendLwd, rep(2, length(series)))
     legendLty <- c(legendLty, rep(1, length(series)))
   }
@@ -1070,7 +1077,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   if (save_png)
     dev.off()
 
-  cat("Standardized file name:", filename, fill=TRUE); flush.console()
+  par(op)
+
+  cat("Standardized file name:", stringr::str_replace_all(filename, "%%", "%"), fill=TRUE); flush.console()
 
   return (nop())
 }
