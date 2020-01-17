@@ -845,7 +845,8 @@ create_airs_monthly_data <- function(
   group_name = "/ascending/Data Fields/SurfSkinTemp_A", # Or "/descending/Data Fields/SurfSkinTemp_D"
   baseline = 2003:2018,
   apply_lat_weights = TRUE,
-  series = "AIRS Surface Skin Global"
+  series = "AIRS Surface Skin Global",
+  save_rdata = FALSE
 )
 {
   list.filesArgs <- list(
@@ -873,7 +874,7 @@ create_airs_monthly_data <- function(
     }, simplify = FALSE)
 
   d <- Reduce(rbind, sapply(l, function(x) { m <- attr(x, "metadata"); dataframe(year = m$year, month = m$month) }, simplify = FALSE))
-  g <- Reduce(function(x, y) abind::abind(x, y, along = 3), l)
+  g <- Reduce(function(x, y) abind::abind(x, y, along = 3), l) # lat × lon × month
 
   p <- make_planetary_grid(grid_size = c(1, 1))
 
@@ -889,6 +890,8 @@ create_airs_monthly_data <- function(
       p[[x[1], x[2]]][[1]] <<- d
     }, .progress = "text")
 
+  p0 <- p
+
   ## Calculate time-series anomalies for each cell.
   flit <- expand.grid(month = 1:12, year = seq(min(d$year), max(d$year)))
 
@@ -902,11 +905,48 @@ create_airs_monthly_data <- function(
       p[[x[1], x[2]]][[1]] <<- recenter_anomalies(e, baseline)
     }, .progress = "text")
 
-  w <- sapply(p, function(x) { x[[1]]$temp * ifelse(apply_lat_weights, attr(x, "weight"), 1) }, simplify = TRUE)
-  temp <- apply(w, 1, function(x) { r <- NA; if (!all(is.na(x))) r <- mean(x, na.rm = TRUE); r })
+  ## Now weight the means zonally (i.e. by latitude grid).
+  get_mean_series <- function(p)
+  {
+    l <- sapply(seq(NROW(p)),
+      function(x)
+      {
+        y <- p[x, ]
+        w <- attr(y[[1]], "weight")
+        l <- sapply(names(y), function(i) { r <- y[[i]][[1]]; names(r)[names(r) == "temp"] <- i; r }, simplify = FALSE) # List of time series for this latitude
+        ## Now merge all the series together.
+        d <- dplyr::arrange(Reduce(function(i, j) merge(i, j, by = c("year", "month"), all = TRUE), l), year, month)
 
-  r <- flit
-  r[[series]] <- temp
+        m <- apply(data.matrix(d[, -(1:2)]), 1, function(i) { r <- NA; if(!all(is.na(i))) r <- mean(i, na.rm = TRUE); r })
+        attr(m, "weight") <- w
+        attr(m, "time") <- d[, c("year", "month")]
+
+        m
+      }, simplify = FALSE)
+
+    w <- sapply(l, attr, which = "weight")
+    ll <- Reduce(cbind, l)
+    m <- apply(ll, 1, function(i) { r <- NA; if(!all(is.na(i))) r <- weighted.mean(i, w, na.rm = TRUE); r })
+
+    d <- dplyr::arrange(Reduce(function(i, j) merge(i, j, by = c("year", "month"), all = TRUE), sapply(l, attr, which = "time", simplify = FALSE)), year, month)
+    d[[series]] <- m
+
+    d
+  }
+  r <- get_mean_series(p)
+
+  ## This will be fairly inflexible, but it's mostly for debugging.
+  if (save_rdata) {
+    airsSaveDirBase <- "."
+    if (!is.null(getOption("climeseries_data_dir")))
+      airsSaveDirBase <- getOption("climeseries_data_dir")
+    airsSaveDir <- paste(airsSaveDirBase, "AIRS", sep = "/")
+    if (!dir.exists(airsSaveDir))
+      dir.create(airsSaveDir, recursive = TRUE)
+
+    fileName <- paste(stringr::str_replace_all(group_name, "/", "_"), make_current_timestamp(use_seconds = TRUE), sep = "_") %_% ".RData"
+    save(list = c("l", "d", "g", "p0", "p", "i", "r"), file = paste(airsSaveDir, fileName, sep = "/"))
+  }
 
   r
 }
@@ -923,8 +963,7 @@ create_combined_airs_series <- function(
   descending = "/descending/Data Fields/SurfSkinTemp_D",
   series = "AIRS Surface Skin Global",
   node_weights = 1,
-  multiplier = 0.8,
-  baseline = NULL,
+  multiplier = 0.5,
   ...
 )
 {
@@ -943,30 +982,7 @@ create_combined_airs_series <- function(
   ad <- a; ad[[series]] <- (w[1] * a[[series]] + w[2] * d[[series]]) * multiplier
   ad$yr_part <- ad$year + (2 * ad$month - 1)/24
 
-  if (!is.null(baseline)) {
-    if (min(baseline) < min(ad$year)) {
-      e <- get_climate_data(download = FALSE, baseline = FALSE)
-      g <- merge(e, ad[, c("year", "month", series)], by = c("year", "month"), all.x = TRUE)
-
-      ade <- g[, c("year", "month", "yr_part", series)] %>%
-        dplyr::filter(year >= min(baseline))
-
-      is_na_ade <- is.na(ade[[series]])
-      m <- stats::lm(substitute(s ~ yr_part, list(s = as.name(series))), data = ad)
-      ## Calculate linear prediction back to start of baseline (don't go back further than about 1970).
-      ade[[series]][is.na(ade[[series]])] <- stats::predict(m, dataframe(yr_part = ade$yr_part))[is.na(ade[[series]])]
-      adeb <- recenter_anomalies(ade, baseline)
-      is.na(adeb[[series]]) <- is_na_ade
-
-      r <- merge(ad[, c("year", "month")], adeb, all.x = TRUE)
-    } else {
-      r <- recenter_anomalies(ad, baseline)
-    }
-  } else {
-    r <- ad
-  }
-
-  dplyr::arrange(r, year, month)
+  dplyr::arrange(ad, year, month)
 }
 
 

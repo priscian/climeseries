@@ -351,7 +351,8 @@ data_urls <- c(list(
 
 ## Omit by default some series whose downloading or processing takes a very long time.
 omitUrlNames <- c(
-  "OSIRIS Stratospheric Aerosol Optical Depth (550 nm)"
+  "OSIRIS Stratospheric Aerosol Optical Depth (550 nm)",
+  "AIRS Surface Skin Global"
   #"MODIS Aerosol Optical Thickness (550 nm)"
 )
 
