@@ -986,6 +986,252 @@ create_combined_airs_series <- function(
 }
 
 
+## First download CMIP5 TAZ, where e.g. "/mnt/v/data/climate/CMIP5-taz" is your directory:
+## wget --user-agent=Mozilla --no-check-certificate -r -np -nd -l 1 -A nc,NC -H -P /mnt/v/data/climate/CMIP5-taz -erobots=off https://climexp.knmi.nl/CMIP5/monthly/taz/
+#' @export
+create_cmip5_taz_data <- function(
+  data_path = ".",
+  rdata_path = paste(data_path, "cmip5-taz_all-members_lats-all.RData", sep = "/"),
+  files_re = "^taz_Amon_ens_rcp(26|45|60|85)_.*?\\.nc$", # Case ignored unless overridden in 'list.files...'.
+  list.files... = list(),
+  filter_expr = NULL,
+  verbose = TRUE
+)
+{
+  list.filesArgs <- list(
+    path = data_path,
+    pattern = files_re,
+    full.names = TRUE,
+    recursive = FALSE,
+    ignore.case = TRUE
+  )
+  list.filesArgs <- utils::modifyList(list.filesArgs, list.files..., keep.null = TRUE)
+  files <- do.call(list.files, list.filesArgs)
+
+  cmip5_taz <- sapply(basename(files),
+    function(i)
+    {
+      f <- paste(data_path, i, sep = "/")
+
+      if (verbose) {
+        cat(sprintf("Processing file %s...", i)); utils::flush.console()
+      }
+
+      nc <- RNetCDF::open.nc(f)
+      #RNetCDF::print.nc(nc)
+      institute_id <- RNetCDF::att.get.nc(nc, "NC_GLOBAL", "institute_id")
+      model_id <- RNetCDF::att.get.nc(nc, "NC_GLOBAL", "model_id")
+      scenario <- RNetCDF::att.get.nc(nc, "NC_GLOBAL", "experiment")
+      forcing <- RNetCDF::att.get.nc(nc, "NC_GLOBAL", "forcing")
+      origin <- sub("^\\s*days since\\s*", "", RNetCDF::att.get.nc(nc, "time", "units"), ignore.case = TRUE)
+      RNetCDF::close.nc(nc)
+
+      x0 <- tidync::tidync(f)
+      if (!is.null(filter_expr))
+        x0 <- x0 %>% { eval(filter_expr) }
+      x <- x0 %>% tidync::hyper_array() %>% `[[`(1L, drop = FALSE)
+
+      latitude <- x0$transforms$lat %>% dplyr::filter(selected) %>% dplyr::pull(lat)
+      air_pressure <- x0$transforms$plev %>% dplyr::filter(selected) %>% dplyr::pull(plev)
+      dates <- x0$transforms$time %>% dplyr::filter(selected) %>% dplyr::pull(time) %>%
+        as.Date(origin = origin)
+
+      dimnames(x) <- list(latitude = latitude, air_pressure = air_pressure, dates = as.character(dates))
+
+      attr(x, "latitude") <- latitude
+      attr(x, "air_pressure") <- air_pressure
+      attr(x, "dates") <- dates
+
+      attr(x, "institute_id") <- institute_id
+      attr(x, "model_id") <- model_id
+      attr(x, "scenario") <- scenario
+
+      if (verbose) {
+        cat(". Done.", fill = TRUE); utils::flush.console()
+      }
+
+      x
+    }, simplify = FALSE)
+
+  if (!is.null(rdata_path))
+    save(list = c("cmip5_taz"), file = rdata_path)
+
+  cmip5_taz
+}
+
+## usage:
+# cmip5_taz <- create_cmip5_taz_data("V:/data/climate/CMIP5-taz")
+#
+# cmip5_taz <- create_cmip5_taz_data(
+#   data_path = "V:/data/climate/CMIP5-taz",
+#   rdata_path = paste("V:/data/climate/CMIP5-taz", "cmip5-taz_all-members_lats-tropics.RData", sep = "/"),
+#   filter_expr = expression(tidync::hyper_filter(., lat = lat < 24 & lat > -24))
+# )
+
+
+## V. ftp://ftp.remss.com/msu/weighting_functions
+#' @export
+get_rss_msu_weights <- function(
+  weights_path,
+  air_pressure, # Vector of air pressures to base interpolations on
+  skip = 7
+)
+{
+  ## These reads are very specific, but seem to work for all the RSS weighting functions:
+  colNames <- unlist(read.table(weights_path, skip = skip - 2, header = FALSE, nrows = 1, check.names = FALSE, stringsAsFactors = FALSE))
+  surface_weight <- read.table(weights_path, skip = skip - 4, header = FALSE, nrows = 1, check.names = FALSE, stringsAsFactors = FALSE)$V3
+  w <- read.table(weights_path, skip = skip, header = FALSE, check.names = FALSE, stringsAsFactors = FALSE)
+  colnames(w) <- sub("^weight$", "Weight", colNames, ignore.case = TRUE, perl = TRUE)
+
+  a <- air_pressure[air_pressure %nin% w$`P(pa)`]
+  z <- merge(w, dataframe(`P(pa)` = a), by = "P(pa)", all = TRUE) %>%
+    dplyr::arrange(desc(`P(pa)`))
+  zz <- z %>% dplyr::select(`P(pa)`, `h(m)`, Weight) %>%
+    interpNA(method = "linear", unwrap = FALSE) %>% dataframe()
+
+  zzz <- zz %>% dplyr::filter(`P(pa)` %in% air_pressure)
+  attr(zzz, "surface_weight") <- surface_weight
+  attr(zzz, "original_data") <- w
+
+  zzz
+}
+
+## usage:
+# weights_path <- system.file("inst/extdata/misc/RSS/std_atmosphere_wt_function_chan_tmt_land.txt", package = "climeseries")
+# air_pressure <- c(1e+05, 92500, 85000, 70000, 60000, 50000, 40000, 30000, 25000, 20000, 15000, 10000, 7000, 5000, 3000, 2000, 1000)
+# w <- get_rss_msu_weights(weights_path, air_pressure)
+
+
+## V. http://www.realclimate.org/index.php/archives/2017/03/the-true-meaning-of-numbers/
+#' @export
+create_cmip5_atmosphere_temps <- function(
+  taz_archive,
+  channel,
+  rdata_path = NULL,
+  weighting_domain = c("_land", "_ocean"), # These will be blanks for TLS & TTS.
+  column_integrate = FALSE,
+  ...
+)
+{
+  if (is.character(taz_archive)) {
+    load(taz_archive)
+    taz <- cmip5_taz
+    cmip5_taz <- NULL
+  }
+  else
+    taz <- taz_archive
+
+  data(etopo5, package = "esd")
+  land_ocean_weights <- list(land = sum(etopo5 >= 0)/length(etopo5), ocean = sum(etopo5 < 0)/length(etopo5))
+
+  ## Estimate area-weighted mean temperature
+  area_mean <- function(x, lat_weights) {
+    d <- dim(lat_weights)
+    y <- x * c(lat_weights)
+    dim(y) <- d
+    z <- colSums(y, na.rm = TRUE) / sum(lat_weights[, 1], na.rm = TRUE)
+
+    z
+  }
+
+
+  total_weight_between_levels <- function(x) # Where 'x' = data frame from 'get_rss_msu_weights()'.
+  {
+    ## RSS pseudocode:
+    # total_wt_between_level_minus_one_and_level_one =
+    #   0.5 * (wt_function(level) + wt_function(level-1)) * (h(level) - h(level-1))
+
+    w <- c(attr(x, "surface_weight"), x$Weight)
+    h <- c(0.0, x$`h(m)`)
+
+    0.5 * (x$Weight + head(w, -1)) * diff(h)
+  }
+
+
+  l <- sapply(names(taz),
+    function(i)
+    {
+      tazi <- taz[[i]]
+      latitude <- attr(tazi, "latitude")
+      d <- dim(tazi)
+
+      lat_weights <- matrix(rep(cos(pi * latitude/180), d[2]), d[1], d[2])
+      x <- tazi; dim(x) <- c(d[1] * d[2], d[3])
+      z <- apply(x, 2, area_mean, lat_weights)
+
+      air_pressure <- attr(tazi, "air_pressure")
+      channel <- tolower(channel)
+      ocean_msu_weights <- get_rss_msu_weights(system.file(sprintf("inst/extdata/misc/RSS/std_atmosphere_wt_function_chan_%s%s.txt", channel, weighting_domain[1]), package = "climeseries"), air_pressure, ...)
+      land_msu_weights <- get_rss_msu_weights(system.file(sprintf("inst/extdata/misc/RSS/std_atmosphere_wt_function_chan_%s%s.txt", channel, weighting_domain[2]), package = "climeseries"), air_pressure, ...)
+      msu_weights <-
+        land_ocean_weights$ocean * ocean_msu_weights$Weight +
+        land_ocean_weights$land * land_msu_weights$Weight
+
+      if (!column_integrate)
+        tt <- apply(z, 2, function(x, w) { sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE) }, w = msu_weights)
+
+      ## Also test out vertical integration of weighted temps.
+      # ocean_msu_weight_surface <- attr(ocean_msu_weights, "original_data") %>% dplyr::slice(1) %>% dplyr::select(`P(pa)`, `h(m)`, Weight)
+      # land_msu_weight_surface <- attr(land_msu_weights, "original_data") %>% dplyr::slice(1) %>% dplyr::select(`P(pa)`, `h(m)`, Weight)
+      total_weights_combined <-
+        land_ocean_weights$ocean * total_weight_between_levels(ocean_msu_weights) +
+        land_ocean_weights$land * total_weight_between_levels(land_msu_weights)
+      total_msu_weights <- ocean_msu_weights %>% dplyr::mutate(Weight = total_weights_combined)
+      layer_heights <- diff(c(0, total_msu_weights$`h(m)`)) # Unnecessary
+
+      # tth <- apply(z, 2, function(x, w) { sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE) }, w = total_msu_weights$Weight) # ?
+      if (column_integrate) {
+        tt <- apply(z, 2,
+          function(x, w, h)
+          {
+            ## V. https://en.wikipedia.org/wiki/Weight_function#Weighted_average
+            integratex(h, x * w)$value / integratex(h, w)$value
+          }, w = total_msu_weights$Weight, h = total_msu_weights$`h(m)`)
+      }
+
+      dates <- attr(tazi, "dates")
+      model_id <- attr(tazi, "model_id")
+      model_name <- tools::file_path_sans_ext(i)
+
+      r0 <- dataframe(year = lubridate::year(dates), month = lubridate::month(dates)) %>%
+        dplyr::mutate(!!model_name := tt)
+      r <- data.table::data.table(r0)
+      r <- as.data.frame(r[, lapply(.SD, mean, na.rm = TRUE), by = .(year, month), .SDcols = names(r0)[3:NCOL(r0)]]) # Remove year/month duplicates by averaging.
+
+      attr(r, "institute_id") <- attr(tazi, "institute_id")
+      attr(r, "model_id") <- attr(tazi, "model_id")
+      attr(r, "scenario") <- attr(tazi, "scenario")
+
+      r
+    }, simplify = FALSE)
+
+  r <- range(c(sapply(l, function(x) range(x$year))))
+  flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
+
+  m <- sapply(l,
+    function(i)
+    {
+      merge(flit, i, by = c("year", "month"), all = TRUE)[[3]]
+    }, simplify = TRUE)
+  colnames(m) <- sapply(l, function(x) names(x)[3])
+  y <- flit %>%
+    dplyr::mutate(yr_part = year + (2 * month - 1)/24, met_year = NA)
+  m <- cbind(y, m, stringsAsFactors = FALSE)
+
+  attr(m, "ensemble") <- "CMIP5"
+  attr(m, "model_type") <- "taz"
+  attr(m, "model") <- as.vector(sapply(l, attr, which = "model_id"))
+  attr(m, "scenario") <- paste("RCP", sprintf("%.1f", as.numeric(sub("^(rcp)(.*)$", "\\2", sapply(l, attr, which = "scenario"), ignore.case = TRUE))))
+
+  cmip5 <- m
+
+  if (!is.null(rdata_path))
+    save(list = c("cmip5"), file = rdata_path)
+
+  m
+}
+
+
 #' @export
 create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", daily_filename="OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", planetary_grid=NULL, extract=FALSE)
 {

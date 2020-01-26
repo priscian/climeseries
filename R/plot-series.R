@@ -363,7 +363,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       if (is_invalid(trendArgs$m[[i]]$col))
         trendArgs$m[[i]]$col <- col[names(trendArgs$m)[i]]
       if (is_invalid(trendArgs$m[[i]]$lwd))
-        trendArgs$m[[i]]$lwd <- trendArgs$lwd
+        trendArgs$m[[i]]$lwd <- rep(trendArgs$lwd, length.out = length(trendArgs$m))[i]
 
       trendArgs$m[[i]]$sdata <- trendArgs$data %>%
         dplyr::select(c(intersect(common_columns, colnames(trendArgs$data)), names(trendArgs$m)[i])) %>%
@@ -739,7 +739,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=RColorBrewer::brewer.pal, col_i_fun...=list(name="Paired"), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -769,6 +769,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   if (is.null(baseline))
     baseline <- attr(models, "baseline")
   model_type <- attr(models, "model_type")
+
+  ## In case the "scenario" attribute isn't a factor:
+  attr(models, "scenario") <- as.factor(attr(models, "scenario"))
 
   originalScenario <- attr(models, "scenario")
   keepCols <- names(models)
