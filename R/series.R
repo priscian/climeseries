@@ -232,7 +232,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year = x$year, yr_part = x$year + (2 * x$month - 1)/24, month = x$month, temp = x$anomaly, check.names = FALSE, stringsAsFactors = FALSE)
 
       #d[[series %_% "_uncertainty"]] <- x[[10]] - x[[9]]
-      d[[series %_% "_uncertainty"]] <- 1.96 * x$total_uncertainty
+      d[[series %_% "_uncertainty"]] <- 2 * 1.96 * x$total_uncertainty
 
       return (d)
     })(path),
@@ -274,7 +274,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## Add value of 95% total uncertainty to data frame.
       ## 'x$V3' is 1 × sigma, so 1.96 × sigma is a 95% CI. V. http://www-users.york.ac.uk/~kdc3/papers/coverage2013/series.html for details, http://www.skepticalscience.com/kevin_cowtan_agu_fall_2014.html for a plot with uncertainty bands.
       if (NCOL(x) > 2)
-        d[[series %_% "_uncertainty"]] <- 1.96 * x$V3
+        d[[series %_% "_uncertainty"]] <- 2 * 1.96 * x$V3
 
       return (d)
     })(path),
@@ -302,13 +302,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           y <- x[!dupIndex, ]
           d1 <- data.frame(year=y$V1, yr_part=y$V1 + (2 * y$V2 - 1)/24, month=y$V2, `BEST Global (Air Ice Temp.)`=y$V3, check.names=FALSE, stringsAsFactors=FALSE)
           d1Series <- grep("^yr_|^met_|^year|^month|_uncertainty$", names(d1), value=TRUE, invert=TRUE)
-          d1[[d1Series %_% "_uncertainty"]] <- y$V4
+          d1[[d1Series %_% "_uncertainty"]] <- 2 * y$V4
 
           ## "with Sea Ice Temperature Inferred from Water Temperatures"
           y <- x[dupIndex, ]
           d2 <- data.frame(year=y$V1, yr_part=y$V1 + (2 * y$V2 - 1)/24, month=y$V2, `BEST Global (Water Ice Temp.)`=y$V3, check.names=FALSE, stringsAsFactors=FALSE)
           d2Series <- grep("^yr_|^met_|^year|^month|_uncertainty$", names(d2), value=TRUE, invert=TRUE)
-          d2[[d2Series %_% "_uncertainty"]] <- y$V4
+          d2[[d2Series %_% "_uncertainty"]] <- 2 * y$V4
 
           d <- list(d1, d2); names(d) <- c(d1Series, d2Series)
         }
@@ -318,7 +318,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       else {
         d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
         ## "Uncertainties represent the 95% confidence interval for statistical and spatial undersampling effects as well as ocean biases." From http://berkeleyearth.lbl.gov/auto/Global/Land_and_Ocean_complete.txt.
-        d[[series %_% "_uncertainty"]] <- x$V4
+        d[[series %_% "_uncertainty"]] <- 2 * x$V4
       }
 
       return (d)
@@ -619,7 +619,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     })(path),
 
     `AIRS Surface Skin Global` = (function(p) {
-      d <- create_combined_airs_series(baseline = 1981:2010, series = series)
+      d <- create_combined_airs_series(baseline = 2003:2018, series = series)
 
       return (d)
     })(path),
@@ -666,7 +666,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V5, check.names=FALSE, stringsAsFactors=FALSE)
       ## 'x$V3' is 1 × sigma, so 1.96 × sigma is a 95% CI, I think.
-      d[[series %_% "_uncertainty"]] <- 1.96 * x$V6
+      d[[series %_% "_uncertainty"]] <- 2 * 1.96 * x$V6
 
       return (d)
     })(path),
@@ -766,6 +766,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year=yearValue, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
       flit <- data.frame(x$V5, x$V9, check.names=FALSE, stringsAsFactors=FALSE)
       names(flit) <- c(series, series %_% "_uncertainty")
+      flit[[series %_% "_uncertainty"]] <- 2 * 1.96 * flit[[series %_% "_uncertainty"]]
       flit <- data.matrix(flit)
       is.na(flit) <- flit == 0.0
       d <- cbind(d, flit)
@@ -905,7 +906,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
       m <- data.table::data.table(dplyr::full_join(flit, m, by=c("year", "month")))
       ## Uncertainties are 1 × sigma (Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1), so 1.96 × sigma is a 95% CI.
-      m[, `_uncertainty` := 1.96 * `_uncertainty`]
+      m[, `_uncertainty` := 2 * 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
       d <- as.data.frame(m)
 
@@ -942,7 +943,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       m <- dplyr::full_join(flit, m, by=c("year", "month"))
       m <- data.table::data.table(m) # This need optimization for the future "climeseries" update.
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
-      m[, `_uncertainty` := 1.96 * `_uncertainty`]
+      m[, `_uncertainty` := 2 * 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
       d <- as.data.frame(m)
 
@@ -1385,7 +1386,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       #m <- data.table::data.table(m) # This needs optimization for the future "climeseries" update.
 
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
-      d <- d0 %>% dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_uncertainty")), function(a) { a * 1.96 }) %>%
+      d <- d0 %>% dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_uncertainty")), function(a) { a * 2 * 1.96 }) %>%
         dplyr::mutate(yr_part = year + (2 * month - 1)/24)
 
       return (d)

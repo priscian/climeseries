@@ -152,14 +152,16 @@ shift.data.frame <- function(x, i, ...)
 }
 
 
-#' @export
-nearest <- function(v, x, value = FALSE)
+## Which values of 'v' are closest to the given values of 'x'?
+nearest_orig <- function(v, x, value = FALSE)
 {
-  d <- data.table(v, value = v)
-  setattr(d, "sorted", "v")
-  setkey(d, v) # Sort the data
+  d <- data.table::data.table(v, value = v)
+  data.table::setattr(d, "sorted", "v")
+  data.table::setkey(d, v) # Sort the data
 
   ## Binary search
+  ## N.B. Can't really get at 'J()' without making this package depend on "data.table" --
+  ## V. https://stackoverflow.com/questions/22001945/how-is-j-function-implemented-in-data-table
   m <- d[J(x), roll = "nearest"]$value
 
   l <- which(v == m)
@@ -169,6 +171,49 @@ nearest <- function(v, x, value = FALSE)
   else
     l
 }
+
+## usage:
+# nearest(1:10, c(0, 13))
+
+
+## Same as 'DescTools::IsZero()'.
+#' @export
+is_zero <- function (x, tol = sqrt(.Machine$double.eps), na.rm = FALSE)
+{
+  if (na.rm)
+    x <- x[!is.na(x)]
+  if (is.numeric(x))
+    abs(x) < tol
+  else FALSE
+}
+
+
+## Which values of 'x' are closest to the given values of 'v'? I.e. the "fixed" values are 'x'.
+## Swiped from 'DescTools::Closest()'.
+#' @export
+nearest <- function (x, v, value = FALSE, na.rm = FALSE)
+{
+  v <- v[1]
+
+  if (na.rm)
+    x <- x[!is.na(x)]
+
+  mdist <- min(abs(x - v))
+  if (is.na(mdist))
+    res <- NA
+  else {
+    idx <- is_zero(abs(x - v) - mdist)
+    if (!value)
+      res <- which(idx)
+    else res <- x[idx]
+  }
+
+  return (res)
+}
+
+## usage:
+# nearest(-(1:10), 13)
+
 
 #' @export
 nearest_below <- function(v, x, value=FALSE) { l <- which(v == max(v[(v < x)])); if (value) v[l] else l }

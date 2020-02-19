@@ -677,22 +677,30 @@ celsius_to_fahr <- function(temp)
 ## Aided by the description at http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/download.html.
 #' @export
 #' @import plyr
-make_planetary_grid <- function(lat_range=c(90, -90), long_range=c(0, 0), grid_size=c(5, 5), clockwise=FALSE, reverse_long=FALSE, container=list(structure(list(c(NA)), weight=1.0)), digits=3)
+make_planetary_grid <- function(
+  lat_range = c(90, -90),
+  long_range = c(0, 0),
+  grid_size = c(5, 5),
+  clockwise = FALSE, reverse_long = FALSE,
+  container = list(structure(list(c(NA)), weight = 1.0)),
+  digits = 3,
+  use_lat_weights = TRUE
+)
 {
   ## N.B. 90° N = +90° lat; 90° S = -90° lat; 180° W = -180° long; 180° E = +180° long.
 
-  allSame <- function(x, tol=.Machine$double.eps ^ 0.5) abs(max(x) - min(x)) < tol
+  AllSame <- function(x, tol = .Machine$double.eps ^ 0.5) abs(max(x) - min(x)) < tol
 
   if (length(grid_size) == 1L)
     grid_size <- rep(grid_size[1], 2L)
   latSize <- grid_size[1]; longSize <- grid_size[2]
 
-  getShortArcMidpointValues <- function(r, g)
+  GetShortArcMidpointValues <- function(r, g)
   {
     r <- sort(r)
     signr <- sign(r)
-    if (allSame(signr)) {
-      if (allSame(r)) mr <- r
+    if (AllSame(signr)) {
+      if (AllSame(r)) mr <- r
       else
         mr <- r + c(1, -1) * (g / 2)
     }
@@ -701,26 +709,26 @@ make_planetary_grid <- function(lat_range=c(90, -90), long_range=c(0, 0), grid_s
       mr <- r - signr * (g / 2)
     }
 
-    mv <- seq(mr[1], mr[2], by=g)
+    mv <- seq(mr[1], mr[2], by = g)
 
     mv
   }
 
-  latValues <- getShortArcMidpointValues(lat_range, latSize)
+  latValues <- GetShortArcMidpointValues(lat_range, latSize)
   if (diff(lat_range) < 0)
-    latValues <- sort(latValues, decreasing=TRUE)
+    latValues <- sort(latValues, decreasing = TRUE)
 
-  getLongMidpointValues <- function(r, g, clockwise)
+  GetLongMidpointValues <- function(r, g, clockwise)
   {
     if ((diff(r) > 0 && !clockwise) || (diff(r) <= 0 && clockwise)) {
-      mv <- getShortArcMidpointValues(r, g)
+      mv <- GetShortArcMidpointValues(r, g)
       if (diff(r) < 0)
-        mv <- sort(mv, decreasing=TRUE)
+        mv <- sort(mv, decreasing = TRUE)
     }
     else {
       mv <- c(
-        sort(getShortArcMidpointValues(c(r[1], ((2 * !clockwise) - 1) * 180), g), decreasing=clockwise),
-        sort(getShortArcMidpointValues(c((2 * clockwise - 1) * 180, r[2]), g), decreasing=clockwise)
+        sort(GetShortArcMidpointValues(c(r[1], ((2 * !clockwise) - 1) * 180), g), decreasing = clockwise),
+        sort(GetShortArcMidpointValues(c((2 * clockwise - 1) * 180, r[2]), g), decreasing = clockwise)
       )
     }
 
@@ -730,15 +738,19 @@ make_planetary_grid <- function(lat_range=c(90, -90), long_range=c(0, 0), grid_s
     mv
   }
 
-  longValues <- getLongMidpointValues(long_range, longSize, clockwise)
+  longValues <- GetLongMidpointValues(long_range, longSize, clockwise)
 
-  g <- matrix(container, length(latValues), length(longValues), dimnames=list(round(latValues, digits), round(longValues, digits)))
+  g <- matrix(container, length(latValues), length(longValues), dimnames = list(round(latValues, digits), round(longValues, digits)))
 
   ## Add latitude-weight attributes to row elements.
-  w <- cos(matrix(rep(latValues, ncol(g)), ncol=ncol(g), byrow=FALSE) * (pi / 180)) # Latitude weights.
-  plyr::m_ply(expand.grid(r_=seq(nrow(g)), c_=seq(ncol(g))), function(r_, c_) attr(g[[r_, c_]], "weight") <<- w[r_, c_])
+  if (use_lat_weights) {
+    w <- cos(matrix(rep(latValues, NCOL(g)), ncol = NCOL(g), byrow = FALSE) * (pi / 180)) # Latitude weights
+    plyr::m_ply(expand.grid(r_ = seq(nrow(g)), c_ = seq(NCOL(g))), function(r_, c_) attr(g[[r_, c_]], "weight") <<- w[r_, c_])
+  }
 
   attr(g, "grid_size") <- grid_size; names(attr(g, "grid_size")) <- c("lat", "long")
+  attr(g, "lat_range") <- lat_range
+  attr(g, "long_range") <- long_range
   class(g) <- "PlanetaryGrid"
 
   g
@@ -832,9 +844,12 @@ convert_hdf4_to_h5 <- function(
 ## usage:
 ## V. https://disc.gsfc.nasa.gov/data-access
 ## Update AIRS gridded data. From the WSL Bash shell:
+# sudo mount -t drvfs v: /mnt/v
 # wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --auth-no-challenge=on --keep-session-cookies -N -np -r --accept='*.hdf' -P /mnt/v/data/climate/AIRS-Level3 --content-disposition https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/
 ## Now convert HDF4 files to HD5 in R:
 # r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006", "V:/data/climate/AIRS-Level3/h5")
+## Or a single file, e.g.
+# r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/2020/AIRS.2020.01.01.L3.RetStd_IR031.v6.0.31.1.G20032153019.hdf", "V:/data/climate/AIRS-Level3/h5/AIRS.2020.01.01.L3.RetStd_IR031.v6.0.31.1.G20032153019.h5")
 
 
 #' @export
@@ -890,7 +905,7 @@ create_airs_monthly_data <- function(
       p[[x[1], x[2]]][[1]] <<- d
     }, .progress = "text")
 
-  p0 <- p
+  p0 <- rlang::duplicate(p, shallow = FALSE)
 
   ## Calculate time-series anomalies for each cell.
   flit <- expand.grid(month = 1:12, year = seq(min(d$year), max(d$year)))
@@ -983,6 +998,45 @@ create_combined_airs_series <- function(
   ad$yr_part <- ad$year + (2 * ad$month - 1)/24
 
   dplyr::arrange(ad, year, month)
+}
+
+
+## Linearly interpolate a climate series backwards for approximate baselining.
+## I'll use this mostly for AIRS, but it might be otherwise applicable.
+#' @export
+interpolate_baseline <- function(
+  series, # A single column in 'x'
+  x, # A 'climeseries' data set
+  baseline = NULL
+)
+{
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
+
+  series <- series[1]
+  xu <- x[na_unwrap(x[[series]]), c(common_columns, series)]
+
+  if (!is.null(baseline)) {
+    if (min(baseline) < min(xu$year)) {
+      xx <- x[, c(common_columns, series)] %>%
+        dplyr::filter(year >= min(baseline))
+
+      is_na <- is.na(xx[[series]])
+      m <- stats::lm(substitute(s ~ yr_part, list(s = as.name(series))), data = x)
+      ## Calculate linear prediction back to start of baseline (don't go back further than about 1970).
+      xx[[series]][is_na] <- stats::predict(m, dataframe(yr_part = xx$yr_part))[is_na]
+      xxx <- recenter_anomalies(xx, baseline)
+      is.na(xxx[[series]]) <- is_na
+
+      r <- merge(x[, common_columns], xxx[, c("year", "month", series)], all.x = TRUE)
+    } else {
+      r <- recenter_anomalies(x[, c(common_columns, series)], baseline)
+    }
+  } else {
+    r <- x[, c(common_columns, series)]
+  }
+
+  r
 }
 
 

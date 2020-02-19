@@ -1,175 +1,383 @@
 #' @export
-make_series_from_ghcn_gridded <- function(
-
+get_series_from_ghcn_gridded <- function(
+  ver = 3, # Or 4
+  temp = c("avg", "min", "max"),
+  quality = "u", # 'u' or 'a' for v3; 'u', 'f', 'e' for v4
+  files = list(
+    v3 = list(
+      base_url = "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3",
+      archive = "ghcnm.t%s.latest.qc%s.tar.gz",
+      countries = "country-codes",
+      readme = "README"
+    ),
+    v4 = list(
+      base_url = "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v4",
+      archive = "ghcnm.t%s.latest.qc%s.tar.gz",
+      countries = "ghcnm-countries.txt",
+      flags = "ghcnm-flags.txt",
+      readme = "readme.txt"
+    )
+  ),
+  download = FALSE,
+  data_dir = NULL, subdir = sprintf("ghcn-m/v%s", ver),
+  data_files_re = "^ghcnm\\.t%s\\.v%s.*\\.qc%s\\.%s",
+  na_strings = -9999,
+  divide_by = 100.0,
+  load_env = globalenv()
 )
 {
-  tictoc::tic("USHCN raw v. final")
+  archiveTempType <- match.arg(temp)
+  v <- as.numeric(ver)[1]
 
-  ## N.B. Pick your desired temp type here by index or name!
-  archiveTempType <- c(Average = "avg", Minimum = "min", Maximum = "max")
+  ## Time the operations.
+  tictoc::tic(sprintf("Processing GHCN-M v%s T%s QC%s", ver, toupper(archiveTempType), toupper(quality)))
 
-  dataDir <- getOption("climeseries_data_dir") # Put your favorite data directory here!
-  archiveNames <- c(sprintf("ushcn.t%s.latest.raw.tar.gz", archiveTempType), sprintf("ushcn.t%s.latest.FLs.52j.tar.gz", archiveTempType))
-  temp_type <- names(archiveTempType)
-  ## ftp://ftp.ncdc.noaa.gov/pub/data/ushcn/v2.5/readme.txt
-  archivePaths <- paste("ftp://ftp.ncdc.noaa.gov/pub/data/ushcn/v2.5", archiveNames, sep = "/")
+  dataDir <- ifelse(is.null(data_dir), getOption("climeseries_data_dir"), data_dir)
+  if (!is.null(subdir) && trimws(subdir) != "")
+    dataDir <- paste(dataDir, trimws(subdir), sep = "/")
+  if (!dir.exists(dataDir))
+    dir.create(dataDir, recursive = TRUE)
 
-  fileList <- sapply(archivePaths,
-    function(x, download)
-    {
-      archiveName <- paste(dataDir, basename(x), sep = "/")
+  fileStrings <- files[["v" %_% ver]]
+  uris <- list(
+    archive = paste(fileStrings$base_url, sprintf(fileStrings$archive, temp, quality), sep = "/"),
+    countries = paste(fileStrings$base_url, fileStrings$countries, sep = "/"),
+    readme = paste(fileStrings$base_url, fileStrings$readme, sep = "/")
+  )
 
-      if (download) {
-        download.file(x, archiveName, mode = "wb", quiet = TRUE)
-        untar(archiveName, compressed = TRUE, exdir = dataDir, list = FALSE) # extras = "--overwrite" not supported
-      }
-
-      untar(archiveName, compressed = TRUE, list = TRUE)
-    }, download = TRUE, simplify = FALSE) # 'download = FALSE' to use existing archives.
-
-  temp <- sapply(fileList, function(x) paste(dataDir, x, sep = "/"), simplify = FALSE)
-  ## https://stackoverflow.com/questions/46147901/r-test-if-a-file-exists-and-is-not-a-directory
-  fl <- sapply(temp, function(a) a[Vectorize(file_test, vectorize.args = "x")("-f", a)], simplify = FALSE)
-
-  surl <- "ftp://ftp.ncdc.noaa.gov/pub/data/ushcn/v2.5/ushcn-v2.5-stations.txt"
-  stations <- read.fwf(surl, widths = c(11, 9, 10, 7, 3, 32, 7, 6, 7, 3), comment.char = "", stringsAsFactors = FALSE)
-
-  ## Make list of raw/final data frames for each station in same wide format as original text file.
-  d <- sapply(fl,
-    function(x)
-    {
-      sapply(x,
-        function(y)
-        {
-          z <- read.fwf(y, c(11, 1, 4, rep(9, 12)), stringsAsFactors = FALSE); z <- z[, -2] # Some archives have an extra no. after the year!
-          flit <- (gsub("\\s+\\d+", "", trimws(sapply(z[, -(1:2)], function(a) gsub("([A-Za-z]\\d*)", "", a)))))
-          is.na(flit) <- flit == -9999
-
-          #r <- dataframe(z[, 1:2], fahr_to_celsius(data.matrix(dataframe(flit)) / 100.0))
-          ## N.B. Conversion is unnecessary; temps are already in °C. V. the README file.
-          r <- dataframe(z[, 1:2], data.matrix(dataframe(flit)) / 100.0)
-          flit <- stations[stations$V1 == unique(r[[1]])[1], ]
-          attr(r, "location") <- list(lat = flit$V2, long = flit$V3, place = paste(trimws(flit$V6), trimws(flit$V5), sep = ", "))
-
-          r
-        }, simplify = FALSE)
-    }, simplify = FALSE)
-
-  ## Make list of raw/final data tables for each station in long format (year, month, temperature).
-  e <- sapply(d,
-    function(x)
-    {
-      sapply(x,
-        function(y)
-        {
-          siteId <- unique(y$V1)
-          z <- reshape2::melt(y[, 2L:14L], id.vars = "V3", variable.name = "month", value.name = siteId)
-          z$month <- as.numeric(z$month)
-          names(z)[names(z) == "V3"] <- "year"
-          z <- tbl_dt(dplyr::arrange(z, year, month))
-
-          attr(z[[siteId]], "location") <- attr(y, "location")
-
-          z
-        }, simplify = FALSE)
-    }, simplify = FALSE)
-
-  ## Make list of raw/final wide data tables of all long individual stations by merging them on month & year.
-  g <- sapply(e,
-    function(a)
-    {
-      #Reduce(merge_fun_factory(all = TRUE, by = c("year", "month")), a)
-      Reduce(function(x, y) { dplyr::full_join(x, y, by = c("year", "month")) }, a)
-    }, simplify = FALSE)
-
-  ## Calculate anomalies from some baseline for all stations.
-  baseline <- 1951:1980
-  #baseline <- 1981:2010
-  h <- sapply(g, function(a) recenter_anomalies(a, baseline = baseline), simplify = FALSE)
-
-  ## Create raw/final list of regional/planetary grids of latitude-weighted cells & populate them with station data.
-  o <- sapply(h,
-    function(x)
-    {
-      ## Create global grid of 2.5° × 3.5° squares and bin temp values in the correct square.
-      p <- make_planetary_grid(grid_size = c(2.5, 3.5))
-
-      y <- x[, get_climate_series_names(x), with = FALSE]
-
-      dev_null <- sapply(seq(NCOL(y)),
-      function(z)
+  if (download) {
+    fileList <- sapply(uris$archive,
+      function(i)
       {
-        #cat(z, fill = TRUE)
+        archiveName <- paste(dataDir, basename(i), sep = "/")
 
-        elms <- y[, z, with = FALSE]
-        coords <- attr(elms[[1]], "location")
-        lat <- coords[["lat"]]; long <- coords[["long"]]
-        rc <- find_planetary_grid_square(p, lat, long)
-        if (any(is.na(rc))) return ()
-        sq <- p[[rc["row"], rc["col"]]][[1]]
-        if (!is.data.frame(sq))
-          p[[rc["row"], rc["col"]]][[1]] <<- elms
-        else
-          p[[rc["row"], rc["col"]]][[1]] <<- cbind(sq, elms)
+        download.file(i, archiveName, mode = "wb", quiet = TRUE)
+        untar(archiveName, exdir = dataDir, list = FALSE) # extras = "--overwrite" not supported
 
-        nop()
+        untar(archiveName, list = TRUE)
       }, simplify = FALSE)
 
-      ## Check grid-cell contents before averaging:
-      ## p[sapply(p, function(x) is.data.frame(x[[1]]))] # Which grid cells are populated?
-      ## as.data.frame(p[<element_number>][[1]][[1]]) # To look at the data for cell <element_number>
+    archiveDir <- paste(dataDir, dirname(fileList[[1]][1]), sep = "/")
+    countries <- paste(archiveDir, fileStrings$countries, sep = "/")
 
-      ## Create weighted average for each month for each grid cell.
-      dev_null <- sapply(seq(length(p)),
-      function(z)
-      {
-        pDT <- p[z][[1]][[1]]
-        if (is.data.frame(pDT)) {
-          ## https://stackoverflow.com/questions/31258547/data-table-row-wise-sum-mean-min-max-like-dplyr
-          p[z][[1]][[1]] <<- pDT[, `:=`(mean = rowMeans(.SD, na.rm = TRUE))][, .(mean)]
-        }
+    ## Download countries file.
+    download.file(uris$countries, countries, mode = "wb", quiet = TRUE)
 
-        nop()
-      }, simplify = FALSE)
+    if (!is.null(fileStrings$flags))
+      download.file(paste(fileStrings$base_url, fileStrings$flags, sep = "/"), paste(archiveDir, fileStrings$flags, sep = "/"), mode = "wb", quiet = TRUE)
 
-      weights <- NULL
-      r <- data.matrix(Reduce(cbind, sapply(seq(length(p)),
-        function(z)
-        {
-          if (!is.data.frame(p[z][[1]][[1]])) return (NULL)
-
-          weights <<- c(weights, attr(p[z][[1]], "weight"))
-
-          p[z][[1]][[1]][[1]]
-        }, simplify = FALSE)))
-
-      rr <- plyr::aaply(r, 1, stats::weighted.mean, w = weights, na.rm = TRUE)
-      is.na(rr) <- is.nan(rr)
-
-      x[, 1:2][, temp := rr]
-    }, simplify = FALSE)
-
-  ## Create raw/final list of long data frames of average temps for the entire region.
-  r <- sapply(o,
-    function(x) {
-      yearRange <- range(x$year)
-      r <- base::merge(expand.grid(month = 1:12, year = seq(yearRange[1], yearRange[2])), x, by = c("year", "month"), all = TRUE)
-      #r$yr_part <- r$year + (r$month - 0.5)/12; r$met_year <- NA
-
-      as.data.frame(r)
-    }, simplify = FALSE)
-
-  series <- c("USHCN " %_% temp_type %_% " Raw", "USHCN " %_% temp_type %_% " Final")
-  for (i in seq(length(r))) {
-    names(r[[i]])[names(r[[i]]) == "temp"] <- series[i]
+    download.file(uris$readme, paste(archiveDir, fileStrings$readme, sep = "/"), mode = "wb", quiet = TRUE)
   }
 
-  ## Finally, merge raw/final data frames on year & month to produce a single data frame of the regional raw/final temps.
-  s <- Reduce(merge_fun_factory(all = TRUE, by = c("year", "month")), r)
-  s <- recenter_anomalies(s, baseline)
-  diffSeries <- "USHCN Final minus Raw"
-  s[[diffSeries]] <- s[[series[2]]] - s[[series[1]]]
-  s$yr_part <- s$year + (s$month - 0.5)/12; s$met_year <- NA
+  ## Now retrieve the latest files by searching for them.
+  flit <- list.files(dataDir, sprintf("^ghcnm.v%s", ver), full.names = TRUE, recursive = TRUE, include.dirs = TRUE)
+  archiveDirs <- sapply(flit, function(i) i[Vectorize(utils::file_test, vectorize.args = "x")("-d", i)], simplify = FALSE) %>% unlist()
+
+  if (is_invalid(archiveDirs))
+    stop("No valid GHCN-M directories found.")
+
+  latest <- sort(archiveDirs, decreasing = TRUE)[1]
+  inv <- list.files(latest, sprintf(data_files_re, temp, ver, quality, "inv"), full.names = TRUE, ignore.case = TRUE)[1]
+  dat <- list.files(latest, sprintf(data_files_re, temp, ver, quality, "dat"), full.names = TRUE, ignore.case = TRUE)[1]
+
+  rdata_filepath <- paste(dataDir, tools::file_path_sans_ext(sprintf(fileStrings$archive, temp, quality), compression = TRUE) %_% ".RData", sep = "/")
+
+  if (download) {
+    ## Station metadata
+    stationFormat <- c(11, -1, 8, -1, 9, -1, 6, -1, 30, -1, 4, 1, 5, 2, 2, 2, 2, 1, 2, 16, 1)
+    station_metadata <- read.fwf(inv, widths = stationFormat, comment.char = "", stringsAsFactors = FALSE)
+    stationCols <- read.table(text = '
+      ID
+      LATITUDE
+      LONGITUDE
+      STNELEV
+      NAME
+      GRELEV
+      POPCLS
+      POPSIZ
+      TOPO
+      STVEG
+      STLOC
+      OCNDIS
+      AIRSTN
+      TOWNDIS
+      GRVEG
+      POPCSS
+    ', header = FALSE, stringsAsFactors = FALSE)[[1]] %>% tolower()
+    colnames(station_metadata) <- stationCols
+
+    if (v == 4)
+      station_metadata <- station_metadata %>% dplyr::select(1:5)
+    attr(station_metadata, "version") <- v
+    attr(station_metadata, "temperature") <- temp
+    attr(station_metadata, "quality") <- quality
+    attr(station_metadata, "archive") <- uris$archive
+
+    ### Station data
+
+    dataFormat <- c(11, 4, 4, rep(c(5, 1, 1, 1), 12))
+    station_data <- read.fwf(dat, widths = dataFormat, comment.char = "", na.strings = na_strings, stringsAsFactors = FALSE, n = -1)
+    dataNames <- c("id", "year", "element", apply(expand.grid(c("value", "dmflag", "qcflag", "dsflag"), 1:12), 1, function(i) paste(trimws(i), collapse = "")))
+    colnames(station_data) <- dataNames
+
+    station_data_list <- station_data %>%
+      dplyr::group_by(id) %>%
+      dplyr::group_map(
+        function(x, y)
+        {
+          xx <- x %>% tidyr::pivot_longer(
+            cols = dplyr::matches("^(value|dmflag|qcflag|dsflag)"),
+            names_to = c(".value", "month"),
+            names_pattern = "(.*?)(\\d+)"
+          )
+
+          attr(xx, "groups") <- y
+
+          xx
+        }, keep = TRUE)
+
+    station_names <- sapply(station_data_list, function(x) attr(x, "groups")[[1, 1]])
+    names(station_data_list) <- station_names
+
+    r <- range(c(sapply(station_data_list, function(x) range(x$year))))
+    flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
+
+    ghcn <- sapply(station_data_list,
+      function(i)
+      {
+        merge(flit, i[, c("year", "month", "value")], by = c("year", "month"), all = TRUE)[[3]] / divide_by
+      }, simplify = TRUE)
+    colnames(ghcn) <- station_names
+    y <- flit %>%
+      dplyr::mutate(yr_part = year + (2 * month - 1)/24, met_year = NA)
+    ghcn <- cbind(y, ghcn, stringsAsFactors = FALSE)
+
+    save(list = c("station_metadata", "station_data", "station_data_list", "ghcn"), file = rdata_filepath)
+  } else {
+    load(rdata_filepath, envir = load_env)
+  }
 
   tictoc::toc()
+
+  rdata_filepath
 }
+
+
+#' @export
+make_ghcn_temperature_series <- function(
+  ghcn, # GHCN station data in climeseries format
+  station_metadata,
+  series_name,
+  other_filters = rep(TRUE, length(get_climate_series_names(ghcn))), # Other filters for station selection
+  grid_size = c(30.0, 30.0),
+  baseline = 1951:1980,
+  lat_range = c(90, -90), long_range = c(-180, 180), # Default global coverage
+  interpolate = FALSE,
+  min_nonmissing_months = 10, # Over baseline period
+  min_nonmissing_years = round(length(baseline) * 0.5), # Over baseline period
+  make_planetary_grid... = list(),
+  use_lat_zonal_weights = FALSE,
+  lat_zonal_weights =
+    list(
+      list(range = c(90, 23.6), weight = 0.3),
+      list(range = c(23.6, -23.6), weight = 0.4),
+      list(range = c(-23.6, -90), weight = 0.3)
+    )
+)
+{
+  ver <- attr(station_metadata, "version")
+  temp_type <- attr(station_metadata, "temperature")
+  quality <- attr(station_metadata, "quality")
+
+  LatLongToText <- function(x, sufs, template = "%.0f%s")
+    { suf <- sufs[2]; r <- abs(x); if (x < 0) suf <- sufs[1]; sprintf(template, r, suf) }
+
+  if (missing(series_name)) {
+    latRangeText <- sapply(lat_range, LatLongToText, sufs = c("S", "N"), simplify = TRUE)
+    longRangeText <- sapply(long_range, LatLongToText, sufs = c("W", "E"), simplify = TRUE)
+
+    series_name <- sprintf("GHCN v%i %s, %s Land %s (%s cells%s)",
+      ver,
+      paste(latRangeText, collapse = "–"),
+      paste(longRangeText, collapse = "–"),
+      ifelse(quality %in% c("a", "f", "e"), "Adj.", "Raw"),
+      paste(sapply(grid_size, sprintf, fmt = "%.1f°"), collapse = " × "),
+      ifelse(use_lat_zonal_weights, " zoned", "")
+    )
+  }
+
+  ## Which stations have adequate coverage over the baseline period?
+  has_baseline_coverage <- sapply(get_climate_series_names(ghcn),
+    function(i)
+    {
+      d <- ghcn[, c(common_columns, i)] %>%
+        dplyr::filter(year %in% baseline) %>%
+        dplyr::group_by(year) %>%
+        dplyr::group_map(
+          function(x, y)
+          {
+            sum(!is.na(x[[i]]))
+          }) %>% unlist()
+
+      sum(d >= min_nonmissing_months) >= min_nonmissing_years
+    }, simplify = TRUE)
+
+  ## Use only stations that meet the baseline-coverage + other filters criteria.
+  filters <- has_baseline_coverage & other_filters
+  g <- ghcn[, c(common_columns, names(filters)[filters]), drop = FALSE]
+  if (!is.null(baseline))
+    g <- recenter_anomalies(g, baseline = baseline)
+
+  ### Create planetary grid of (grid_size[1])° × (grid_size[2])° squares and bin temp values in the correct square.
+
+  make_planetary_gridArgs <- list(
+    lat_range = lat_range,
+    long_range = long_range,
+    grid_size = grid_size,
+    use_lat_weights = TRUE
+  )
+  make_planetary_gridArgs <- utils::modifyList(make_planetary_gridArgs, make_planetary_grid..., keep.null = TRUE)
+  p <- do.call(make_planetary_grid, make_planetary_gridArgs)
+  attr(p, "time_coverage") <- ghcn[, c("year", "month")]
+
+  g <- data.table::data.table(g)
+  y <- g[, get_climate_series_names(g), with = FALSE]
+
+  plyr::l_ply(seq(NCOL(y)),
+    function(z)
+    {
+      id <- names(y)[z]
+      coords <- station_metadata[station_metadata$id == id, , drop = FALSE]
+      elms <- y[, z, with = FALSE]
+      lat <- coords[["latitude"]]; long <- coords[["longitude"]]
+      rc <- find_planetary_grid_square(p, lat, long)
+      if (any(is.na(rc))) return ()
+      sq <- p[[rc["row"], rc["col"]]][[1]]
+      if (!is.data.frame(sq))
+        p[[rc["row"], rc["col"]]][[1]] <<- elms
+      else
+        p[[rc["row"], rc["col"]]][[1]] <<- cbind(sq, elms)
+    })
+
+  ## Make copy of the grid for possible further analysis.
+  p0 <- rlang::duplicate(p, shallow = FALSE)
+
+  ## Create average for each month for each grid cell.
+  plyr::l_ply(seq(length(p)),
+    function(z)
+    {
+      pDT <- p[z][[1]][[1]]
+      if (is.data.frame(pDT)) {
+        ## https://stackoverflow.com/questions/31258547/data-table-row-wise-sum-mean-min-max-like-dplyr
+        row_means <- pDT[, `:=`(mean = rowMeans(.SD, na.rm = TRUE))][, .(mean)]
+        is.na(row_means$mean) <- is.nan(row_means$mean)
+        p[z][[1]][[1]] <<- row_means
+      }
+    })
+
+  ## Aggregate time series into mean by latitude.
+  r <- plyr::alply(p, 1,
+    function(z)
+    {
+      zz <- plyr::llply(z, function(zz) { r <- zz[[1]]; if (!is.data.frame(r)) return (NULL); r })
+
+      l <- purrr::reduce(zz, cbind)
+      ll <- NULL
+      if (!is.null(l)) {
+        ll <- apply(l, 1, mean, na.rm = TRUE)
+        is.na(ll) <- is.nan(ll)
+      }
+
+      ll
+    })
+
+  rr <- Reduce(cbind, r); dimnames(rr) <- NULL
+
+  ### Now handle both latitude weights & (potentially) zonal-latitude weights.
+
+  ## Assume that latitude weights are same for all longitudes.
+  weights <- apply(p, 1, function(a) attr(a[[1]], "weight"))[!sapply(r, is.null)]
+
+  ## Create weights for latitude zones.
+  ## V. http://rankexploits.com/musings/2010/the-great-gistemp-mystery/
+  grid_lats <- as.numeric(dimnames(p)[[1]])
+
+  if (use_lat_zonal_weights) {
+    zone_weights <- rep(1.0, length(grid_lats))
+
+    plyr::l_ply(seq_along(lat_zonal_weights),
+      function(a)
+      {
+        zone_weight <- lat_zonal_weights[[a]]$weight
+        lat_range_i <- sapply(lat_zonal_weights[[a]]$range, function(b) nearest(grid_lats, b))
+
+        zone_weights[Reduce(`:`, lat_range_i)] <<- zone_weight
+      })
+
+    ## V. https://math.stackexchange.com/questions/1910320/weighted-arithmetic-mean-with-2-or-more-weights-per-observation
+    weights <- zone_weights[!sapply(r, is.null)] * weights
+  }
+
+  rrr <- apply(rr, 1, stats::weighted.mean, w = weights, na.rm = TRUE)
+  is.na(rrr) <- is.nan(rrr)
+
+  gg <- g[, c("year", "month")][, (series_name) := rrr] # Use parens around variable name with `:=()`
+  attr(gg, "planetary_grid") <- p0
+  attr(gg, "filters") <- filters
+
+  gg
+}
+
+## usage:
+# get_series_from_ghcn_gridded(ver = 3, temp = "avg", quality = "a", download = FALSE)
+# ghcn_v3_avg <- make_ghcn_temperature_series(ghcn, station_metadata, "GHCN v3 Global Land Adj. (30° × 30° cells)")
+
+
+## Informal look into gridded data used to make temp series 'x'.
+grid_info <- function(
+  x, # Temp series created by 'make_ghcn_temperature_series()'
+  env = globalenv(), # Environment of 'x' & its metadata
+  info = c(
+    "counts", # Station count/cell, dimnames or not depending on 'label'
+    "temps", # Show data for cell 'elm' (which can be 2-D)
+    "metadata", # Metadata for stations in cell 'elm' (can be 2-D)
+    "coords" # lat,lon of cell 'elm'
+  ),
+  elm = NULL,
+  labels = TRUE
+)
+{
+  info <- match.arg(info)
+
+  p <- attr(x, "planetary_grid")
+  m <- env$station_metadata
+
+  w <- switch(info,
+    counts = {
+      if (labels)
+        structure(sapply(p, function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p), .Dimnames = dimnames(p))
+      else
+        structure(sapply(p, function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p))
+    },
+
+    temps = {
+      eval_js(sprintf("p[%s][[1]][[1]]", paste(elm, collapse = ", ")))
+    },
+
+    metadata = {
+      eval_js(sprintf("m[m$id %%in%% colnames(p[%s][[1]][[1]]), ]", paste(elm, collapse = ", ")))
+    },
+
+    coords = {
+      eval_js(sprintf("structure(apply(expand.grid(dimnames(p)), 1, paste, collapse = ','), .Dim = dim(p))[%s]", paste(elm, collapse = ", ")))
+    }
+  )
+
+  w
+}
+
+## usage:
+# grid_info(adj, ghcn_v3_avg_a, "counts", labels = TRUE)
+# grid_info(adj, ghcn_v3_avg_a, "temps", elm = c(10, 21)) # Can also be 1-D, i.e. 21.
+# grid_info(adj, ghcn_v3_avg_a, "metadata", elm = c(10, 21)) # Can also be 1-D.
+# grid_info(adj, ghcn_v3_avg_a, "coords", elm = c(10, 21)) # Can also be 1-D.

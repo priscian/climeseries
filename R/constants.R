@@ -347,6 +347,8 @@ data_urls <- c(list(
   #   http://gravis.gfz-potsdam.de/csvdata/GIS/dm/ # Greenland Ice Mass
   #   http://gravis.gfz-potsdam.de/csvdata/AIS/dm/ # Antarctica Ice Mass
   #   ftp://isdcftp.gfz-potsdam.de/grace/GravIS/GFZ/Level-3/ICE/
+  # Historical sea ice:
+  #   https://nsidc.org/cryosphere/sotc/sea_ice.html
 ), reanalysis_urls)
 
 ## Omit by default some series whose downloading or processing takes a very long time.
