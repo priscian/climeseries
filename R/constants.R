@@ -76,7 +76,9 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/"
 noaaOhcBase <- "https://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 #nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
-nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
+#nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
+nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ice_mass/RL06/v02/mascon_CRI/"
+nasaOceanMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ocean_mass/RL06/v02/mascon_CRI/"
 graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
 
 ## Reanalyses:
@@ -153,7 +155,6 @@ reanalysis_urls <- make_reanalysis_urls()
 #' @rdname constants
 #' @export
 data_urls <- c(list(
-  `AIRS Surface Skin Global` = "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/",
   `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/dm/", type = "land ice"),
   `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/dm/", type = "land ice"),
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
@@ -161,16 +162,16 @@ data_urls <- c(list(
   `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ea_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
-  `ERA5 Sea Ice Extent` = list(path = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CIA_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv", type = "sea ice"),
+  `ERA5 Sea Ice Extent` = list(path = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CI_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv", type = "sea ice"),
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
   `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_201706.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_201706.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaLandIceMassBase %_% "ocean_mass_200204_201706.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_201911.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_201911.txt", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_201911.txt", type="ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -325,7 +326,8 @@ data_urls <- c(list(
   # ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt
   # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_all_66.csv
   # http://www.psmsl.org/products/reconstructions/jevrejevaetal2008.php
-  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
+  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD"),
+  `AIRS Surface Skin Global` = "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/"
   ## TODO: Ocean heat content. More snow and ice?
   # https://climatedataguide.ucar.edu/climate-data/ocean-temperature-analysis-and-heat-content-estimate-institute-atmospheric-physics
   # https://www.ncdc.noaa.gov/snow-and-ice/
@@ -349,6 +351,7 @@ data_urls <- c(list(
   #   ftp://isdcftp.gfz-potsdam.de/grace/GravIS/GFZ/Level-3/ICE/
   # Historical sea ice:
   #   https://nsidc.org/cryosphere/sotc/sea_ice.html
+  # AVISO SLR: ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt
 ), reanalysis_urls)
 
 ## Omit by default some series whose downloading or processing takes a very long time.

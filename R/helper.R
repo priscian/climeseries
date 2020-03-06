@@ -850,6 +850,8 @@ convert_hdf4_to_h5 <- function(
 # r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006", "V:/data/climate/AIRS-Level3/h5")
 ## Or a single file, e.g.
 # r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/2020/AIRS.2020.01.01.L3.RetStd_IR031.v6.0.31.1.G20032153019.hdf", "V:/data/climate/AIRS-Level3/h5/AIRS.2020.01.01.L3.RetStd_IR031.v6.0.31.1.G20032153019.h5")
+## Bash shell:
+# sudo umount /mnt/v
 
 
 #' @export

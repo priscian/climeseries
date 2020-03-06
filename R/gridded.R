@@ -334,6 +334,7 @@ make_ghcn_temperature_series <- function(
 
 
 ## Informal look into gridded data used to make temp series 'x'.
+#' @export
 grid_info <- function(
   x, # Temp series created by 'make_ghcn_temperature_series()'
   env = globalenv(), # Environment of 'x' & its metadata

@@ -853,6 +853,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
+      ## NOAA STAR data temporarily offline. Comment this out after using once:
+      #return (get_climate_data(download = FALSE, baseline = FALSE)[, c("year", "month", "yr_part", series)])
+
       tryCatch({
         x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE, comment.char="#")
       }, error=Error, warning=Error)
