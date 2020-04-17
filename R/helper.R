@@ -674,114 +674,6 @@ celsius_to_fahr <- function(temp)
 }
 
 
-## Aided by the description at http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/download.html.
-#' @export
-#' @import plyr
-make_planetary_grid <- function(
-  lat_range = c(90, -90),
-  long_range = c(0, 0),
-  grid_size = c(5, 5),
-  clockwise = FALSE, reverse_long = FALSE,
-  container = list(structure(list(c(NA)), weight = 1.0)),
-  digits = 3,
-  use_lat_weights = TRUE
-)
-{
-  ## N.B. 90° N = +90° lat; 90° S = -90° lat; 180° W = -180° long; 180° E = +180° long.
-
-  AllSame <- function(x, tol = .Machine$double.eps ^ 0.5) abs(max(x) - min(x)) < tol
-
-  if (length(grid_size) == 1L)
-    grid_size <- rep(grid_size[1], 2L)
-  latSize <- grid_size[1]; longSize <- grid_size[2]
-
-  GetShortArcMidpointValues <- function(r, g)
-  {
-    r <- sort(r)
-    signr <- sign(r)
-    if (AllSame(signr)) {
-      if (AllSame(r)) mr <- r
-      else
-        mr <- r + c(1, -1) * (g / 2)
-    }
-    else {
-      if (any(signr == 0)) signr[signr == 0] <- -sum(signr)
-      mr <- r - signr * (g / 2)
-    }
-
-    mv <- seq(mr[1], mr[2], by = g)
-
-    mv
-  }
-
-  latValues <- GetShortArcMidpointValues(lat_range, latSize)
-  if (diff(lat_range) < 0)
-    latValues <- sort(latValues, decreasing = TRUE)
-
-  GetLongMidpointValues <- function(r, g, clockwise)
-  {
-    if ((diff(r) > 0 && !clockwise) || (diff(r) <= 0 && clockwise)) {
-      mv <- GetShortArcMidpointValues(r, g)
-      if (diff(r) < 0)
-        mv <- sort(mv, decreasing = TRUE)
-    }
-    else {
-      mv <- c(
-        sort(GetShortArcMidpointValues(c(r[1], ((2 * !clockwise) - 1) * 180), g), decreasing = clockwise),
-        sort(GetShortArcMidpointValues(c((2 * clockwise - 1) * 180, r[2]), g), decreasing = clockwise)
-      )
-    }
-
-    ## Reversing the order of long. values might sometimes be necessary for complete arcs, i.e. same start and end values.
-    if (reverse_long) mv <- rev(mv)
-
-    mv
-  }
-
-  longValues <- GetLongMidpointValues(long_range, longSize, clockwise)
-
-  g <- matrix(container, length(latValues), length(longValues), dimnames = list(round(latValues, digits), round(longValues, digits)))
-
-  ## Add latitude-weight attributes to row elements.
-  if (use_lat_weights) {
-    w <- cos(matrix(rep(latValues, NCOL(g)), ncol = NCOL(g), byrow = FALSE) * (pi / 180)) # Latitude weights
-    plyr::m_ply(expand.grid(r_ = seq(nrow(g)), c_ = seq(NCOL(g))), function(r_, c_) attr(g[[r_, c_]], "weight") <<- w[r_, c_])
-  }
-
-  attr(g, "grid_size") <- grid_size; names(attr(g, "grid_size")) <- c("lat", "long")
-  attr(g, "lat_range") <- lat_range
-  attr(g, "long_range") <- long_range
-  class(g) <- "PlanetaryGrid"
-
-  g
-}
-
-## usage:
-# g <- make_planetary_grid() # Default complete globe after JMA, 90N–90S, 0W–0E.
-
-
-#' @export
-find_planetary_grid_square <- function(p, lat, long)
-{
-  if (!inherits(p, "PlanetaryGrid"))
-    stop("'p' must be a \"PlanetaryGrid\" object.")
-
-  gridLatValues <- as.numeric(rownames(p)); gridLongValues <- as.numeric(colnames(p))
-  gridRow <- which.min(abs(lat - gridLatValues))
-  gridCol <- which.min(abs(long - gridLongValues))
-
-  gridSize <- attr(p, "grid_size")
-  if (abs(gridLatValues[gridRow] - lat) > gridSize[1] / 2) gridRow <- NA
-  if (abs(gridLongValues[gridCol] - long) > gridSize[2] / 2) gridCol <- NA
-
-  c(row=gridRow, col=gridCol)
-}
-
-## usage:
-# g <- make_planetary_grid()
-# find_planetary_grid_square(g, 60.15, 110.82)
-
-
 #' @export
 convert_hdf4_to_h5 <- function(
   hdf4_path = ".", # Can be a single directory or vector of file paths.
@@ -849,7 +741,7 @@ convert_hdf4_to_h5 <- function(
 ## Now convert HDF4 files to HD5 in R:
 # r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006", "V:/data/climate/AIRS-Level3/h5")
 ## Or a single file, e.g.
-# r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/2020/AIRS.2020.01.01.L3.RetStd_IR031.v6.0.31.1.G20032153019.hdf", "V:/data/climate/AIRS-Level3/h5/AIRS.2020.01.01.L3.RetStd_IR031.v6.0.31.1.G20032153019.h5")
+# r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/2020/AIRS.2020.03.01.L3.RetStd_IR031.v6.0.31.1.G20105141600.hdf", "V:/data/climate/AIRS-Level3/h5/AIRS.2020.03.01.L3.RetStd_IR031.v6.0.31.1.G20105141600.h5")
 ## Bash shell:
 # sudo umount /mnt/v
 
@@ -1951,6 +1843,23 @@ nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("neares
     r <- unlist(r)
 
   r
+}
+
+
+#' @export
+create_timeseries_from_gridded <- function(
+  x,
+  sub_lat = c(-90, 90), sub_long = c(-180, 180),
+  data_dir = getOption("climeseries_data_dir"),
+  series_suffix = NULL
+)
+{
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
+
+  if (is.null(data_dir)) data_dir <- getwd()
+
+  ## To be continued!
 }
 
 

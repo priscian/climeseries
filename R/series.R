@@ -131,8 +131,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    #`ERSSTv4` =,
-    `ERSSTv5` = (function(p) {
+    #`ERSSTv5` =,
+    `NCEI v5` = (function(p) {
       skip <- 0L
 
       tryCatch({
@@ -147,7 +147,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         l <- apply(namedMatches, 1,
           function(y)
           {
-            seriesName <- paste("ERSSTv5", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
+            seriesName <- paste("NCEI v5", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
             cat("    Processing file", y["file"], fill=TRUE); flush.console()
             x <- read.table(p %_% y["file"], header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
             d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
@@ -1340,7 +1340,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         flit <- httr::GET(p)
-        localPath <- drop(stringr::str_match(content(flit, "text"), stringr::regex("/psd/tmp/.*?\\.txt", ignore_case = TRUE)))
+        localPath <- drop(stringr::str_match(content(flit, "text"), stringr::regex("tmp/.*?\\.txt", ignore_case = TRUE)))
         if (length(localPath) > 1)
           warning("Web scrape found multiple hits for local data path (should only find one).")
         purl <- httr::parse_url(p)

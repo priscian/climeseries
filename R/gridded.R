@@ -1,3 +1,143 @@
+## Aided by the description at http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/download.html.
+#' @export
+#' @import plyr
+make_planetary_grid <- function(
+  lat_range = c(90, -90),
+  long_range = c(0, 0),
+  grid_size = c(5, 5),
+  clockwise = FALSE, reverse_long = FALSE,
+  container = list(structure(list(c(NA)), weight = 1.0)),
+  digits = 3,
+  use_lat_weights = TRUE,
+  use_lat_zonal_weights = TRUE,
+  lat_zonal_weights =
+    list(
+      list(range = c(90, 23.6), weight = 0.3),
+      list(range = c(23.6, -23.6), weight = 0.4),
+      list(range = c(-23.6, -90), weight = 0.3)
+    )
+)
+{
+  ## N.B. 90° N = +90° lat; 90° S = -90° lat; 180° W = -180° long; 180° E = +180° long.
+
+  AllSame <- function(x, tol = .Machine$double.eps ^ 0.5) abs(max(x) - min(x)) < tol
+
+  if (length(grid_size) == 1L)
+    grid_size <- rep(grid_size[1], 2L)
+  latSize <- grid_size[1]; longSize <- grid_size[2]
+
+  GetShortArcMidpointValues <- function(r, g)
+  {
+    r <- sort(r)
+    signr <- sign(r)
+    if (AllSame(signr)) {
+      if (AllSame(r)) mr <- r
+      else
+        mr <- r + c(1, -1) * (g / 2)
+    }
+    else {
+      if (any(signr == 0)) signr[signr == 0] <- -sum(signr)
+      mr <- r - signr * (g / 2)
+    }
+
+    mv <- seq(mr[1], mr[2], by = g)
+
+    mv
+  }
+
+  latValues <- GetShortArcMidpointValues(lat_range, latSize)
+  if (diff(lat_range) < 0)
+    latValues <- sort(latValues, decreasing = TRUE)
+
+  GetLongMidpointValues <- function(r, g, clockwise)
+  {
+    if ((diff(r) > 0 && !clockwise) || (diff(r) <= 0 && clockwise)) {
+      mv <- GetShortArcMidpointValues(r, g)
+      if (diff(r) < 0)
+        mv <- sort(mv, decreasing = TRUE)
+    }
+    else {
+      mv <- c(
+        sort(GetShortArcMidpointValues(c(r[1], ((2 * !clockwise) - 1) * 180), g), decreasing = clockwise),
+        sort(GetShortArcMidpointValues(c((2 * clockwise - 1) * 180, r[2]), g), decreasing = clockwise)
+      )
+    }
+
+    ## Reversing the order of long. values might sometimes be necessary for complete arcs, i.e. same start and end values.
+    if (reverse_long) mv <- rev(mv)
+
+    mv
+  }
+
+  longValues <- GetLongMidpointValues(long_range, longSize, clockwise)
+
+  g <- matrix(container, length(latValues), length(longValues), dimnames = list(round(latValues, digits), round(longValues, digits)))
+
+  ## Add latitude-weight attributes to row elements.
+  ## V. https://stackoverflow.com/questions/58881607/calculating-the-cosine-of-latitude-as-weights-for-gridded-data/58883457#58883457
+  if (use_lat_weights) {
+    w <- cos(matrix(rep(latValues, NCOL(g)), ncol = NCOL(g), byrow = FALSE) * (pi / 180)) # Latitude weights
+    plyr::m_ply(expand.grid(r_ = seq(NROW(g)), c_ = seq(NCOL(g))), function(r_, c_) attr(g[[r_, c_]], "weight") <<- w[r_, c_])
+  }
+
+  ## Create weights for latitude zones.
+  ## V. http://rankexploits.com/musings/2010/the-great-gistemp-mystery/
+  if (use_lat_zonal_weights) {
+    grid_lats <- as.numeric(dimnames(g)[[1]])
+    zone_weights <- rep(1.0, length(grid_lats))
+
+    plyr::l_ply(seq_along(lat_zonal_weights),
+      function(a)
+      {
+        zone_weight <- lat_zonal_weights[[a]]$weight
+        lat_range_i <- sapply(lat_zonal_weights[[a]]$range, function(b) nearest(grid_lats, b))
+
+        zone_weights[Reduce(`:`, lat_range_i)] <<- zone_weight
+        #zone_weights[Reduce(`:`, lat_range_i)] <<- zone_weight/length(Reduce(`:`, lat_range_i))
+      })
+
+    ## Also create a cell attribute.
+    zw <- matrix(rep(zone_weights, each = NCOL(g)), ncol = NCOL(g), byrow = TRUE)
+    plyr::m_ply(expand.grid(r_ = seq(NROW(g)), c_ = seq(NCOL(g))), function(r_, c_) attr(g[[r_, c_]], "zone_weight") <<- zw[r_, c_])
+
+    names(zone_weights) <- dimnames(g)[[1]]
+    attr(g, "zone_weights") <- zone_weights
+  }
+
+  attr(g, "grid_size") <- grid_size; names(attr(g, "grid_size")) <- c("lat", "long")
+  attr(g, "lat_range") <- lat_range
+  attr(g, "long_range") <- long_range
+  class(g) <- "PlanetaryGrid"
+
+  g
+}
+
+## usage:
+# g <- make_planetary_grid() # Default complete globe after JMA, 90N–90S, 0W–0E.
+
+
+#' @export
+find_planetary_grid_square <- function(p, lat, long)
+{
+  if (!inherits(p, "PlanetaryGrid"))
+    stop("'p' must be a \"PlanetaryGrid\" object.")
+
+  gridLatValues <- as.numeric(rownames(p)); gridLongValues <- as.numeric(colnames(p))
+  gridRow <- which.min(abs(lat - gridLatValues))
+  gridCol <- which.min(abs(long - gridLongValues))
+
+  gridSize <- attr(p, "grid_size")
+  if (abs(gridLatValues[gridRow] - lat) > gridSize[1] / 2) gridRow <- NA
+  if (abs(gridLongValues[gridCol] - long) > gridSize[2] / 2) gridCol <- NA
+
+  c(row=gridRow, col=gridCol)
+}
+
+## usage:
+# g <- make_planetary_grid()
+# find_planetary_grid_square(g, 60.15, 110.82)
+
+
 #' @export
 get_series_from_ghcn_gridded <- function(
   ver = 3, # Or 4
@@ -21,6 +161,7 @@ get_series_from_ghcn_gridded <- function(
   download = FALSE,
   data_dir = NULL, subdir = sprintf("ghcn-m/v%s", ver),
   data_files_re = "^ghcnm\\.t%s\\.v%s.*\\.qc%s\\.%s",
+  latest_modification_time = TRUE,
   na_strings = -9999,
   divide_by = 100.0,
   load_env = globalenv()
@@ -77,6 +218,8 @@ get_series_from_ghcn_gridded <- function(
     stop("No valid GHCN-M directories found.")
 
   latest <- sort(archiveDirs, decreasing = TRUE)[1]
+  if (latest_modification_time)
+    latest <- archiveDirs[order(file.mtime(archiveDirs), decreasing = TRUE)][1]
   inv <- list.files(latest, sprintf(data_files_re, temp, ver, quality, "inv"), full.names = TRUE, ignore.case = TRUE)[1]
   dat <- list.files(latest, sprintf(data_files_re, temp, ver, quality, "dat"), full.names = TRUE, ignore.case = TRUE)[1]
 
@@ -151,6 +294,7 @@ get_series_from_ghcn_gridded <- function(
     y <- flit %>%
       dplyr::mutate(yr_part = year + (2 * month - 1)/24, met_year = NA)
     ghcn <- cbind(y, ghcn, stringsAsFactors = FALSE)
+    #ghcn <- dplyr::bind_cols(y, as.data.frame(ghcn))
 
     save(list = c("station_metadata", "station_data", "station_data_list", "ghcn"), file = rdata_filepath)
   } else {
@@ -176,13 +320,8 @@ make_ghcn_temperature_series <- function(
   min_nonmissing_months = 10, # Over baseline period
   min_nonmissing_years = round(length(baseline) * 0.5), # Over baseline period
   make_planetary_grid... = list(),
-  use_lat_zonal_weights = FALSE,
-  lat_zonal_weights =
-    list(
-      list(range = c(90, 23.6), weight = 0.3),
-      list(range = c(23.6, -23.6), weight = 0.4),
-      list(range = c(-23.6, -90), weight = 0.3)
-    )
+  use_lat_zonal_weights = TRUE,
+  uncertainty = TRUE, boot_seed = 666, boot... = list()
 )
 {
   ver <- attr(station_metadata, "version")
@@ -240,15 +379,14 @@ make_ghcn_temperature_series <- function(
   p <- do.call(make_planetary_grid, make_planetary_gridArgs)
   attr(p, "time_coverage") <- ghcn[, c("year", "month")]
 
-  g <- data.table::data.table(g)
-  y <- g[, get_climate_series_names(g), with = FALSE]
+  y <- g[, get_climate_series_names(g), drop = FALSE]
 
   plyr::l_ply(seq(NCOL(y)),
     function(z)
     {
       id <- names(y)[z]
       coords <- station_metadata[station_metadata$id == id, , drop = FALSE]
-      elms <- y[, z, with = FALSE]
+      elms <- y[, z, drop = FALSE]
       lat <- coords[["latitude"]]; long <- coords[["longitude"]]
       rc <- find_planetary_grid_square(p, lat, long)
       if (any(is.na(rc))) return ()
@@ -256,22 +394,22 @@ make_ghcn_temperature_series <- function(
       if (!is.data.frame(sq))
         p[[rc["row"], rc["col"]]][[1]] <<- elms
       else
-        p[[rc["row"], rc["col"]]][[1]] <<- cbind(sq, elms)
+        p[[rc["row"], rc["col"]]][[1]] <<- dplyr::bind_cols(sq, elms)
     })
 
   ## Make copy of the grid for possible further analysis.
   p0 <- rlang::duplicate(p, shallow = FALSE)
 
   ## Create average for each month for each grid cell.
-  plyr::l_ply(seq(length(p)),
+  plyr::l_ply(seq_along(p),
     function(z)
     {
-      pDT <- p[z][[1]][[1]]
-      if (is.data.frame(pDT)) {
-        ## https://stackoverflow.com/questions/31258547/data-table-row-wise-sum-mean-min-max-like-dplyr
-        row_means <- pDT[, `:=`(mean = rowMeans(.SD, na.rm = TRUE))][, .(mean)]
-        is.na(row_means$mean) <- is.nan(row_means$mean)
-        p[z][[1]][[1]] <<- row_means
+      #pDF <- p[z][[1]][[1]] # Alternative indexing
+      pDF <- p[[z]][[1]]
+      if (is.data.frame(pDF)) {
+        row_means <- rowMeans(pDF, na.rm = TRUE)
+        is.na(row_means) <- is.nan(row_means)
+        p[[z]][[1]] <<- dataframe(mean = row_means)
       }
     })
 
@@ -279,49 +417,160 @@ make_ghcn_temperature_series <- function(
   r <- plyr::alply(p, 1,
     function(z)
     {
-      zz <- plyr::llply(z, function(zz) { r <- zz[[1]]; if (!is.data.frame(r)) return (NULL); r })
+      zz <- plyr::llply(z, function(zz) { if (is.data.frame(zz[[1]])) return (zz[[1]]); NULL })
+      zzz <- zz %>% purrr::compact()
 
-      l <- purrr::reduce(zz, cbind)
       ll <- NULL
-      if (!is.null(l)) {
-        ll <- apply(l, 1, mean, na.rm = TRUE)
+      if (!is_invalid(zzz)) {
+        ll <- purrr::reduce(zzz, cbind) %>% data.matrix %>% rowMeans(na.rm = TRUE)
         is.na(ll) <- is.nan(ll)
       }
 
       ll
     })
+  plyr::l_ply(seq_along(r), function(i) if (!is.null(r[[i]])) r[[i]] <<- structure(dataframe(r[[i]]), .Names = dimnames(p)[[1]][i]))
 
-  rr <- Reduce(cbind, r); dimnames(rr) <- NULL
+  rr <- purrr::reduce(r %>% purrr::compact(), cbind) %>% data.matrix
 
   ### Now handle both latitude weights & (potentially) zonal-latitude weights.
 
   ## Assume that latitude weights are same for all longitudes.
   weights <- apply(p, 1, function(a) attr(a[[1]], "weight"))[!sapply(r, is.null)]
 
-  ## Create weights for latitude zones.
-  ## V. http://rankexploits.com/musings/2010/the-great-gistemp-mystery/
-  grid_lats <- as.numeric(dimnames(p)[[1]])
-
   if (use_lat_zonal_weights) {
-    zone_weights <- rep(1.0, length(grid_lats))
+    zone_weights <- attr(p, "zone_weights")
 
-    plyr::l_ply(seq_along(lat_zonal_weights),
-      function(a)
-      {
-        zone_weight <- lat_zonal_weights[[a]]$weight
-        lat_range_i <- sapply(lat_zonal_weights[[a]]$range, function(b) nearest(grid_lats, b))
+    ## Is this right?
+    flit <- zone_weights[!sapply(r, is.null)]
+    lt1 <- table(flit)
+    lt2 <- unique(flit)
+    plyr::l_ply(seq_along(lt1), function(i) { flit[flit == lt2[i]] <<- lt2[i]/lt1[i] })
 
-        zone_weights[Reduce(`:`, lat_range_i)] <<- zone_weight
-      })
+    ## This is probably better:
+    rles <- zone_weights[!sapply(r, is.null)] %>% seqle(incr = 0)
+    lat_zonal_weights <- mapply(rles$values, rles$lengths, FUN = function(a, b) { rep(a/b, b) }, SIMPLIFY = FALSE) %>% unlist
 
     ## V. https://math.stackexchange.com/questions/1910320/weighted-arithmetic-mean-with-2-or-more-weights-per-observation
-    weights <- zone_weights[!sapply(r, is.null)] * weights
+    weights <- lat_zonal_weights * weights
   }
 
   rrr <- apply(rr, 1, stats::weighted.mean, w = weights, na.rm = TRUE)
   is.na(rrr) <- is.nan(rrr)
 
-  gg <- g[, c("year", "month")][, (series_name) := rrr] # Use parens around variable name with `:=()`
+  gg <- g[, c("year", "month")] %>% dplyr::mutate(!!series_name := rrr)
+
+  if (uncertainty) local({
+    d <- sapply(t(p0), function(a) { if (is.data.frame(a[[1]])) return(a[[1]]); NULL }, simplify = FALSE) %>% purrr::compact() %>% purrr::reduce(dplyr::bind_cols) %>% data.matrix
+
+    wz <- apply(p0, 1, function(a) sapply(a, function(b) { if (is.data.frame(b[[1]])) return (rep(1, NCOL(b[[1]]))/NCOL(b[[1]])); NULL }, simplify = FALSE)) %>% unlist %>% as.vector
+
+    v2 <- apply(p0, 1, function(a) { sapply(a, function(b) { if (is.data.frame(b[[1]])) { apply(b[[1]], 1, function(bb) { r <- bb; r[!is.na(r)] <- 1; r/sum(r, na.rm = TRUE) }) } }, simplify = FALSE) %>% purrr::compact() }) %>% purrr::compact(); names(v2) <- colnames(rr)
+    v2a <- rapply(v2, function(a) { if (!is.matrix(a)) return (as.matrix(a)); t(a) }, how = "replace")
+    v2b <- vector("list", length = sapply(v2a, length) %>% sum)
+    i <- 1; dev_null <- rapply(v2a, function(a) { v2b[[i]] <<- a; i <<- i + 1; NULL })
+    # rapply(v2b, NCOL) %>% length # No. non-empty cells
+    # rapply(v2b, NCOL) %>% sum # No. stations
+    v2c <- rapply(v2a, function(a) { a[!is.na(a)] <- 1; a }, how = "replace")
+    ## v2c: List w/ elms for all non-empty cells by lat; each leaf elm contains matrix of all time points × all stations for that cell, 1 for non-missing.
+
+    ####################
+    ##### Weights based on the no. of stations in a cell:
+    ####################
+    wz1 <- purrr::reduce(v2b, cbind) %>% data.matrix
+    # apply(wz1, 2, min, na.rm = TRUE) == wz %>% as.vector
+
+    ## Assume that latitude weights are same for all longitudes.
+    wl0 <- apply(p0, 1, function(a) attr(a[[1]], "weight"))
+    wl <- wl0[!sapply(r, is.null)]
+    if (use_lat_zonal_weights)
+      wl <- wl * lat_zonal_weights
+
+    ## Aggregate stations by latitude.
+    v3 <- vector("list", length = dim(p0)[1])
+    # sapply(v3, length) %>% sum # No. non-empty cells
+    # rapply(v3, NCOL) %>% sum # No. stations
+    i <- 0; plyr::a_ply(p0, 1, function(a) { i <<- i + 1; r <- sapply(a, function(b) { if (!is_invalid(b[[1]])) return (b[[1]]); NULL }, simplify = FALSE) %>% purrr::compact(); if (!is_invalid(r)) v3[[i]] <<- r })
+    v3 <- v3 %>% purrr::compact()
+    v3a <- sapply(v3, function(a) { r <- Reduce(cbind, a) %>% data.matrix; r[!is.na(r)] <- 1; colnames(r) <- NULL; r }, simplify = FALSE)
+    ## v3a: List w/ elms for all non-empty latitudes; each elm contains matrix of all time points × all stations for that lat, 1 for non-missing.
+    # sapply(v3a, NCOL) %>% sum # Total no. of stations
+    i <- 0; v3b <- sapply(v3a, function(a) { i <<- i + 1; r <- apply(a, 1, function(b) { (wl[i] * b)/sum(b, na.rm = TRUE) }); if (is.null(dim(r))) return (as.matrix(r)); t(r) }, simplify = FALSE)
+
+    ####################
+    ##### Weights based on differing no. of non-empty cells for each latitude:
+    ####################
+    wll1 <- v3c <- Reduce(cbind, v3b) %>% data.matrix; colnames(v3c) <- NULL
+    # apply(wll1, 2, min, na.rm = TRUE) == wll %>% as.vector
+
+    vv <- plyr::aaply(p0, 1, function(a) sapply(a, function(b) if (is.data.frame(b[[1]])) NCOL(b[[1]]) else NULL, simplify = FALSE), .drop = FALSE)
+    lat_station_counts <- apply(vv, 1, function(a) { r <- a %>% purrr::compact(); if (length(r) > 0) return (r %>% unlist %>% sum); NULL }) %>% unlist
+    lat_cell_counts <- apply(vv, 1, function(a) { r <- a %>% purrr::compact(); if (length(r) > 0) return (r %>% unlist %>% length); NULL }) %>% unlist
+    lat_observations_weights <- sapply(seq_along(lat_cell_counts), function(i) { rep(lat_cell_counts[i]/sum(lat_cell_counts, na.rm = TRUE), lat_station_counts[i])/lat_station_counts[i] }, simplify = FALSE) %>% unlist
+
+    ## Need to use 'v2c' & 'v3a' here.
+    lat_station_counts1 <- plyr::llply(v3a, rowSums, na.rm = TRUE)
+    # sapply(lat_station_counts1, max) # Cf. lat_station_counts %>% as.vector
+    lat_cell_counts1 <- sapply(seq_along(v2c), function(i) { r <- sapply(v2c[[i]], function(b) { r <- rowSums(b, na.rm = TRUE); r[r > 1] <- 1; r }) %>% rowSums }, simplify = FALSE)
+    # sapply(lat_cell_counts1, max) # Cf. lat_cell_counts %>% as.vector
+    sum_lat_cell_counts1 <- Reduce(cbind, lat_cell_counts1) %>% data.matrix %>% rowSums
+    v1 <- sapply(seq_along(lat_cell_counts1), function(i) { r <- lat_cell_counts1[[i]]/sum_lat_cell_counts1; is.na(r) <- is.nan(r); rr <- matrix(rep(r, lat_station_counts[i]), ncol = lat_station_counts[i], byrow = FALSE)/lat_station_counts1[[i]]; is.na(rr) <- is.nan(rr); rr }, simplify = FALSE)
+    lat_observations_weights1 <- Reduce(cbind, v1) %>% data.matrix
+
+    ####################
+    ##### Weights based on differing no. of non-empty cells & stations for each latitude:
+    ####################
+    inv_lat_observations_weights1 <- 1/lat_observations_weights1
+
+    w <- wz1 * inv_lat_observations_weights1 * wll1 # Use this below to speed things up.
+    i <- 0; dd <- apply(d, 1, function(a) { i <<- i + 1; stats::weighted.mean(a, w = w[i, ], na.rm = TRUE) }); is.na(dd) <- is.nan(dd)
+
+    ## Test to make sure the series resulting from 'd' looks correct.
+    ddd <- cbind(attr(p0, "time_coverage"), GHCN_orig = rrr, GHCN = dd)
+    e <- get_climate_data(download = FALSE, baseline = FALSE)
+    e <- purrr::reduce(list(e, ddd), merge, by = c("year", "month"), all.x = TRUE)
+    baseline <- 1951:1980
+    plot_climate_data(e, series = c("GHCN_orig", "GHCN"), 1880, yearly = TRUE, baseline = baseline, conf_int = FALSE, lwd = 1, ylim = NULL, save_png = FALSE)
+
+    g <- data.table::data.table(cbind(attr(p0, "time_coverage"), d))
+    ggg <- g[, get_climate_series_names(g), with = FALSE]
+
+    ## N.B. This is MUCH faster than using an equivalent 'sapply()' call!
+    i <- 0; h <- t(apply(ggg, 1, function(a) { i <<- i + 1; r <- a * (w[i, ]/sum(w[i, !is.na(a)])) * sum(!is.na(a)); is.na(r) <- is.nan(r); r })) %>% data.table::data.table()
+
+    ## V. https://stats.idre.ucla.edu/r/faq/how-can-i-generate-bootstrap-statistics-in-r/
+    bf <- function(x, i)
+    {
+      r <- mean(x[i], na.rm = TRUE)
+      is.na(r) <- is.nan(r)
+
+      r
+    }
+
+    bootArgs <- list(
+      statistic = bf,
+      R = 100
+    )
+    bootArgs <- utils::modifyList(bootArgs, boot..., keep.null = TRUE)
+
+    set.seed(boot_seed)
+    b <- apply(h, 1, function(a) { bootArgs$data <- a; do.call(boot::boot, bootArgs) })
+
+    GHCN_uncertainty <- sapply(b,
+      function(a)
+      {
+        tryCatch({
+          #diff(boot::boot.ci(a, type = "norm")$normal[1, ][2:3])
+          diff(boot::boot.ci(a, type = "basic")$basic[1, ][4:5])
+        }, error = function(e) NA)
+      }) %>% as.vector
+
+    ## CIs based on the CLT:
+    GHCN_uncertainty_clt <- sapply(b, function(a) sd(a$data, na.rm = TRUE)/sqrt(sum(!is.na(a$data)))) * 2 * 1.96
+
+    gg[[series_name %_% "_uncertainty"]] <<- GHCN_uncertainty_clt
+    gg[[series_name %_% "_uncertainty_boot"]] <<- GHCN_uncertainty
+  })
+
   attr(gg, "planetary_grid") <- p0
   attr(gg, "filters") <- filters
 

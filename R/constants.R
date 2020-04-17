@@ -84,7 +84,7 @@ graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
 ## Reanalyses:
 make_reanalysis_urls <- function()
 {
-  writBase <- "https://www.esrl.noaa.gov/psd/cgi-bin/data/testdap/timeseries.proc.pl?dataset1=@@SERIES@@&var=2m+Air+Temperature&fyear=1840&fyear2=2019&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@"
+  writBase <- "https://psl.noaa.gov/psd/cgi-bin/data/testdap/timeseries.proc.pl?dataset1=@@SERIES@@&var=2m+Air+Temperature&fyear=1840&fyear2=2019&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@"
   reanalyses <- list(
     `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
     `ERA5` = sub("@@SERIES@@", "ERA-5", writBase),
@@ -162,16 +162,17 @@ data_urls <- c(list(
   `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ea_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
-  `ERA5 Sea Ice Extent` = list(path = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CI_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv", type = "sea ice"),
+  ## Check here in case of failure of ERA5 sea ice: https://climate.copernicus.eu/sea-ice-cover-march-2020 etc.
+  `ERA5 Sea Ice Extent` = list(path = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CIA_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv", type = "sea ice"),
   `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
   #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
   `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
   `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_201911.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_201911.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_201911.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202002.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202002.txt", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202002.txt", type="ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -213,7 +214,7 @@ data_urls <- c(list(
   ## ERSSTv4
   #ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## ERSSTv5
-  ERSSTv5 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
+  `NCEI v5` = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## https://www.ncdc.noaa.gov/data-access/marineocean-data/extended-reconstructed-sea-surface-temperature-ersst-v5
   ## Single file: ftp://ftp.cdc.noaa.gov/Datasets/noaa.ersst.v5/sst.mnmean.nc
   ## ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/v5/beta/
