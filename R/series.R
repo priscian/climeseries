@@ -150,7 +150,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             seriesName <- paste("NCEI v5", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
             cat("    Processing file", y["file"], fill=TRUE); flush.console()
             x <- read.table(p %_% y["file"], header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
-            d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
+            d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=2 * 1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
             ## N.B. See ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/readme.timeseries for "total error variance."
             names(d)[names(d) == "temp"] <- seriesName
             names(d)[names(d) == "conf_int"] <- seriesName %_% "_uncertainty"
@@ -1429,7 +1429,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
           l <- plyr::arrange(Reduce(rbind, l), YEAR)
           ## Columns 3, 5, 7 are 1 × sigma, so 1.96 × sigma is a 95% CI.
-          l_ply(c(3, 5, 7), function(a) l[[a]] <<- 1.96 * l[[a]])
+          l_ply(c(3, 5, 7), function(a) l[[a]] <<- 2 * 1.96 * l[[a]])
           flit1 <- paste("NCEI", a$basin[1], "Ocean Heat Content", a$depth[1]) %_% c("", " NH", " SH")
           flit2 <- flit1 %_% "_uncertainty"
           colNames <- c("yr_part", c(flit1, flit2)[order(c(seq_along(flit1), seq_along(flit2) + 0.5))])
@@ -1461,7 +1461,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
           l <- plyr::arrange(Reduce(rbind, l), YEAR)
           ## Columns 3, 5, 7 are 1 × sigma, so 1.96 × sigma is a 95% CI.
-          l_ply(c(3, 5, 7), function(a) l[[a]] <<- 1.96 * l[[a]])
+          l_ply(c(3, 5, 7), function(a) l[[a]] <<- 2 * 1.96 * l[[a]])
           flit1 <- paste("NCEI", a$basin[1], "Ocean Heat Content", a$depth[1]) %_% c("", " NH", " SH") %_% " (Pentadal)"
           flit2 <- flit1 %_% "_uncertainty"
           colNames <- c("yr_part", c(flit1, flit2)[order(c(seq_along(flit1), seq_along(flit2) + 0.5))])

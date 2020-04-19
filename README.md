@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20200416.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20200418.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -179,7 +179,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20200416.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20200418.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -270,84 +270,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. ERA5 Surface Air USA 48
 1. ERA5 Surface Air USA 48 Land
 1. ERA5 Surface Air USA 48 Ocean
-1. ERSSTv5 Land 00N-30N
-1. ERSSTv5 Land 00N-90N
-1. ERSSTv5 Land 20N-90N
-1. ERSSTv5 Land 20S-20N
-1. ERSSTv5 Land 30N-60N
-1. ERSSTv5 Land 30S-00N
-1. ERSSTv5 Land 60N-90N
-1. ERSSTv5 Land 60S-30S
-1. ERSSTv5 Land 60S-60N
-1. ERSSTv5 Land 90S-00N
-1. ERSSTv5 Land 90S-20S
-1. ERSSTv5 Land 90S-60S
-1. ERSSTv5 Land 90S-90N
-1. ERSSTv5 Land + Ocean 00N-30N
-1. ERSSTv5 Land + Ocean 00N-90N
-1. ERSSTv5 Land + Ocean 20N-90N
-1. ERSSTv5 Land + Ocean 20S-20N
-1. ERSSTv5 Land + Ocean 30N-60N
-1. ERSSTv5 Land + Ocean 30S-00N
-1. ERSSTv5 Land + Ocean 60N-90N
-1. ERSSTv5 Land + Ocean 60S-30S
-1. ERSSTv5 Land + Ocean 60S-60N
-1. ERSSTv5 Ocean 00N-30N
-1. ERSSTv5 Land + Ocean 90S-00N
-1. ERSSTv5 Land + Ocean 90S-20S
-1. ERSSTv5 Land + Ocean 90S-60S
-1. ERSSTv5 Land + Ocean 90S-90N
-1. ERSSTv5 Ocean 00N-90N
-1. ERSSTv5 Ocean 20N-90N
-1. ERSSTv5 Ocean 20S-20N
-1. ERSSTv5 Ocean 30N-60N
-1. ERSSTv5 Ocean 30S-00N
-1. ERSSTv5 Ocean 60N-90N
-1. ERSSTv5 Ocean 60S-30S
-1. ERSSTv5 Ocean 60S-60N
-1. ERSSTv5 Ocean 90S-00N
-1. ERSSTv5 Ocean 90S-20S
-1. ERSSTv5 Ocean 90S-60S
-1. ERSSTv5 Ocean 90S-90N
-1. ERSSTv5 Land 00N-30N_uncertainty
-1. ERSSTv5 Land 00N-90N_uncertainty
-1. ERSSTv5 Land 20N-90N_uncertainty
-1. ERSSTv5 Land 20S-20N_uncertainty
-1. ERSSTv5 Land 30N-60N_uncertainty
-1. ERSSTv5 Land 30S-00N_uncertainty
-1. ERSSTv5 Land 60N-90N_uncertainty
-1. ERSSTv5 Land 60S-30S_uncertainty
-1. ERSSTv5 Land 60S-60N_uncertainty
-1. ERSSTv5 Land 90S-00N_uncertainty
-1. ERSSTv5 Land 90S-20S_uncertainty
-1. ERSSTv5 Land 90S-60S_uncertainty
-1. ERSSTv5 Land 90S-90N_uncertainty
-1. ERSSTv5 Land + Ocean 00N-30N_uncertainty
-1. ERSSTv5 Land + Ocean 00N-90N_uncertainty
-1. ERSSTv5 Land + Ocean 20N-90N_uncertainty
-1. ERSSTv5 Land + Ocean 20S-20N_uncertainty
-1. ERSSTv5 Land + Ocean 30N-60N_uncertainty
-1. ERSSTv5 Land + Ocean 30S-00N_uncertainty
-1. ERSSTv5 Land + Ocean 60N-90N_uncertainty
-1. ERSSTv5 Land + Ocean 60S-30S_uncertainty
-1. ERSSTv5 Land + Ocean 60S-60N_uncertainty
-1. ERSSTv5 Ocean 00N-30N_uncertainty
-1. ERSSTv5 Land + Ocean 90S-00N_uncertainty
-1. ERSSTv5 Land + Ocean 90S-20S_uncertainty
-1. ERSSTv5 Land + Ocean 90S-60S_uncertainty
-1. ERSSTv5 Land + Ocean 90S-90N_uncertainty
-1. ERSSTv5 Ocean 00N-90N_uncertainty
-1. ERSSTv5 Ocean 20N-90N_uncertainty
-1. ERSSTv5 Ocean 20S-20N_uncertainty
-1. ERSSTv5 Ocean 30N-60N_uncertainty
-1. ERSSTv5 Ocean 30S-00N_uncertainty
-1. ERSSTv5 Ocean 60N-90N_uncertainty
-1. ERSSTv5 Ocean 60S-30S_uncertainty
-1. ERSSTv5 Ocean 60S-60N_uncertainty
-1. ERSSTv5 Ocean 90S-00N_uncertainty
-1. ERSSTv5 Ocean 90S-20S_uncertainty
-1. ERSSTv5 Ocean 90S-60S_uncertainty
-1. ERSSTv5 Ocean 90S-90N_uncertainty
 1. ESRL AMO
 1. Extended Multivariate ENSO Index
 1. GISS Stratospheric Aerosol Optical Depth (550 nm) Global
@@ -673,6 +595,84 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEI US PHDI
 1. NCEI US PMDI
 1. NCEI US Precip.
+1. NCEI v5 Land 00N-30N
+1. NCEI v5 Land 00N-90N
+1. NCEI v5 Land 20N-90N
+1. NCEI v5 Land 20S-20N
+1. NCEI v5 Land 30N-60N
+1. NCEI v5 Land 30S-00N
+1. NCEI v5 Land 60N-90N
+1. NCEI v5 Land 60S-30S
+1. NCEI v5 Land 60S-60N
+1. NCEI v5 Land 90S-00N
+1. NCEI v5 Land 90S-20S
+1. NCEI v5 Land 90S-60S
+1. NCEI v5 Land 90S-90N
+1. NCEI v5 Land + Ocean 00N-30N
+1. NCEI v5 Land + Ocean 00N-90N
+1. NCEI v5 Land + Ocean 20N-90N
+1. NCEI v5 Land + Ocean 20S-20N
+1. NCEI v5 Land + Ocean 30N-60N
+1. NCEI v5 Land + Ocean 30S-00N
+1. NCEI v5 Land + Ocean 60N-90N
+1. NCEI v5 Land + Ocean 60S-30S
+1. NCEI v5 Land + Ocean 60S-60N
+1. NCEI v5 Ocean 00N-30N
+1. NCEI v5 Land + Ocean 90S-00N
+1. NCEI v5 Land + Ocean 90S-20S
+1. NCEI v5 Land + Ocean 90S-60S
+1. NCEI v5 Land + Ocean 90S-90N
+1. NCEI v5 Ocean 00N-90N
+1. NCEI v5 Ocean 20N-90N
+1. NCEI v5 Ocean 20S-20N
+1. NCEI v5 Ocean 30N-60N
+1. NCEI v5 Ocean 30S-00N
+1. NCEI v5 Ocean 60N-90N
+1. NCEI v5 Ocean 60S-30S
+1. NCEI v5 Ocean 60S-60N
+1. NCEI v5 Ocean 90S-00N
+1. NCEI v5 Ocean 90S-20S
+1. NCEI v5 Ocean 90S-60S
+1. NCEI v5 Ocean 90S-90N
+1. NCEI v5 Land 00N-30N_uncertainty
+1. NCEI v5 Land 00N-90N_uncertainty
+1. NCEI v5 Land 20N-90N_uncertainty
+1. NCEI v5 Land 20S-20N_uncertainty
+1. NCEI v5 Land 30N-60N_uncertainty
+1. NCEI v5 Land 30S-00N_uncertainty
+1. NCEI v5 Land 60N-90N_uncertainty
+1. NCEI v5 Land 60S-30S_uncertainty
+1. NCEI v5 Land 60S-60N_uncertainty
+1. NCEI v5 Land 90S-00N_uncertainty
+1. NCEI v5 Land 90S-20S_uncertainty
+1. NCEI v5 Land 90S-60S_uncertainty
+1. NCEI v5 Land 90S-90N_uncertainty
+1. NCEI v5 Land + Ocean 00N-30N_uncertainty
+1. NCEI v5 Land + Ocean 00N-90N_uncertainty
+1. NCEI v5 Land + Ocean 20N-90N_uncertainty
+1. NCEI v5 Land + Ocean 20S-20N_uncertainty
+1. NCEI v5 Land + Ocean 30N-60N_uncertainty
+1. NCEI v5 Land + Ocean 30S-00N_uncertainty
+1. NCEI v5 Land + Ocean 60N-90N_uncertainty
+1. NCEI v5 Land + Ocean 60S-30S_uncertainty
+1. NCEI v5 Land + Ocean 60S-60N_uncertainty
+1. NCEI v5 Ocean 00N-30N_uncertainty
+1. NCEI v5 Land + Ocean 90S-00N_uncertainty
+1. NCEI v5 Land + Ocean 90S-20S_uncertainty
+1. NCEI v5 Land + Ocean 90S-60S_uncertainty
+1. NCEI v5 Land + Ocean 90S-90N_uncertainty
+1. NCEI v5 Ocean 00N-90N_uncertainty
+1. NCEI v5 Ocean 20N-90N_uncertainty
+1. NCEI v5 Ocean 20S-20N_uncertainty
+1. NCEI v5 Ocean 30N-60N_uncertainty
+1. NCEI v5 Ocean 30S-00N_uncertainty
+1. NCEI v5 Ocean 60N-90N_uncertainty
+1. NCEI v5 Ocean 60S-30S_uncertainty
+1. NCEI v5 Ocean 60S-60N_uncertainty
+1. NCEI v5 Ocean 90S-00N_uncertainty
+1. NCEI v5 Ocean 90S-20S_uncertainty
+1. NCEI v5 Ocean 90S-60S_uncertainty
+1. NCEI v5 Ocean 90S-90N_uncertainty
 1. NCEP/CSFR Surface Air Global
 1. NCEP/CSFR Surface Air Global Land
 1. NCEP/CSFR Surface Air Global Ocean

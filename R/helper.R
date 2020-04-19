@@ -1369,7 +1369,22 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
     dev_null <- sapply(series, function(a) { is.na(x[, a]) <<- x[, "year"] %in% incompleteYears; nop() }); rm(dev_null)
   }
 
-  r <- data.table::data.table(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by = year]
+  ## This doesn't account for the "_uncertainty" columns, though, whose squares should be averaged then 'sqrt()'ed.
+  #r0 <- data.table::data.table(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by = year]
+
+  ## Use a better mean estimate for the "_uncertainty" columns.
+  cnames <- get_climate_series_names(x, conf_int = TRUE)
+  l <- list(cnames[stringr::str_ends(cnames, "_uncertainty", negate = TRUE)], cnames[stringr::str_ends(cnames, "_uncertainty", negate = FALSE)])
+  r <- list(.vars = dplyr::lst(!!l[[1]], !!l[[2]]),
+      .funs = dplyr::lst(
+        function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm = na_rm); r },
+        function(a) { r <- NA_real_; if (!all(is.na(a))) r <- sqrt(mean(a^2, na.rm = na_rm)); r }
+      )) %>%
+    ## For applying multiple functions to different columns in 'summarize_at()', see:
+    ## https://stackoverflow.com/questions/41109403/r-dplyr-summarise-multiple-functions-to-selected-variables/53981812#53981812
+    purrr::pmap(~ x %>% as.data.frame %>% dplyr::group_by(year) %>% dplyr::summarize_at(.x, .y)) %>%
+    purrr::reduce(dplyr::inner_join, by = "year")
+
   if (unwrap)
     r <- r[na_unwrap(r), ]
 
