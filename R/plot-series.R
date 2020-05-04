@@ -85,10 +85,10 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   savedBaseline <- attr(x, "baseline")
 
-  allNames <- c(get_climate_series_names(x, conf_int=!conf_int, invert=FALSE), series)
+  allNames <- c(get_climate_series_names(x, conf_int = conf_int, invert = FALSE), series)
   allNames <- intersect(c(common_columns, series, series %_% "_uncertainty"), allNames)
   x <- x[, allNames]
-  x <- subset(x, na_unwrap(x[, get_climate_series_names(x, conf_int=TRUE)])) # Remove trailing NAs.
+  x <- subset(x, na_unwrap(x[, get_climate_series_names(x, conf_int = TRUE)])) # Remove trailing NAs.
   attr(x, "baseline") <- savedBaseline
 
   if (!is.null(baseline))
@@ -754,7 +754,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   if (plotInstrumental) {
     savedBaseline <- attr(instrumental, "baseline")
 
-    allNames <- c(get_climate_series_names(instrumental, conf_int=!conf_int_i, invert=FALSE), series)
+    allNames <- c(get_climate_series_names(instrumental, conf_int=conf_int_i, invert=FALSE), series)
     allNames <- intersect(c(common_columns, series, series %_% "_uncertainty"), allNames)
     instrumental <- instrumental[, allNames]
     instrumental <- subset(instrumental, na_unwrap(instrumental[, get_climate_series_names(instrumental, conf_int=TRUE)])) # Remove trailing NAs.

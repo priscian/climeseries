@@ -348,24 +348,27 @@ make_ghcn_temperature_series <- function(
   }
 
   ## Which stations have adequate coverage over the baseline period?
-  has_baseline_coverage <- sapply(get_climate_series_names(ghcn),
-    function(i)
-    {
-      d <- ghcn[, c(common_columns, i)] %>%
-        dplyr::filter(year %in% baseline) %>%
-        dplyr::group_by(year) %>%
-        dplyr::group_map(
-          function(x, y)
-          {
-            sum(!is.na(x[[i]]))
-          }) %>% unlist()
+  has_baseline_coverage <- rep(TRUE, length(get_climate_series_names(ghcn)))
+  if (!is.null(baseline)) {
+    has_baseline_coverage <- sapply(get_climate_series_names(ghcn),
+      function(i)
+      {
+        d <- ghcn[, c(common_columns, i)] %>%
+          dplyr::filter(year %in% baseline) %>%
+          dplyr::group_by(year) %>%
+          dplyr::group_map(
+            function(x, y)
+            {
+              sum(!is.na(x[[i]]))
+            }) %>% unlist()
 
-      sum(d >= min_nonmissing_months) >= min_nonmissing_years
-    }, simplify = TRUE)
+        sum(d >= min_nonmissing_months) >= min_nonmissing_years
+      }, simplify = TRUE)
+  }
 
   ## Use only stations that meet the baseline-coverage + other filters criteria.
   filters <- has_baseline_coverage & other_filters
-  g <- ghcn[, c(common_columns, names(filters)[filters]), drop = FALSE]
+  g <- ghcn[, c(common_columns, get_climate_series_names(ghcn)[filters]), drop = FALSE]
 
   ## N.B. Probably best to add uniform random noise here.
   if (!is.null(round_to_nearest)) {
@@ -640,7 +643,7 @@ metadata_select <- function(
 
 ## Starting w/ a random station, select n total that are maximally separated on the globe.
 #' @export
-get_random_stations(
+get_random_stations <- function(
   n = 30, # No. total stations to be selected
   starting_station = NULL, # Leave NULL for random selection.
   rng_seed = 666

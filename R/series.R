@@ -1796,11 +1796,13 @@ get_climate_data <- function(download, data_dir, filename_base, urls=climeseries
 #' @return A character vector of column names.
 #'
 #' @export
-get_climate_series_names <- function(x, conf_int=FALSE, invert=TRUE)
+get_climate_series_names <- function(x, conf_int = FALSE, invert = TRUE)
 {
   colNames <- colnames(x)
 
-  return (colNames[grep("(^yr_|^met_|^year|^month" %_% ifelse(conf_int, "", "|_uncertainty$") %_% ")", colNames, invert=invert)])
+  if (!invert) conf_int <- !conf_int
+
+  return (colNames[grep("(^yr_|^met_|^year|^month" %_% ifelse(conf_int, "", "|_uncertainty$") %_% ")", colNames, invert = invert)])
 }
 
 
@@ -1817,7 +1819,14 @@ get_climate_series_names <- function(x, conf_int=FALSE, invert=TRUE)
 #' @return The data frame argument \code{x} recentered on \code{baseline}.
 #'
 #' @export
-recenter_anomalies <- function(x, baseline=defaultBaseline, digits=4L, by_month=TRUE, return_baselines_only=FALSE, ...)
+recenter_anomalies <- function(
+  x,
+  baseline = defaultBaseline,
+  digits = 4L,
+  by_month = TRUE,
+  return_baselines_only = FALSE,
+  ...
+)
 {
   if (is.null(baseline))
     return (x)
@@ -1838,13 +1847,13 @@ recenter_anomalies <- function(x, baseline=defaultBaseline, digits=4L, by_month=
 
   for (i in tempSeries) {
     if (by_month) {
-      bma <- tapply(flit[[i]], flit$month, mean, na.rm=TRUE)
+      bma <- tapply(flit[[i]], flit$month, mean, na.rm = TRUE)
       base <- rep(NA_real_, nrow(x))
       ## N.B. This next step is both a time & memory sink, the latter being more problematic; optimize it!
-      null <- sapply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x$month == s] <<- v }); null <- NULL
+      dev_null <- sapply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x$month == s] <<- v }); dev_null <- NULL
     }
     else { # By year.
-      bma <- tapply(flit[[i]], flit$year, mean, na.rm=TRUE)
+      bma <- tapply(flit[[i]], flit$year, mean, na.rm = TRUE)
       base <- mean(bma)
     }
 
