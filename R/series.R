@@ -1126,8 +1126,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `ERA5 2m` =,
-    `ERA5 Sea Ice Extent` = (function(p) {
+    `ERA5 Sea Ice Extent` = ,
+    `ERA5 2m` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
       if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
       else { currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear }

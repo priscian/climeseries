@@ -350,20 +350,19 @@ make_ghcn_temperature_series <- function(
   ## Which stations have adequate coverage over the baseline period?
   has_baseline_coverage <- rep(TRUE, length(get_climate_series_names(ghcn)))
   if (!is.null(baseline)) {
-    has_baseline_coverage <- sapply(get_climate_series_names(ghcn),
+    flit <- ghcn %>%
+      dplyr::filter(year %in% baseline)
+
+    has_baseline_coverage <- Reduce(rbind, by(flit[, get_climate_series_names(flit)], flit$year,
       function(i)
       {
-        d <- ghcn[, c(common_columns, i)] %>%
-          dplyr::filter(year %in% baseline) %>%
-          dplyr::group_by(year) %>%
-          dplyr::group_map(
-            function(x, y)
-            {
-              sum(!is.na(x[[i]]))
-            }) %>% unlist()
-
-        sum(d >= min_nonmissing_months) >= min_nonmissing_years
-      }, simplify = TRUE)
+        (!(is.na(i))) %>% colSums(na.rm = TRUE)
+      })) %>% (function(x) { rownames(x) <- NULL; x }) %>%
+      (function(x)
+      {
+        (x >= min_nonmissing_months) %>%
+          colSums(na.rm = TRUE) >= min_nonmissing_years
+      })
   }
 
   ## Use only stations that meet the baseline-coverage + other filters criteria.
@@ -533,7 +532,7 @@ make_ghcn_temperature_series <- function(
     ####################
     wcl1 <- 1/lat_observations_weights1
 
-    w <- wc1 * wl1 * wcl1; colnames(w) <- get_climate_series_names(g) # Use this below to speed things up.
+    w <- wc1 * wl1 * wcl1; colnames(w) <- get_climate_series_names(d) # Use this below to speed things up.
     i <- 0; dd <- apply(d, 1, function(a) { i <<- i + 1; stats::weighted.mean(a, w = w[i, ], na.rm = TRUE) }); is.na(dd) <- is.nan(dd)
 
     ## Test to make sure the series resulting from 'd' looks correct.
@@ -617,6 +616,9 @@ make_ghcn_temperature_series <- function(
     rio::export(l[[1]], sprintf(pathTemplate, "stations") %_% ".csv")
     rio::export(l[2], sprintf(pathTemplate, "metadata"), rowNames = rowNames[2], colNames = TRUE)
     rio::export(tail(l, -2), sprintf(pathTemplate, "analyzed"), rowNames = tail(rowNames, -2), colNames = TRUE)
+
+    ## Put this list in the global envirnoment in case I need it for anything.
+    assign(series_name, l, envir = .GlobalEnv)
 
     cat(". Done.", fill = TRUE); utils::flush.console()
   }
