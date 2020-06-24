@@ -655,7 +655,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
     ciArgs <- list(
       x0 = ccYears,
       y0 = ccRates[, "lwr"],
-      x1 =ccYears,
+      x1 = ccYears,
       y1 = ccRates[, "upr"],
       length = 0.03,
       angle = 90,

@@ -1370,9 +1370,10 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
   }
 
   ## This doesn't account for the "_uncertainty" columns, though, whose squares should be averaged then 'sqrt()'ed.
-  #r0 <- data.table::data.table(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols=-common_columns[common_columns %nin% "year"], by = year]
+  #r0 <- data.table::data.table(x)[, lapply(.SD, function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm=na_rm); r }), .SDcols = -common_columns[common_columns %nin% "year"], by = year]
 
   ## Use a better mean estimate for the "_uncertainty" columns.
+  ## V. stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation/26647#26647
   cnames <- get_climate_series_names(x, conf_int = TRUE)
   l <- list(cnames[stringr::str_ends(cnames, "_uncertainty", negate = TRUE)], cnames[stringr::str_ends(cnames, "_uncertainty", negate = FALSE)])
   r <- list(.vars = dplyr::lst(!!l[[1]], !!l[[2]]),

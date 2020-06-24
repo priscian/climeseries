@@ -322,7 +322,8 @@ make_ghcn_temperature_series <- function(
   make_planetary_grid... = list(),
   use_lat_zonal_weights = TRUE,
   uncertainty = TRUE, boot_seed = 666, boot... = list(),
-  round_to_nearest = NULL, # NULL or ±a, where 'a' describes dist'n U(-a, +a)
+  round_to_nearest = NULL, # NULL or ±a, where 'a' describes dist'n U(-a, +a),
+  runif_seed = 666, use_runif = TRUE, # Use 'stats::runif()' instead of rounding when SD close to error range
   spreadsheet_path = NULL # Set equal to a file path to make an Excel spreadsheet from the data
 )
 {
@@ -371,7 +372,17 @@ make_ghcn_temperature_series <- function(
 
   ## N.B. Probably best to add uniform random noise here.
   if (!is.null(round_to_nearest)) {
-    g <- g %>% dplyr::mutate_at(dplyr::vars(get_climate_series_names(.)), function(tt) { 2 * round_to_nearest * round(tt/(2 * round_to_nearest)) })
+    g <- g %>%
+      dplyr::mutate_at(dplyr::vars(get_climate_series_names(.)),
+        function(tt) {
+          if (use_runif) {
+            set.seed(runif_seed)
+
+            tt + stats::runif(length(tt), -abs(round_to_nearest), abs(round_to_nearest)) 
+          } else {
+            2 * round_to_nearest * round(tt/(2 * round_to_nearest))
+          }
+        })
   }
 
   if (!is.null(baseline))
