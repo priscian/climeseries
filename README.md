@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20200608.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20200717.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -91,7 +91,7 @@ inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5", subdir = "tas + tos")
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
   "BEST Global (Air Ice Temp.)", "JMA Global")
-plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5", start = 1880, end = 2020.99,
+plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5", start = 1880, end = 2025.99,
   yearly = TRUE, ma = 12, baseline = 1970:2000, scenario_text = "Scenario TAS + TOS Realizations",
   center_fun = "mean", smooth_envelope = FALSE, envelope_type = "range", envelope_text = "range",
   ylim = c(-1.0, 1.5), conf_int_i = FALSE, save_png = FALSE)
@@ -179,7 +179,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20200608.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20200717.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -247,8 +247,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
 1. ERA5 2m Global
 1. ERA5 2m European
-1. ERA5 Sea Ice Extent Arctic
-1. ERA5 Sea Ice Extent Antarctic
 1. ERA5 Surface Air Global
 1. ERA5 Surface Air Global Land
 1. ERA5 Surface Air Global Ocean
@@ -343,74 +341,74 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. GISTEMP v4 Zonal Land 44S-24S
 1. GISTEMP v4 Zonal Land 64S-44S
 1. GISTEMP v4 Zonal Land 90S-64S
-1. GRACE-FO Antarctic Ice Mass AIS
-1. GRACE-FO Antarctic Ice Mass AIS_301
-1. GRACE-FO Antarctic Ice Mass AIS_302
-1. GRACE-FO Antarctic Ice Mass AIS_303
-1. GRACE-FO Antarctic Ice Mass AIS_304
-1. GRACE-FO Antarctic Ice Mass AIS_305
-1. GRACE-FO Antarctic Ice Mass AIS_306
-1. GRACE-FO Antarctic Ice Mass AIS_307
-1. GRACE-FO Antarctic Ice Mass AIS_308
-1. GRACE-FO Antarctic Ice Mass AIS_309
-1. GRACE-FO Antarctic Ice Mass AIS_310
-1. GRACE-FO Antarctic Ice Mass AIS_311
-1. GRACE-FO Antarctic Ice Mass AIS_312
-1. GRACE-FO Antarctic Ice Mass AIS_313
-1. GRACE-FO Antarctic Ice Mass AIS_314
-1. GRACE-FO Antarctic Ice Mass AIS_315
-1. GRACE-FO Antarctic Ice Mass AIS_316
-1. GRACE-FO Antarctic Ice Mass AIS_317
-1. GRACE-FO Antarctic Ice Mass AIS_318
-1. GRACE-FO Antarctic Ice Mass AIS_319
-1. GRACE-FO Antarctic Ice Mass AIS_320
-1. GRACE-FO Antarctic Ice Mass AIS_321
-1. GRACE-FO Antarctic Ice Mass AIS_322
-1. GRACE-FO Antarctic Ice Mass AIS_323
-1. GRACE-FO Antarctic Ice Mass AIS_324
-1. GRACE-FO Antarctic Ice Mass AIS_325
-1. GRACE-FO Antarctic Ice Mass AIS_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_301_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_302_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_303_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_304_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_305_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_306_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_307_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_308_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_309_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_310_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_311_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_312_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_313_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_314_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_315_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_316_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_317_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_318_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_319_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_320_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_321_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_322_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_323_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_324_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_325_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS
-1. GRACE-FO Greenland Ice Mass GIS_301
-1. GRACE-FO Greenland Ice Mass GIS_302
-1. GRACE-FO Greenland Ice Mass GIS_303
-1. GRACE-FO Greenland Ice Mass GIS_304
-1. GRACE-FO Greenland Ice Mass GIS_305
-1. GRACE-FO Greenland Ice Mass GIS_306
-1. GRACE-FO Greenland Ice Mass GIS_307
-1. GRACE-FO Greenland Ice Mass GIS_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_301_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_302_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_303_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_304_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_305_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_306_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_307_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_301 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_302 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_303 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_304 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_305 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_306 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_307 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_308 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_309 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_310 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_311 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_312 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_313 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_314 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_315 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_316 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_317 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_318 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_319 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_320 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_321 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_322 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_323 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_324 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS_325 [Gt]
+1. GRACE-FO Antarctic Ice Mass AIS [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_301 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_302 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_303 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_304 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_305 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_306 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_307 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_308 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_309 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_310 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_311 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_312 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_313 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_314 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_315 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_316 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_317 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_318 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_319 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_320 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_321 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_322 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_323 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_324 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass AIS_325 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS [Gt]
+1. GRACE-FO Greenland Ice Mass GIS_301 [Gt]
+1. GRACE-FO Greenland Ice Mass GIS_302 [Gt]
+1. GRACE-FO Greenland Ice Mass GIS_303 [Gt]
+1. GRACE-FO Greenland Ice Mass GIS_304 [Gt]
+1. GRACE-FO Greenland Ice Mass GIS_305 [Gt]
+1. GRACE-FO Greenland Ice Mass GIS_306 [Gt]
+1. GRACE-FO Greenland Ice Mass GIS_307 [Gt]
+1. GRACE-FO Greenland Ice Mass GIS [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_301 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_302 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_303 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_304 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_305 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_306 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass GIS_307 [Gt]_uncertainty
 1. Greenland Land Ice Mass Variation
 1. Greenland Land Ice Mass Variation_uncertainty
 1. HadCET
@@ -595,33 +593,33 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEI US PHDI
 1. NCEI US PMDI
 1. NCEI US Precip.
-1. NCEI v5 Land 00N-30N
-1. NCEI v5 Land 00N-90N
-1. NCEI v5 Land 20N-90N
-1. NCEI v5 Land 20S-20N
-1. NCEI v5 Land 30N-60N
-1. NCEI v5 Land 30S-00N
-1. NCEI v5 Land 60N-90N
 1. NCEI v5 Land 60S-30S
+1. NCEI v5 Land 60N-90N
 1. NCEI v5 Land 60S-60N
 1. NCEI v5 Land 90S-00N
 1. NCEI v5 Land 90S-20S
 1. NCEI v5 Land 90S-60S
 1. NCEI v5 Land 90S-90N
-1. NCEI v5 Land + Ocean 00N-30N
 1. NCEI v5 Land + Ocean 00N-90N
+1. NCEI v5 Land + Ocean 00N-30N
 1. NCEI v5 Land + Ocean 20N-90N
 1. NCEI v5 Land + Ocean 20S-20N
 1. NCEI v5 Land + Ocean 30N-60N
 1. NCEI v5 Land + Ocean 30S-00N
+1. NCEI v5 Land 00N-30N
+1. NCEI v5 Land 00N-90N
+1. NCEI v5 Land 20N-90N
+1. NCEI v5 Land 20S-20N
+1. NCEI v5 Land 30N-60N
 1. NCEI v5 Land + Ocean 60N-90N
 1. NCEI v5 Land + Ocean 60S-30S
 1. NCEI v5 Land + Ocean 60S-60N
-1. NCEI v5 Ocean 00N-30N
 1. NCEI v5 Land + Ocean 90S-00N
 1. NCEI v5 Land + Ocean 90S-20S
+1. NCEI v5 Land 30S-00N
 1. NCEI v5 Land + Ocean 90S-60S
 1. NCEI v5 Land + Ocean 90S-90N
+1. NCEI v5 Ocean 00N-30N
 1. NCEI v5 Ocean 00N-90N
 1. NCEI v5 Ocean 20N-90N
 1. NCEI v5 Ocean 20S-20N
@@ -634,33 +632,33 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEI v5 Ocean 90S-20S
 1. NCEI v5 Ocean 90S-60S
 1. NCEI v5 Ocean 90S-90N
-1. NCEI v5 Land 00N-30N_uncertainty
-1. NCEI v5 Land 00N-90N_uncertainty
-1. NCEI v5 Land 20N-90N_uncertainty
-1. NCEI v5 Land 20S-20N_uncertainty
-1. NCEI v5 Land 30N-60N_uncertainty
-1. NCEI v5 Land 30S-00N_uncertainty
-1. NCEI v5 Land 60N-90N_uncertainty
 1. NCEI v5 Land 60S-30S_uncertainty
+1. NCEI v5 Land 60N-90N_uncertainty
 1. NCEI v5 Land 60S-60N_uncertainty
 1. NCEI v5 Land 90S-00N_uncertainty
 1. NCEI v5 Land 90S-20S_uncertainty
 1. NCEI v5 Land 90S-60S_uncertainty
 1. NCEI v5 Land 90S-90N_uncertainty
-1. NCEI v5 Land + Ocean 00N-30N_uncertainty
 1. NCEI v5 Land + Ocean 00N-90N_uncertainty
+1. NCEI v5 Land + Ocean 00N-30N_uncertainty
 1. NCEI v5 Land + Ocean 20N-90N_uncertainty
 1. NCEI v5 Land + Ocean 20S-20N_uncertainty
 1. NCEI v5 Land + Ocean 30N-60N_uncertainty
 1. NCEI v5 Land + Ocean 30S-00N_uncertainty
+1. NCEI v5 Land 00N-30N_uncertainty
+1. NCEI v5 Land 00N-90N_uncertainty
+1. NCEI v5 Land 20N-90N_uncertainty
+1. NCEI v5 Land 20S-20N_uncertainty
+1. NCEI v5 Land 30N-60N_uncertainty
 1. NCEI v5 Land + Ocean 60N-90N_uncertainty
 1. NCEI v5 Land + Ocean 60S-30S_uncertainty
 1. NCEI v5 Land + Ocean 60S-60N_uncertainty
-1. NCEI v5 Ocean 00N-30N_uncertainty
 1. NCEI v5 Land + Ocean 90S-00N_uncertainty
 1. NCEI v5 Land + Ocean 90S-20S_uncertainty
+1. NCEI v5 Land 30S-00N_uncertainty
 1. NCEI v5 Land + Ocean 90S-60S_uncertainty
 1. NCEI v5 Land + Ocean 90S-90N_uncertainty
+1. NCEI v5 Ocean 00N-30N_uncertainty
 1. NCEI v5 Ocean 00N-90N_uncertainty
 1. NCEI v5 Ocean 20N-90N_uncertainty
 1. NCEI v5 Ocean 20S-20N_uncertainty

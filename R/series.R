@@ -831,7 +831,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 1L # Ignore header
 
       tryCatch({
-        CSIRO_down <- FALSE # Set to TRUE if the CSIRO FTP site fails.
+        CSIRO_down <- TRUE # Set to TRUE if the CSIRO FTP site fails.
         alt_p <- system.file("extdata/latest/CSIRO_Alt.csv", package="climeseries")
         if (!CSIRO_down)
           download.file(p, alt_p, mode = "wb", quiet = TRUE)
@@ -1134,7 +1134,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
       uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
-      if (!url.exists(uri)) { ## Does the previous month's data exist?
+      if (httr::http_error(uri)) { ## Does the previous month's data exist?
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
         else currentMonth <- currentMonth - 1
 
@@ -1147,7 +1147,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       x <- NULL
 
-      skip <- 2L
+      skip <- 8L
 
       tryCatch({
         x <- read.csv(uri, header=TRUE, skip=skip, check.names=FALSE)
@@ -1370,7 +1370,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         x <- rio::import(p, format = "csv", skip = skip)
       }, error = Error, warning = Error)
 
-      matches <- stringr::str_match(x$time, "^(\\d{4})_(\\d+)$")
+      matches <- stringr::str_match(x$`time [yyyy_doy]`, "^(\\d{4})_(\\d+)$")
       yearTemp <- lubridate::date_decimal(as.numeric(matches[, 2]))
       lubridate::day(yearTemp) <- as.numeric(matches[, 3])
       y <- lubridate::year(yearTemp)
@@ -1378,7 +1378,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       flit <- x[, -1, drop = FALSE]
       flitNames <- names(flit)
-      names(flit) <- paste(series, stringr::str_replace(flitNames, "^error_(.*?)$", "\\1_uncertainty"))
+      names(flit) <- paste(series, stringr::str_replace(flitNames, "^std_(.*?)$", "\\1_uncertainty"))
 
       r <- range(y)
       flit2 <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
