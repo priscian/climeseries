@@ -87,7 +87,7 @@ make_reanalysis_urls <- function()
   writBase <- "https://psl.noaa.gov/psd/cgi-bin/data/testdap/timeseries.proc.pl?dataset1=@@SERIES@@&var=2m+Air+Temperature&fyear=1840&fyear2=2019&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@"
   reanalyses <- list(
     `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
-    `ERA5` = sub("@@SERIES@@", "ERA-5", writBase),
+    `ERA5` = sub("@@SERIES@@", "ERA5", writBase),
     `NCEP/NCAR R1` = sub("@@SERIES@@", "NCEP%2FNCAR+R1", writBase),
     `NCEP/DOE R2` = sub("@@SERIES@@", "NCEP%2FDOE+R2", writBase),
     `NCEP/CSFR` = sub("@@SERIES@@", "NCEP%2FCFSR", writBase),

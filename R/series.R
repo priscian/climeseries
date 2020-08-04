@@ -831,7 +831,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 1L # Ignore header
 
       tryCatch({
-        CSIRO_down <- TRUE # Set to TRUE if the CSIRO FTP site fails.
+        CSIRO_down <- FALSE # Set to TRUE if the CSIRO FTP site fails.
         alt_p <- system.file("extdata/latest/CSIRO_Alt.csv", package="climeseries")
         if (!CSIRO_down)
           download.file(p, alt_p, mode = "wb", quiet = TRUE)

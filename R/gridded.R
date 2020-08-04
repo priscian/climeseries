@@ -277,7 +277,7 @@ get_series_from_ghcn_gridded <- function(
           attr(xx, "groups") <- y
 
           xx
-        }, keep = TRUE)
+        }, .keep = TRUE)
 
     station_names <- sapply(station_data_list, function(x) attr(x, "groups")[[1, 1]])
     names(station_data_list) <- station_names
@@ -320,7 +320,7 @@ make_ghcn_temperature_series <- function(
   min_nonmissing_months = 10, # Over baseline period
   min_nonmissing_years = round(length(baseline) * 0.5), # Over baseline period
   make_planetary_grid... = list(),
-  use_lat_zonal_weights = TRUE,
+  use_lat_zonal_weights = FALSE,
   uncertainty = TRUE, boot_seed = 666, boot... = list(),
   round_to_nearest = NULL, # NULL or ±a, where 'a' describes dist'n U(-a, +a),
   runif_seed = 666, use_runif = TRUE, # Use 'stats::runif()' instead of rounding when SD close to error range
