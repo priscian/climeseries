@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -100,7 +100,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   flit <- window_ts(y, start, end, extend=TRUE)
   startTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[1], "above")
   endTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
-  textRange <- paste(paste(startTS_abo, collapse="."), paste(endTS_abo, collapse="."), sep="-"); flit <- NULL
+  textRange <- paste(paste(startTS_abo, collapse="."), paste(endTS_abo, collapse="."), sep="-")
+  flit <- NULL
   if (yearly) {
     make_yearly_dataArgs <- list(
       x = y
@@ -240,13 +241,24 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     do.call("png", pngArgs)
   }
 
-  xaxt <- "n"
+  ## N.B. My custom x-axis ticks are causing some problems, so let's just ditch them for now (24 Sep 2020).
+  #xaxt <- "n"
+  xaxt <- "s"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
 
   if (!add) {
     op <- par(mar = c(5, 5, 4, 2) + 0.1)
-    plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, frame.plot=FALSE, ...) # I.e. 'plot.ts()'.
+    plot(w[, get_climate_series_names(w, conf_int=FALSE)], plot.type=plot_type, type="n", xaxs="r", xaxt=xaxt, axes = FALSE, xlab=xlab, ylab=ylab, main=main, frame.plot=FALSE, ...) # I.e. 'plot.ts()'.
+
+    if (!is.null(bg)) {
+      graphics::rect(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[4], border = NA, col = bg)
+    }
+
+    ## V. https://stackoverflow.com/questions/22470114/removing-top-and-right-borders-from-boxplot-frame-in-r/62185904#62185904
+    #graphics::box(bty = "l") # L-shaped box
+    graphics::axis(1, lwd = 0, lwd.ticks = 0) # Draw x-axis
+    graphics::axis(2, lwd = 0, lwd.ticks = 0) # Draw y-axis
   }
   if (xaxt == "n")
     axis(1, xaxisTicks)
@@ -255,8 +267,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (maText != "") mtext(maText, 3L)
 
   if (!add) {
-    grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
-    abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
+    grid(nx=NA, ny=NULL, col="gray", lty="dotted", lwd=par("lwd"))
+    abline(v=xaxisTicks, col="gray", lty="dotted", lwd=par("lwd"))
   }
 
   if (!is.null(start_callback))

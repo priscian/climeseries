@@ -80,7 +80,7 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
         else c(x, NA)[i]
         ## N.B. This fails for some time series with non-zero 'tsp' starts, so replace it & return a 'ts' object:
         #attr(y, "tsp") <- c(ystart, yend, xfreq)
-        y <- FillBlankDates(y)
+        y <- FillBlankDates(y, frequency = xfreq)
         y <- make_time_series_from_anomalies(y, frequency = xfreq, conf_int = TRUE)
         if (yfreq != xfreq)
             y <- Recall(y, frequency = yfreq)
@@ -90,7 +90,7 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
 
 
 ## For use in 'window_default()' to fix empty dates in padded time series.
-FillBlankDates <- function(y)
+FillBlankDates <- function(y, frequency)
 {
   nau <- na_unwrap(oss(y))
   if (all(nau))
@@ -104,16 +104,26 @@ FillBlankDates <- function(y)
       function(a)
       {
         r <- NULL
-        if (a < 0)
-          r <- add_months(min(y[, "yr_part"], na.rm = TRUE), a)
-        else if (a > 0)
-          r <- add_months(max(y[, "yr_part"], na.rm = TRUE), a)
+        if (a < 0) {
+          if (frequency == 12L)
+            r <- add_months(min(y[, "yr_part"], na.rm = TRUE), a)
+          else
+            r <- c(year = min(y[, "yr_part"], na.rm = TRUE) + a)
+        }
+        else if (a > 0) {
+          if (frequency == 12L)
+            r <- add_months(max(y[, "yr_part"], na.rm = TRUE), a)
+          else
+            r <- c(year = max(y[, "yr_part"], na.rm = TRUE) + a)
+        }
 
         r
       }, simplify = FALSE))
-  z <- z %>% make_yr_part %>% make_met_year
 
-  ycols <- intersect(colnames(y), common_columns)
+  if (frequency == 12L)
+    z <- z %>% make_yr_part %>% make_met_year
+
+  ycols <- intersect(colnames(z), common_columns)
   if (!is.matrix(y))
     y[!nau, ycols] <- z[, ycols]
   else
