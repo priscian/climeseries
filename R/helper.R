@@ -762,7 +762,7 @@ create_airs_monthly_data <- function(
     path = data_path,
     pattern = files_re,
     full.names = TRUE,
-    recursive = TRUE,
+    recursive = FALSE,
     ignore.case = TRUE
   )
   list.filesArgs <- utils::modifyList(list.filesArgs, list.files..., keep.null = TRUE)
