@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20201120.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20201214.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -179,7 +179,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20201120.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20201214.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -883,6 +883,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RSS TLS 3.3 Ocean -82.5/-20.0
 1. RSS TLS 3.3 Ocean 60.0/82.5
 1. RSS TLS 3.3 Ocean -82.5/-60.0
+1. RSS TLS 4.0 -82.5/82.5
+1. RSS TLS 4.0 -20.0/20.0
+1. RSS TLS 4.0 20.0/82.5
+1. RSS TLS 4.0 -82.5/-20.0
+1. RSS TLS 4.0 60.0/82.5
+1. RSS TLS 4.0 -82.5/-60.0
+1. RSS TLS 4.0 Cont. USA
+1. RSS TLS 4.0 0.0/82.5
+1. RSS TLS 4.0 -82.5/0.0
+1. RSS TLS 4.0 Land -82.5/82.5
+1. RSS TLS 4.0 Land -20.0/20.0
+1. RSS TLS 4.0 Land 20.0/82.5
+1. RSS TLS 4.0 Land -82.5/-20.0
+1. RSS TLS 4.0 Land 60.0/82.5
+1. RSS TLS 4.0 Land -82.5/-60.0
+1. RSS TLS 4.0 Ocean -82.5/82.5
+1. RSS TLS 4.0 Ocean -20.0/20.0
+1. RSS TLS 4.0 Ocean 20.0/82.5
+1. RSS TLS 4.0 Ocean -82.5/-20.0
+1. RSS TLS 4.0 Ocean 60.0/82.5
+1. RSS TLS 4.0 Ocean -82.5/-60.0
 1. RSS TLT 3.3 -70.0/82.5
 1. RSS TLT 3.3 -20.0/20.0
 1. RSS TLT 3.3 20.0/82.5
@@ -988,6 +1009,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. RSS TTS 3.3 Ocean -82.5/-20.0
 1. RSS TTS 3.3 Ocean 60.0/82.5
 1. RSS TTS 3.3 Ocean -82.5/-60.0
+1. RSS TTS 4.0 -82.5/82.5
+1. RSS TTS 4.0 -20.0/20.0
+1. RSS TTS 4.0 20.0/82.5
+1. RSS TTS 4.0 -82.5/-20.0
+1. RSS TTS 4.0 60.0/82.5
+1. RSS TTS 4.0 -82.5/-60.0
+1. RSS TTS 4.0 Cont. USA
+1. RSS TTS 4.0 0.0/82.5
+1. RSS TTS 4.0 -82.5/0.0
+1. RSS TTS 4.0 Land -82.5/82.5
+1. RSS TTS 4.0 Land -20.0/20.0
+1. RSS TTS 4.0 Land 20.0/82.5
+1. RSS TTS 4.0 Land -82.5/-20.0
+1. RSS TTS 4.0 Land 60.0/82.5
+1. RSS TTS 4.0 Land -82.5/-60.0
+1. RSS TTS 4.0 Ocean -82.5/82.5
+1. RSS TTS 4.0 Ocean -20.0/20.0
+1. RSS TTS 4.0 Ocean 20.0/82.5
+1. RSS TTS 4.0 Ocean -82.5/-20.0
+1. RSS TTS 4.0 Ocean 60.0/82.5
+1. RSS TTS 4.0 Ocean -82.5/-60.0
 1. RSS TTT 3.3 -82.5/82.5
 1. RSS TTT 3.3 -20.0/20.0
 1. RSS TTT 3.3 20.0/82.5
