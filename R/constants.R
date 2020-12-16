@@ -54,6 +54,9 @@ crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/csv/"
+crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.0.0/diagnostics/"
+hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/analysis/diagnostics/"
+hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/non-infilled/diagnostics/"
 cowtanWayBase <- "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/"
 bestBase <- "http://berkeleyearth.lbl.gov/auto/"
 rssBase <- "http://data.remss.com/msu/monthly_time_series/"
@@ -239,6 +242,16 @@ data_urls <- c(list(
   `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_NHEM.csv",
   `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
+  ## Hadley v5
+  `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.0.0.summary_series.global.monthly.nc",
+  `CRUTEM5 NH` = crutem5Base %_% "CRUTEM.5.0.0.0.summary_series.northern_hemisphere.monthly.nc",
+  `CRUTEM5 SH` = crutem5Base %_% "CRUTEM.5.0.0.0.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 Global` = hadcrut5Base %_% "HadCRUT.5.0.0.0.analysis.summary_series.global.monthly.nc",
+  `HadCRUT5 SH` = hadcrut5Base %_% "HadCRUT.5.0.0.0.analysis.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH` = hadcrut5Base %_% "HadCRUT.5.0.0.0.analysis.summary_series.northern_hemisphere.monthly.nc",
+  `HadCRUT5 Global (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.0.0.summary_series.global.monthly.nc",
+  `HadCRUT5 SH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.0.0.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.0.0.summary_series.northern_hemisphere.monthly.nc",
   ## Cowtan & Way
   `Cowtan & Way Krig. Global` = cowtanWayBase %_% "had4_krig_v2_0_0.txt",
   `Cowtan & Way Krig. Global Land` = cowtanWayBase %_% "cru4_krig_v2_0_0.txt",

@@ -242,8 +242,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   }
 
   ## N.B. My custom x-axis ticks are causing some problems, so let's just ditch them for now (24 Sep 2020).
-  #xaxt <- "n"
-  xaxt <- "s"
+  xaxt <- "n"
+  #xaxt <- "s"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
 
@@ -261,7 +261,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     graphics::axis(2, lwd = 0, lwd.ticks = 0) # Draw y-axis
   }
   if (xaxt == "n")
-    axis(1, xaxisTicks)
+    axis(1, xaxisTicks, lty = 0)
   else
     xaxisTicks <- axTicks(1L)
   if (maText != "") mtext(maText, 3L)
@@ -751,7 +751,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -926,13 +926,25 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     do.call("png", pngArgs)
   }
 
+  ## N.B. My custom x-axis ticks are causing some problems, so let's just ditch them for now (24 Sep 2020).
   xaxt <- "n"
+  #xaxt <- "s"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
   op <- par(mar = c(5, 5, 4, 2) + 0.1)
-  plot(wiz[, get_climate_series_names(wiz, conf_int=FALSE), drop=FALSE], screens=1L, bty="n", xaxs="r", xaxt=xaxt, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
+  plot(wiz[, get_climate_series_names(wiz, conf_int=FALSE), drop=FALSE], screens=1L, bty="n", xaxs="r", xaxt=xaxt, axes = FALSE, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
+
+  if (!is.null(bg)) {
+    graphics::rect(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[4], border = NA, col = bg)
+  }
+
+  ## V. https://stackoverflow.com/questions/22470114/removing-top-and-right-borders-from-boxplot-frame-in-r/62185904#62185904
+  #graphics::box(bty = "l") # L-shaped box
+  graphics::axis(1, lwd = 0, lwd.ticks = 0) # Draw x-axis
+  graphics::axis(2, lwd = 0, lwd.ticks = 0) # Draw y-axis
+
   if (xaxt == "n")
-    axis(1, xaxisTicks)
+    axis(1, xaxisTicks, lty = 0)
   else
     xaxisTicks <- axTicks(1)
   if (maText != "") mtext(maText, 3L)

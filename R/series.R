@@ -217,6 +217,42 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `CRUTEM5 Global` =,
+    `CRUTEM5 NH` =,
+    `CRUTEM5 SH` =,
+    `HadCRUT5 Global` =,
+    `HadCRUT5 SH` =,
+    `HadCRUT5 NH` =,
+    `HadCRUT5 Global (not infilled)` =,
+    `HadCRUT5 SH (not infilled)` =,
+    `HadCRUT5 NH (not infilled)` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        flit <- tempfile()
+        download.file(p, flit, mode = "wb", quiet = TRUE)
+        n <- nc_open(flit) # 'print(n)' or just 'n' for details.
+        tas_var <- "tas"
+        if (names(n$var) %>% stringr::str_detect("tas_mean") %>% any)
+          tas_var <- "tas_mean"
+        a <- ncvar_get(n, tas_var)
+        u <- ncvar_get(n, "tas_upper")
+        l <- ncvar_get(n, "tas_lower")
+        times <- ncvar_get(n, "time")
+        tunits <- ncatt_get(n,"time", "units")
+        nc_close(n)
+      }, error = Error, warning = Error)
+
+      # [1] "days since 1850-1-1 00:00:00"
+      dtimes <- as.Date(times, origin = "1850-01-01")
+      ## This data set should have the same length as the "time" dimension of 'a':
+      d <- dataframe(year = year(dtimes), yr_part = year(dtimes) + (2 * month(dtimes) - 1)/24, month = month(dtimes), temp = a)
+      d[[series %_% "_uncertainty"]] <- u - l
+
+      return (d)
+    })(path),
+
+
     `HadSST4 SH` =,
     `HadSST4 NH` =,
     `HadSST4 Tropics` =,

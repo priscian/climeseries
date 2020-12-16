@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20201214.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20201216.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -45,9 +45,10 @@ airs_series <- "AIRS Surface Skin Global"
 new_airs <- interpolate_baseline(airs_series, baseline = 1981:2010)
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 inst[[airs_series]] <- new_airs[[airs_series]]
-series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
-  "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "JRA-55 Surface Air Global", "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global", airs_series)
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
+  "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
+  "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
+  "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global", airs_series)
 ## N.B. Don't rebaseline here!
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
@@ -60,9 +61,9 @@ plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global")
-plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int = TRUE, col = c("red", "blue"),
-  alpha = 0.2, ci_alpha = 0.1, save_png = FALSE)
+series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global", "HadCRUT5 Global")
+plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int = TRUE,
+  col = c("red", "blue", "green"), alpha = 0.2, ci_alpha = 0.1, save_png = FALSE)
 ```
 
 ![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/cw14.ci-hadcrut4.ci_1850.1-recent_yearly_baseline1981-2010.png)
@@ -89,8 +90,8 @@ plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start 
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5", subdir = "tas + tos")
-series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
-  "BEST Global (Air Ice Temp.)", "JMA Global")
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
+  "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global")
 plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5", start = 1880, end = 2025.99,
   yearly = TRUE, ma = 12, baseline = 1970:2000, scenario_text = "Scenario TAS + TOS Realizations",
   center_fun = "mean", smooth_envelope = FALSE, envelope_type = "range", envelope_text = "range",
@@ -105,9 +106,10 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
 ########################################
 
-series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global",
-  "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global",
-  "JRA-55 Surface Air Global", "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global")
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
+  "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
+  "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
+  "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global")
 start <- 1970; end <- NULL
 g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
@@ -125,8 +127,10 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("HadCRUT4 Global", "NCEI Global", "GISTEMP v4 Global", "Cowtan & Way Krig. Global")
-plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green"), lwd = 1, segmented = TRUE,
+series <- c("HadCRUT4 Global", "HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global",
+  "Cowtan & Way Krig. Global")
+plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green", "yellow"), lwd = 1,
+  segmented = TRUE,
   save_png = FALSE)
 ```
 
@@ -179,7 +183,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20201214.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20201216.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -242,6 +246,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. CRUTEM4v Global
 1. CRUTEM4v NH
 1. CRUTEM4v SH
+1. CRUTEM5 Global
+1. CRUTEM5 Global_uncertainty
+1. CRUTEM5 NH
+1. CRUTEM5 NH_uncertainty
+1. CRUTEM5 SH
+1. CRUTEM5 SH_uncertainty
 1. CSIRO Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
@@ -420,6 +430,18 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. HadCRUT4 SH_uncertainty
 1. HadCRUT4 Tropics
 1. HadCRUT4 Tropics_uncertainty
+1. HadCRUT5 Global
+1. HadCRUT5 Global_uncertainty
+1. HadCRUT5 Global (not infilled)
+1. HadCRUT5 Global (not infilled)_uncertainty
+1. HadCRUT5 NH
+1. HadCRUT5 NH_uncertainty
+1. HadCRUT5 NH (not infilled)
+1. HadCRUT5 NH (not infilled)_uncertainty
+1. HadCRUT5 SH
+1. HadCRUT5 SH_uncertainty
+1. HadCRUT5 SH (not infilled)
+1. HadCRUT5 SH (not infilled)_uncertainty
 1. HadSST3 Global
 1. HadSST3 Global_uncertainty
 1. HadSST3 NH
