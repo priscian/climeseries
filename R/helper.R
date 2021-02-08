@@ -492,7 +492,8 @@ remove_exogenous_influences <- function(x, series,
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
-  x <- aggregate_vars_fun(x)
+  if (!is.null(aggregate_vars_fun))
+    x <- aggregate_vars_fun(x)
 
   if (length(lags) == 0)
     return (x)
@@ -744,6 +745,9 @@ convert_hdf4_to_h5 <- function(
 # r <- convert_hdf4_to_h5("V:/data/climate/AIRS-Level3/acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/2020/AIRS.2020.09.01.L3.RetStd_IR030.v6.0.31.1.G20281103846.hdf", "V:/data/climate/AIRS-Level3/h5/AIRS.2020.09.01.L3.RetStd_IR030.v6.0.31.1.G20281103846.h5")
 ## Bash shell:
 # sudo umount /mnt/v
+#####
+## New! V7: https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.7.0/
+## Also, AIRS tables! https://data.giss.nasa.gov/gistemp/#tabledata
 
 
 #' @export
@@ -1520,29 +1524,70 @@ make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=0.2)
 
 ## Basically a "show hottest year" function, but slightly configurable.
 #' @export
-show_single_value <- function(series, baseline=TRUE, data, fun=which.max, ..., value_name="temp anom. (\u00b0C)", digits=3)
+show_single_value <- function
+(
+  series,
+  baseline = TRUE,
+  data,
+  fun = which.max,
+  value_name = "temp anom. (\u00b0C)",
+  format = "%.3f",
+  this_year = current_year,
+  ...
+)
 {
   if (missing(data))
-    data <- get_climate_data(download=FALSE, baseline=baseline)
+    data <- get_climate_data(download = FALSE, baseline = baseline)
+
+  ## N.B. Data must have complete year-month pairs for this to be accurate!
+  complete <- data %>% dplyr::select(!!series) %>%
+    dplyr::group_by(data$year) %>%
+    dplyr::group_map(
+      function(x, y)
+      {
+        x %>% dplyr::mutate_all(function(m) !is.na(m)) %>%
+          dplyr::summarize_all(all) %>%
+          dplyr::bind_cols(y, .)
+      }) %>%
+    purrr::reduce(dplyr::bind_rows) %>%
+    dplyr::rename(year = 1)
 
   baseline <- attr(data, "baseline")
   g <- make_yearly_data(data)[, c("year", series)]
 
-  single <- t(sapply(series,
+  single <- sapply(series,
     function(a)
     {
       m <- fun(g[[a]], ...)
-      r <- data.frame(year=g$year[m], check.names=FALSE)
+      r <- data.frame(year = g$year[m], check.names = FALSE)
       r[[value_name]] <- g[[a]][m]
+      r[["complete?"]] <- c("no", "yes")[complete[[a]][m] + 1]
 
       r
-    }))
+    }, simplify = FALSE) %>%
+    purrr::reduce(dplyr::bind_rows)
+  rownames(single) <- series
+  single[["last complete"]] <- sapply(complete[, -1], function(a) { complete$year[a %>% which %>% max] })
 
-  print(single, digits=digits)
+  this_year_rank <- sapply(g[, -1],
+    function(a) {
+      o <- order(a, decreasing = TRUE)
+      rank_map <- structure(seq(NROW(g)) %>% `is.na<-`(is.na(a[o])), .Names = g$year[o])
+
+      rank_map[this_year %>% as.character] %>% as.vector
+    })
+  single[[paste(this_year, "rank")]] <- this_year_rank
+
+  print(single %>%
+    tibble::rownames_to_column() %>%
+    dplyr::mutate(!!value_name := sprintf(format, .[[value_name]])) %>%
+    tibble::column_to_rownames()
+  )
   if (!is.null(baseline))
-    cat("\nBaseline: ", min(baseline), "\u2014", max(baseline), fill=TRUE, sep="")
+    cat("\nBaseline: ", min(baseline), "\u2014", max(baseline), fill = TRUE, sep = "")
 
   attr(single, "baseline") <- baseline
+
   single
 }
 

@@ -666,6 +666,87 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `AIRS SH` =,
+    `AIRS NH` =,
+    `AIRS Global` = (function(p) {
+      x <- NULL
+
+      skip <- 1L
+
+      tryCatch({
+        r <- httr::GET(p) %>% httr::content(as = "text")
+        coverage <- (r %>% stringr::str_split("\\n"))[[1]][1] %>% stringr::str_match("^(.*?)\\s+.*$") %>% `[`(, 2)
+        r <- r %>%
+          stringr::str_split(stringr::regex(sprintf("^%s\\s+.*$", rex::escape(coverage)), multiline = TRUE)) %>%
+          unlist %>%
+          `[`(. != "") %>%
+          structure(.Names = paste(c("AIRS v6", "AIRS v7", "GISTEMP v4"), coverage))
+        x <- r %>% sapply(
+          function(a)
+          {
+            read.csv(text = a, skip = 1L, as.is = TRUE, na.strings = c("*******"), check.names = FALSE)
+          }, simplify = FALSE)
+      }, error = Error, warning = Error)
+
+      flit <- sapply(seq_along(x),
+        function(a)
+        {
+          flit <- reshape2::melt(x[[a]][, 1L:13L], id.vars = "Year", variable.name = "month", value.name = names(x)[a])
+          for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
+          flit <- dplyr::arrange(flit, Year, month)
+        }, simplify = FALSE)
+
+      d <- flit %>%
+        purrr::reduce(dplyr::full_join, by = c("Year", "month")) %>%
+        dplyr::rename(year = "Year") %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24) %>%
+        dplyr::relocate(yr_part, .after = month) %>%
+        dplyr::select(!tidyselect::starts_with("GISTEMP"))
+
+      return (d)
+    })(path),
+
+    `AIRS Zonal` = (function(p) {
+      x <- NULL
+
+      skip <- 1L
+
+      tryCatch({
+        r <- httr::GET(p) %>% httr::content(as = "text")
+        coverage <- (r %>% stringr::str_split("\\n"))[[1]][1] %>% stringr::str_match("^(.*?)\\s+.*$") %>% `[`(, 2)
+        r <- r %>%
+          stringr::str_split(stringr::regex(sprintf("^%s\\s+.*$", rex::escape(coverage)), multiline = TRUE)) %>%
+          unlist %>%
+          `[`(. != "") %>%
+          structure(.Names = paste(c("AIRS v6", "AIRS v7", "GISTEMP v4"), "Zonal"))
+        x <- r %>% sapply(
+          function(a)
+          {
+            read.csv(text = a, skip = 1L, as.is = TRUE, na.strings = c("*******"), check.names = FALSE)
+          }, simplify = FALSE)
+      }, error = Error, warning = Error)
+
+      flit <- sapply(seq_along(x),
+        function(a)
+        {
+          flit <- x[[a]][, -1]
+          colnames(flit) <- paste(names(x)[a], colnames(flit))
+          d <- cbind(dataframe(year = x[[a]]$Year, month = 6), flit)
+          d <- base::merge(expand.grid(month = 1:12, year = d$year), d, by = c("year", "month"), all = TRUE)
+          #d$yr_part <- d$year + (2 * d$month - 1)/24
+
+          d
+        }, simplify = FALSE)
+
+      d <- flit %>%
+        purrr::reduce(dplyr::full_join, by = c("year", "month")) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24) %>%
+        dplyr::relocate(yr_part, .after = month) %>%
+        dplyr::select(!tidyselect::starts_with("GISTEMP"))
+
+      return (d)
+    })(path),
+
     `CO2 Mauna Loa` = (function(p) {
       x <- NULL
 
@@ -1617,17 +1698,22 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
 
   suffix <- format(Sys.Date(), "%Y%m%d")
 
-  tempPath <- paste(dataDir, filenameBase %_% "raw_" %_% suffix, sep="/")
-  save(d, file=tempPath %_% ".RData")
-  write.csv(d, file=tempPath %_% ".csv", row.names=FALSE)
+  if (!is.null(dataDir)) {
+    tempPath <- paste(dataDir, filenameBase %_% "raw_" %_% suffix, sep = "/")
+    save(d, file = tempPath %_% ".RData")
+    write.csv(d, file = tempPath %_% ".csv", row.names = FALSE)
+  }
 
-  d <- recenter_anomalies(d, defaultBaseline)
+  e <- d
+  d <- recenter_anomalies(e, defaultBaseline)
 
-  tempPath <- paste(dataDir, filenameBase %_% suffix, sep="/")
-  save(d, file=tempPath %_% ".RData")
-  write.csv(d, file=tempPath %_% ".csv", row.names=FALSE)
+  if (!is.null(dataDir)) {
+    tempPath <- paste(dataDir, filenameBase %_% suffix, sep = "/")
+    save(d, file = tempPath %_% ".RData")
+    write.csv(d, file = tempPath %_% ".csv", row.names = FALSE)
+  }
 
-  return (d)
+  return (list(raw = e, baselined = d))
 }
 
 

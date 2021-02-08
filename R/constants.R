@@ -49,12 +49,13 @@ defaultBaseline <- 1981:2010
 gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
 gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncdc.noaa.gov/cag/time-series/"
-nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
+#nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
+nceiGlobalMonthly <- "/p12/12/1880-2020/data.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
 crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/csv/"
-crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.0.0/diagnostics/"
+crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.1.0/diagnostics/"
 hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/analysis/diagnostics/"
 hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/non-infilled/diagnostics/"
 cowtanWayBase <- "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/"
@@ -158,8 +159,15 @@ reanalysis_urls <- make_reanalysis_urls()
 #' @rdname constants
 #' @export
 data_urls <- c(list(
-  `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/imc/", type = "land ice"),
-  `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/imc/", type = "land ice"),
+  ## AIRS
+  `AIRS Zonal` = gistempBaseV4 %_% "T_AIRS/ZonAnn.Ts+dSST.csv",
+  `AIRS Global` = gistempBaseV4 %_% "T_AIRS/GLB.Ts+dSST.csv",
+  `AIRS NH` = gistempBaseV4 %_% "T_AIRS/NH.Ts+dSST.csv",
+  `AIRS SH` = gistempBaseV4 %_% "T_AIRS/SH.Ts+dSST.csv",
+  ## http://gravis.gfz-potsdam.de/antarctica (also new COST-G series)
+  `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/imc/AIS/?release=rl06", type = "land ice"),
+  ## http://gravis.gfz-potsdam.de/greenland (also new COST-G series)
+  `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/imc/GIS/?release=rl06", type = "land ice"),
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
@@ -174,9 +182,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202009.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202009.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202009.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202011.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202011.txt", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202011.txt", type="ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -243,15 +251,15 @@ data_urls <- c(list(
   `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Hadley v5
-  `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.0.0.summary_series.global.monthly.nc",
-  `CRUTEM5 NH` = crutem5Base %_% "CRUTEM.5.0.0.0.summary_series.northern_hemisphere.monthly.nc",
-  `CRUTEM5 SH` = crutem5Base %_% "CRUTEM.5.0.0.0.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 Global` = hadcrut5Base %_% "HadCRUT.5.0.0.0.analysis.summary_series.global.monthly.nc",
-  `HadCRUT5 SH` = hadcrut5Base %_% "HadCRUT.5.0.0.0.analysis.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 NH` = hadcrut5Base %_% "HadCRUT.5.0.0.0.analysis.summary_series.northern_hemisphere.monthly.nc",
-  `HadCRUT5 Global (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.0.0.summary_series.global.monthly.nc",
-  `HadCRUT5 SH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.0.0.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 NH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.0.0.summary_series.northern_hemisphere.monthly.nc",
+  `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.1.0.summary_series.global.monthly.nc",
+  `CRUTEM5 NH` = crutem5Base %_% "CRUTEM.5.0.1.0.summary_series.northern_hemisphere.monthly.nc",
+  `CRUTEM5 SH` = crutem5Base %_% "CRUTEM.5.0.1.0.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 Global` = hadcrut5Base %_% "HadCRUT.5.0.1.0.analysis.summary_series.global.monthly.nc",
+  `HadCRUT5 SH` = hadcrut5Base %_% "HadCRUT.5.0.1.0.analysis.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH` = hadcrut5Base %_% "HadCRUT.5.0.1.0.analysis.summary_series.northern_hemisphere.monthly.nc",
+  `HadCRUT5 Global (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.1.0.summary_series.global.monthly.nc",
+  `HadCRUT5 SH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.1.0.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.1.0.summary_series.northern_hemisphere.monthly.nc",
   ## Cowtan & Way
   `Cowtan & Way Krig. Global` = cowtanWayBase %_% "had4_krig_v2_0_0.txt",
   `Cowtan & Way Krig. Global Land` = cowtanWayBase %_% "cru4_krig_v2_0_0.txt",
@@ -347,8 +355,8 @@ data_urls <- c(list(
   # ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt
   # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_all_66.csv
   # http://www.psmsl.org/products/reconstructions/jevrejevaetal2008.php
-  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD"),
-  `AIRS Surface Skin Global` = "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/"
+  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
+  #`AIRS Surface Skin Global` = "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/"
   ## TODO: Ocean heat content. More snow and ice?
   # https://climatedataguide.ucar.edu/climate-data/ocean-temperature-analysis-and-heat-content-estimate-institute-atmospheric-physics
   # https://www.ncdc.noaa.gov/snow-and-ice/
@@ -377,8 +385,8 @@ data_urls <- c(list(
 
 ## Omit by default some series whose downloading or processing takes a very long time.
 omitUrlNames <- c(
-  "OSIRIS Stratospheric Aerosol Optical Depth (550 nm)",
-  "AIRS Surface Skin Global"
+  "OSIRIS Stratospheric Aerosol Optical Depth (550 nm)"
+  #"AIRS Surface Skin Global"
   #"MODIS Aerosol Optical Thickness (550 nm)"
 )
 

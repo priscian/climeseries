@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20201216.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20200208.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -41,14 +41,14 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 ## Plot several global instrumental temperature series.
 ########################################
 
-airs_series <- "AIRS Surface Skin Global"
+airs_series <- "AIRS v7 Global"
 new_airs <- interpolate_baseline(airs_series, baseline = 1981:2010)
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 inst[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
   "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
   "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
-  "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global", airs_series)
+  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global", airs_series)
 ## N.B. Don't rebaseline here!
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
@@ -109,7 +109,7 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
   "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
   "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
-  "ERA5 Surface Air Global", "NCEP/NCAR R1 Surface Air Global")
+  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global")
 start <- 1970; end <- NULL
 g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
@@ -183,7 +183,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20201216.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20200208.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -216,7 +216,40 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. 20th C. Reanalysis V3 Surface Air USA 48
 1. 20th C. Reanalysis V3 Surface Air USA 48 Land
 1. 20th C. Reanalysis V3 Surface Air USA 48 Ocean
-1. AIRS Surface Skin Global
+1. AIRS v6 Global
+1. AIRS v7 Global
+1. AIRS v6 N.Hemi
+1. AIRS v7 N.Hemi
+1. AIRS v6 S.Hemi
+1. AIRS v7 S.Hemi
+1. AIRS v6 Zonal Glob
+1. AIRS v6 Zonal N.Hemi
+1. AIRS v6 Zonal S.Hemi
+1. AIRS v6 Zonal 24N-90N
+1. AIRS v6 Zonal 24S-24N
+1. AIRS v6 Zonal 90S-24S
+1. AIRS v6 Zonal 64N-90N
+1. AIRS v6 Zonal 44N-64N
+1. AIRS v6 Zonal 24N-44N
+1. AIRS v6 Zonal EQU-24N
+1. AIRS v6 Zonal 24S-EQU
+1. AIRS v6 Zonal 44S-24S
+1. AIRS v6 Zonal 64S-44S
+1. AIRS v6 Zonal 90S-64S
+1. AIRS v7 Zonal Glob
+1. AIRS v7 Zonal N.Hemi
+1. AIRS v7 Zonal S.Hemi
+1. AIRS v7 Zonal 24N-90N
+1. AIRS v7 Zonal 24S-24N
+1. AIRS v7 Zonal 90S-24S
+1. AIRS v7 Zonal 64N-90N
+1. AIRS v7 Zonal 44N-64N
+1. AIRS v7 Zonal 24N-44N
+1. AIRS v7 Zonal EQU-24N
+1. AIRS v7 Zonal 24S-EQU
+1. AIRS v7 Zonal 44S-24S
+1. AIRS v7 Zonal 64S-44S
+1. AIRS v7 Zonal 90S-64S
 1. Antarctica Land Ice Mass Variation
 1. Antarctica Land Ice Mass Variation_uncertainty
 1. BEST Global (Air Ice Temp.)
