@@ -132,7 +132,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     })(path),
 
     #`ERSSTv5` =,
-    `NCEI v5` = (function(p) {
+    `NCEI v4` = (function(p) {
       skip <- 0L
 
       tryCatch({
@@ -147,7 +147,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         l <- apply(namedMatches, 1,
           function(y)
           {
-            seriesName <- paste("NCEI v5", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
+            seriesName <- paste("NCEI v4", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
             cat("    Processing file", y["file"], fill=TRUE); flush.console()
             x <- read.table(p %_% y["file"], header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
             d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=2 * 1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
@@ -995,7 +995,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       m <- copy(l)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
-      m <- data.table::data.table(dplyr::full_join(flit, m, by=c("year", "month")))
+      m <- data.table::as.data.table(dplyr::full_join(flit, m, by=c("year", "month")))
 
       ## Don't use, but keep available. I may have to switch entirely to data tables to add it as a column attribute to the final data set.
       satSources <- m[!duplicated(m, by=c("year", "month")), .(year, month, source)]
@@ -1030,7 +1030,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       m <- copy(x)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
-      m <- data.table::data.table(dplyr::full_join(flit, m, by=c("year", "month")))
+      m <- data.table::as.data.table(dplyr::full_join(flit, m, by=c("year", "month")))
       ## Uncertainties are 1 × sigma (Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1), so 1.96 × sigma is a 95% CI.
       m[, `_uncertainty` := 2 * 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
@@ -1067,7 +1067,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
       m <- m[, lapply(.SD, mean, na.rm=TRUE), by=.(year, month), .SDcols=c(series, "_uncertainty")] # Remove year/month duplicates by averaging.
       m <- dplyr::full_join(flit, m, by=c("year", "month"))
-      m <- data.table::data.table(m) # This need optimization for the future "climeseries" update.
+      m <- data.table::as.data.table(m) # This need optimization for the future "climeseries" update.
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
       m[, `_uncertainty` := 2 * 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
@@ -1255,7 +1255,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
       else { currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear }
 
-      uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
+      #uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
+      uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM@@", currentYear, p))
       uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
       if (httr::http_error(uri)) { ## Does the previous month's data exist?
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
@@ -1509,7 +1510,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d0 <- data.table::data.table(dataframe(year = y, month = m, flit))
       d0 <- d0[, lapply(.SD, mean, na.rm = TRUE), by = .(year, month), .SDcols = names(flit)] # Remove year/month duplicates by averaging.
       d0 <- dplyr::full_join(flit2, d0, by = c("year", "month"))
-      #m <- data.table::data.table(m) # This needs optimization for the future "climeseries" update.
+      m <- data.table::as.data.table(m) # This needs optimization for the future "climeseries" update.
 
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
       d <- d0 %>% dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_uncertainty")), function(a) { a * 2 * 1.96 }) %>%

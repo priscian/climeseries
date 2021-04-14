@@ -1927,31 +1927,42 @@ create_timeseries_from_gridded <- function(
 #' @export
 create_hadcrut4_zonal_data <- function(x,
   sub_lat = c(-90, 90), sub_long = c(-180, 180),
-  kriged = TRUE,
+  what = c("hadcrut", "crutem", "cw"),
   data_dir = getOption("climeseries_data_dir"),
-  hadcrut_url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc",
+  hadcrut_url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc",
+  crutem_url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.1.0.anomalies.nc",
   cw_url = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.nc.gz",
   series_suffix = NULL
 )
 {
+  what <- match.arg(what)
+
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
   if (is.null(data_dir)) data_dir <- getwd()
 
-  if (!kriged) {
-    series <- "HadCRUT4"
+  temp_var <- "temperature_anomaly"
+
+  if (what == "hadcrut") {
+    series <- "HadCRUT5"
     flit <- basename(hadcrut_url)
     download.file(hadcrut_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
-  } else {
+    temp_var <- "tas_mean"
+  } else if (what == "cw") {
     series <- "Cowtan & Way Krig."
     flit <- basename(cw_url)
     download.file(cw_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
     R.utils::gunzip(paste(data_dir, flit, sep = "/"), overwrite = TRUE, remove = FALSE)
     flit <- basename(tools::file_path_sans_ext(cw_url))
+  } else if (what == "crutem") {
+    series <- "CRUTEM5"
+    flit <- basename(crutem_url)
+    download.file(crutem_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
+    temp_var <- "tas"
   }
   n <- nc_open(paste(data_dir, flit, sep = "/")) # 'print(n)' or just 'n' for details.
-  a <- ncvar_get(n, "temperature_anomaly")
+  a <- ncvar_get(n, temp_var)
   ## Structure of 'a' is temperature_anomaly[longitude, latitude, time], 72 × 36 × Inf (monthly since Jan. 1850)
   lat <- ncvar_get(n, "latitude")
   long <- ncvar_get(n, "longitude")

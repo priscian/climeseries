@@ -77,7 +77,7 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 ## ERA-Interim 2m temperature
 ## https://climate.copernicus.eu/surface-air-temperature-maps
 ## https://confluence.ecmwf.int/display/CKB/How+to+download+ERA-Interim+data+from+the+ECMWF+data+archive
-eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/"
+eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/ftp-data/temperature/"
 noaaOhcBase <- "https://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 #nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
 #nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
@@ -171,7 +171,7 @@ data_urls <- c(list(
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
-  `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_Global_ERA5_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1981-2010_v01.csv",
+  `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@/@@MONTHNUM@@/ERA5_1981-2010/ts_1month_anomaly_Global_ERA5_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1981-2010_v01.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
   ## Check here in case of failure of ERA5 sea ice: https://climate.copernicus.eu/sea-ice-cover-march-2020 etc.
@@ -182,9 +182,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202012.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202012.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202012.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202102.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202102.txt", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202102.txt", type="ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -226,7 +226,7 @@ data_urls <- c(list(
   ## ERSSTv4
   #ERSSTv4 = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## ERSSTv5
-  `NCEI v5` = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
+  `NCEI v4` = "ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/",
   ## https://www.ncdc.noaa.gov/data-access/marineocean-data/extended-reconstructed-sea-surface-temperature-ersst-v5
   ## Single file: ftp://ftp.cdc.noaa.gov/Datasets/noaa.ersst.v5/sst.mnmean.nc
   ## ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/v5/beta/
@@ -245,10 +245,10 @@ data_urls <- c(list(
   `HadSST3 SH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
   `HadSST3 NH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
   `HadSST3 Tropics` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
-  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_GLOBE.csv",
-  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_SHEM.csv",
-  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_NHEM.csv",
-  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.0.0.0_monthly_TROP.csv",
+  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_GLOBE.csv",
+  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_SHEM.csv",
+  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_NHEM.csv",
+  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Hadley v5
   `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.1.0.summary_series.global.monthly.nc",
@@ -381,6 +381,7 @@ data_urls <- c(list(
   # Historical sea ice:
   #   https://nsidc.org/cryosphere/sotc/sea_ice.html
   # AVISO SLR: ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt
+  # Ocean acidification in the global ocean: https://www.data.jma.go.jp/gmd/kaiyou/english/co2_flux/co2_flux_data_en.html
 ), reanalysis_urls)
 
 ## Omit by default some series whose downloading or processing takes a very long time.

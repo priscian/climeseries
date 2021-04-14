@@ -114,11 +114,13 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   }
 
   w <- y
-  if (is.null(ma)) local({
+  local({
     interpCols <- NULL
     if (is.logical(interpolate)) {
-      if (all(interpolate))
+      if (all(interpolate)) {
         w <<- interpNA(w, "linear", unwrap = TRUE)
+        if (!is.null(ma)) warning("'interpolate = TRUE' with a non-null moving average may lead to inaccurate MAs.")
+      }
       else if (any(interpolate)) {
         interpCols <- series[interpolate]
       }
@@ -128,14 +130,16 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     }
 
     if (!is.null(interpCols)) {
+      if (!is.null(ma)) warning("'interpolate = TRUE' with a non-null moving average may lead to inaccurate MAs.")
       for (i in interpCols)
         w[, i] <<- drop(interpNA(w[, i], "linear", unwrap = TRUE))
     }
   })
 
   climateSeriesNames <- setdiff(allNames, common_columns)
-  if (!is.null(ma))
+  if (!is.null(ma)) {
     w[, climateSeriesNames] <- MA(w[, climateSeriesNames], ma, sides=ma_sides)
+  }
   ## [13 Oct. 2017] Make sure to window the time series only AFTER applying the moving average.
   y <- window_ts(y, start, end, extend=TRUE)
   w <- window_ts(w, start, end, extend=TRUE)
@@ -260,10 +264,12 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     graphics::axis(1, lwd = 0, lwd.ticks = 0) # Draw x-axis
     graphics::axis(2, lwd = 0, lwd.ticks = 0) # Draw y-axis
   }
-  if (xaxt == "n")
-    axis(1, xaxisTicks, lty = 0)
-  else
+  if (xaxt == "n") {
+    #axis(1, xaxisTicks, lty = 0)
+    mapply(axis, side = 1, at = xaxisTicks, labels = xaxisTicks, tick = FALSE)
+  } else {
     xaxisTicks <- axTicks(1L)
+  }
   if (maText != "") mtext(maText, 3L)
 
   if (!add) {
