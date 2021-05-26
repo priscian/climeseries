@@ -1870,7 +1870,7 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' }
 #'
 #' @export
-get_climate_data <- function(download, data_dir, filename_base, urls=climeseries::data_urls, omit=omitUrlNames, only=NULL, baseline=TRUE, annual_mean=FALSE, verbose=TRUE)
+get_climate_data <- function(download = FALSE, data_dir, filename_base, urls=climeseries::data_urls, omit=omitUrlNames, only=NULL, baseline=TRUE, annual_mean=FALSE, verbose=TRUE)
 {
   if (missing(data_dir)) {
     if (!is.null(getOption("climeseries_data_dir")))
@@ -1972,23 +1972,23 @@ recenter_anomalies <- function(
 
   tempSeries <- get_climate_series_names(x, ...)
 
-  flit <- subset(x, x$year %in% baseline)
+  flit <- subset(x, x[, "year", drop = TRUE] %in% baseline)
 
   for (i in tempSeries) {
     if (by_month) {
-      bma <- tapply(flit[[i]], flit$month, mean, na.rm = TRUE)
+      bma <- tapply(flit[, i, drop = TRUE], flit[, "month", drop = TRUE], mean, na.rm = TRUE)
       base <- rep(NA_real_, nrow(x))
       ## N.B. This next step is both a time & memory sink, the latter being more problematic; optimize it!
-      dev_null <- sapply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x$month == s] <<- v }); dev_null <- NULL
+      dev_null <- sapply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x[, "month", drop = TRUE] == s] <<- v }); dev_null <- NULL
     }
     else { # By year.
-      bma <- tapply(flit[[i]], flit$year, mean, na.rm = TRUE)
+      bma <- tapply(flit[, i, drop = TRUE], flit[, "year", drop = TRUE], mean, na.rm = TRUE)
       base <- mean(bma)
     }
 
     ## Center anomalies on average baseline-period temperatures.
     #x[[i]] <- trunc((x[[i]] - base) * 10^digits) / 10^digits
-    x[[i]] <- round(x[[i]] - base, digits)
+    x[, i] <- round(x[, i] - base, digits)
   }
   attr(x, "baseline") <- baseline
 

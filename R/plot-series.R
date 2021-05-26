@@ -91,27 +91,40 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   x <- subset(x, na_unwrap(x[, get_climate_series_names(x, conf_int = TRUE)])) # Remove trailing NAs.
   attr(x, "baseline") <- savedBaseline
 
-  if (!is.null(baseline))
-    x <- recenter_anomalies(x, baseline, conf_int=FALSE)
+  ## Is data already yearly?
+  y <- make_time_series_from_anomalies(x, conf_int = TRUE, frequency = ifelse("yr_part" %nin% names(x), 1L, 12L))
+  isAlreadyYearly <- stats::frequency(y) == 1L
 
-  y <- make_time_series_from_anomalies(x, conf_int=TRUE)
+  if (!is.null(baseline))
+    y <- recenter_anomalies(y, baseline, by_month = !isAlreadyYearly, conf_int = FALSE)
+  else
+    attr(y, "baseline") <- attr(x, "baseline")
+  baseline <- attr(y, "baseline")
+
   ## Get date range of 'y' before it's converted to a yearly time series.
-  #browser()
-  flit <- window_ts(y, start, end, extend=TRUE)
-  startTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[1], "above")
-  endTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
-  textRange <- paste(paste(startTS_abo, collapse="."), paste(endTS_abo, collapse="."), sep="-")
-  flit <- NULL
-  if (yearly) {
-    make_yearly_dataArgs <- list(
-      x = y
-    )
-    make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data...)
-    y <- do.call("make_yearly_data", make_yearly_dataArgs)
-    y$yr_part <- y$year
-    y <- make_time_series_from_anomalies(y, frequency=1L, conf_int=conf_int)
+  if (!isAlreadyYearly) {
+    flit <- window_ts(y, start, end, extend = TRUE)
+    startTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], stats::tsp(flit)[1], "above")
+    endTS_abo <- nearest_year_month_from_numeric(flit[, "yr_part"], stats::tsp(flit)[2], "below")
+    flit <- NULL
+    if (yearly) {
+      make_yearly_dataArgs <- list(
+        x = y
+      )
+      make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data...)
+      y <- do.call("make_yearly_data", make_yearly_dataArgs)
+      y$yr_part <- y$year
+      y <- make_time_series_from_anomalies(y, frequency = 1L, conf_int = conf_int)
+      ma <- NULL
+    }
+  } else {
+    startTS_abo <- stats::start(y); startTS_abo[2] <- 0
+    endTS_abo <- stats::end(y); endTS_abo[2] <- 0
+    y <- structure(cbind(y, yr_part = y[, "year"]), .Dimnames = list(NULL, c(colnames(y), "yr_part")))
     ma <- NULL
+    yearly <- TRUE
   }
+  textRange <- paste(paste(startTS_abo, collapse = "."), paste(endTS_abo, collapse = "."), sep = "-")
 
   w <- y
   local({
@@ -148,7 +161,6 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     maText <- "(" %_% ma %_% "-month moving average)"
 
   baselineText <- ""
-  baseline <- attr(x, "baseline")
   if (!is.null(baseline))
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
 

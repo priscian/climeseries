@@ -376,11 +376,11 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
 
 
 #' @export
-create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_var", interpolate=TRUE, add=TRUE, ...)
+create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_var", method = "fmm", interpolate=TRUE, add=TRUE, ...)
 {
   d <- x[, var_names]
   if (interpolate)
-    d <- interpNA(d, method="fmm", unwrap=TRUE)
+    d <- interpNA(d, method = method, unwrap=TRUE)
 
   r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r })
   if (interpolate)
@@ -1811,7 +1811,8 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
     r$piecewise[[i]]$breaks <- r$piecewise[[i]]$bp$X[, yearVar][r$piecewise[[i]]$bp$breakpoint]
 
     seg.controlArgs <- list(
-      stop.if.error = TRUE,
+      #stop.if.error = TRUE,
+      fix.npsi = TRUE,
       K = length(r$piecewise[[i]]$breaks),
       n.boot = 250,
       random = FALSE,
