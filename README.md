@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20210526.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20210622.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -18,7 +18,7 @@ library(climeseries)
 
 ## Using *climeseries*
 *climeseries* will by default store downloaded data sets in the current working directory (i.e. `getwd()`) of your R session, and will also load existing data sets from that directory. If you want to change *climeseries*'s default directory, set the following option (with a directory of your choice) before you use *climeseries*:
-```Z
+```
 options(climeseries_data_dir = "C:/common/data/climate/climeseries")
 ```
 Now you're ready to go:
@@ -41,14 +41,17 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 ## Plot several global instrumental temperature series.
 ########################################
 
-airs_series <- "AIRS v7 Global"
-new_airs <- interpolate_baseline(airs_series, baseline = 1981:2010)
-inst <- get_climate_data(download = FALSE, baseline = TRUE)
-inst[[airs_series]] <- new_airs[[airs_series]]
+airs_series <- "AIRS v7 Global"; baseline <- 1981:2010
+new_airs <- interpolate_baseline(airs_series, baseline = baseline)
+inst0 <- get_climate_data(download = FALSE, baseline = FALSE)
+inst0[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
   "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
   "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
   "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global", airs_series)
+inst <- inst0 %>%
+  dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
+  recenter_anomalies(baseline = baseline, keep = series, skip = "AIRS v7 Global")
 ## N.B. Don't rebaseline here!
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
@@ -183,7 +186,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20210526.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20210622.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:

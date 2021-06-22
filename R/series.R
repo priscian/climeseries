@@ -1925,13 +1925,23 @@ get_climate_data <- function(download = FALSE, data_dir, filename_base, urls=cli
 #' @return A character vector of column names.
 #'
 #' @export
-get_climate_series_names <- function(x, conf_int = FALSE, invert = TRUE)
+get_climate_series_names <- function(x, conf_int = FALSE, invert = TRUE, keep = NULL, skip = NULL)
 {
   colNames <- colnames(x)
 
   if (!invert) conf_int <- !conf_int
 
-  return (colNames[grep("(^yr_|^met_|^year|^month" %_% ifelse(conf_int, "", "|_uncertainty$") %_% ")", colNames, invert = invert)])
+  r <- colNames[grep("(^yr_|^met_|^year|^month" %_% ifelse(conf_int, "", "|_uncertainty$") %_% ")", colNames, invert = invert)]
+  if (!is.null(keep)) {
+    keep <- sprintf("^(%s)$", paste(keep %>% rex::escape(), collapse = "|"))
+    r <- stringr::str_subset(r, keep)
+  }
+  if (!is.null(skip)) {
+    skip <- sprintf("^(%s)$", paste(skip %>% rex::escape(), collapse = "|"))
+    r <- stringr::str_subset(r, skip, negate = TRUE)
+  }
+
+  return (r)
 }
 
 

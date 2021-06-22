@@ -292,7 +292,20 @@ get_tidegauge_slr <- function(station_id)
 
 ## Based on the technique described at https://tamino.wordpress.com/2012/01/08/trend-and-cycle-together/.
 #' @export
-remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmonics=4, loess...=list(), unwrap=TRUE, keep_series=TRUE, keep_interpolated=FALSE, keep_loess=FALSE, is_unc=FALSE, unc_suffix="_uncertainty", fit_unc=FALSE, ...)
+remove_periodic_cycle <- function(
+  inst,
+  series,
+  center = TRUE,
+  period = 1,
+  num_harmonics = 4,
+  loess... = list(),
+  unwrap = TRUE,
+  keep_series = TRUE,
+  keep_interpolated = FALSE,
+  keep_loess = FALSE,
+  is_unc = FALSE, unc_suffix="_uncertainty", fit_unc = FALSE,
+  ...
+)
 {
   uncertaintyDf <- NULL
 
@@ -314,7 +327,8 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
     return (d)
   }
 
-  d[[series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)]] <- drop(interpNA(d[, series %_% ifelse(!is_unc, "", unc_suffix)], "fmm"))
+  d[[series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)]] <-
+    drop(interpNA(d[, series %_% ifelse(!is_unc, "", unc_suffix)], "fmm"))
 
   if (is.null(period)) { # Estimate period from data.
     spectralDensity <- spectrum(y)
@@ -323,7 +337,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
 
   ## Get residuals from LOESS fit.
   loessArgs = list(
-    formula = eval(substitute(s ~ yr_part, list(s=as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix))))),
+    formula = eval(substitute(s ~ yr_part, list(s = as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix))))),
     data = d,
     span = 0.2
   )
@@ -338,15 +352,15 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
   fBase <- "r ~ "; f <- NULL
   for (i in seq(num_harmonics))
     f <- c(f, paste0(c("sin", "cos"), paste0("(", 2 * i, " * pi / period * yr_part)")))
-  f <- as.formula(paste0(fBase, paste0(f, collapse=" + ")))
+  f <- as.formula(paste0(fBase, paste0(f, collapse = " + ")))
 
-  rfit <- lm(f, data=d, ...)
+  rfit <- lm(f, data = d, ...)
   uncycled <- d[[series %_% ifelse(!is_unc, "", unc_suffix)]] - rfit$fit
 
   if (is.logical(center))
-    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center=center, scale=FALSE)[, 1]
+    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center = center, scale = FALSE)[, 1]
   else
-    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm=TRUE)
+    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm = TRUE)
 
   if (!keep_series)
     d[[series %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
@@ -355,7 +369,7 @@ remove_periodic_cycle <- function(inst, series, center=TRUE, period=1, num_harmo
     d[[series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
 
   if (!is.null(uncertaintyDf))
-    d <- merge(d, uncertaintyDf[c("yr_part", get_climate_series_names(uncertaintyDf, conf_int=TRUE))], all.x=TRUE, by="yr_part", sort=TRUE)
+    d <- merge(d, uncertaintyDf[c("yr_part", get_climate_series_names(uncertaintyDf, conf_int=TRUE))], all.x = TRUE, by = "yr_part", sort = TRUE)
 
   d
 }
@@ -1450,16 +1464,17 @@ get_yearly_difference <- function(series, start, end=current_year - 1, data, dig
     data <- add_loess_variables(data, series, ...)
 
   g <- make_yearly_data(data)
-  h <- g[year %in% c(start, end), series %_% ifelse(loess, " (LOESS fit)", ""), with = FALSE]
+  h <- g[g$year %in% c(start, end), series %_% ifelse(loess, " (LOESS fit)", "")] %>%
+    `rownames<-`(NULL)
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
   cat("Difference in ", unit ," from ", start, "\u2013", end, sep = "", fill = TRUE)
-  print(t(h[2] - h[1]), digits = digits, row.names = FALSE)
+  print(t(h[2, ] - h[1, ] ) %>% `colnames<-`("diff"), digits = digits, row.names = FALSE)
   cat(fill = TRUE)
   cat("Decadal rate in ", unit ,"/dec. from ", start, "\u2013", end, sep = "", fill = TRUE)
-  print(10 * t(h[2] - h[1]) / (end - start), digits = digits, row.names = FALSE)
+  print((10 * t(h[2, ] - h[1, ]) / (end - start)) %>% `colnames<-`("rate"), digits = digits, row.names = FALSE)
 
-  attr(h, "range") <- c(start=start, end=end)
+  attr(h, "range") <- c(start = start, end = end)
 
   return (h)
 }
