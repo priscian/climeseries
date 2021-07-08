@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -301,8 +301,19 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         ci <- w[, confintNames[i]]
         upper <- value + ci/2; lower <- value - ci/2
         ciCol <- alpha(col[seriesNames[i]], ci_alpha)
-        cidf <- data.frame(yr_part=y[, "yr_part"], lower=lower, upper=upper); cidf <- cidf[complete.cases(cidf), ]
-        polygon(x=c(cidf$yr_part, rev(cidf$yr_part)), y=c(cidf$upper, rev(cidf$lower)), col=ciCol, border=NA)
+        cidf <- data.frame(yr_part=y[, "yr_part"], lower = lower, upper = upper); cidf <- cidf[complete.cases(cidf), ]
+        polygonArgs <- list(
+          x = c(cidf$yr_part, rev(cidf$yr_part)),
+          y = c(cidf$upper, rev(cidf$lower)),
+          ## N.B. If a CI doesn't show up, either set 'density = 50' (slow to save) or expand 'ylim'.
+          density = NULL, # 50 lines/in produces nice CIs, too -- but leave NULL as the default
+          col = ciCol,
+          border = NA
+        )
+        polygonArgs <- utils::modifyList(polygonArgs, polygon..., keep.null = TRUE)
+
+        #polygon(x = c(cidf$yr_part, rev(cidf$yr_part)), y = c(cidf$upper, rev(cidf$lower)), col = ciCol, border = NA)
+        do.call(polygon, polygonArgs)
       }
     }
   }

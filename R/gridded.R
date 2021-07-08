@@ -378,7 +378,7 @@ make_ghcn_temperature_series <- function(
           if (use_runif) {
             set.seed(runif_seed)
 
-            tt + stats::runif(length(tt), -abs(round_to_nearest), abs(round_to_nearest)) 
+            tt + stats::runif(length(tt), -abs(round_to_nearest), abs(round_to_nearest))
           } else {
             2 * round_to_nearest * round(tt/(2 * round_to_nearest))
           }
@@ -652,6 +652,73 @@ metadata_select <- function(
 
 }
 ## This function is probably unnecessary; it's more flexible to use dplyr filtering/selecting.
+
+
+## Returns station counts & related data to simplify plotting
+#' @export
+get_station_counts <- function(
+  x, # Temp series created by 'make_ghcn_temperature_series()'
+  env = globalenv(), # Environment of 'x' & its metadata
+  baseline = 1951:1980,
+  region_name = "Regional",
+  spaghetti_sep = 1.0,
+  make_plot = TRUE,
+  start_year = NULL, end_year = NULL, # Can take fractions of a year
+  save_png = FALSE,
+  plot_climate_data... = list()
+)
+{
+  station_names <- sapply(attr(x, "planetary_grid"), function(a) if (is.data.frame(a[[1]])) names(a[[1]])) %>% purrr::flatten() %>% unlist
+  station_names_re <- stringr::str_flatten(rex::escape(station_names), "|")
+  m <- env$station_metadata %>%
+    dplyr::filter(stringr::str_detect(id, stringr::regex(station_names_re, ignore_case = TRUE), negate = FALSE))
+  g0 <- env$ghcn[, c(get_climate_series_names(env$ghcn, invert = FALSE), m$id)]
+
+  ## This is probably the best one can do in a spaghetti plot:
+  g00 <- recenter_anomalies(g0, baseline)
+  series00 <- get_climate_series_names(g00)
+  m00 <- structure(m$id, .Names = trimws(m$name)) # id-to-name map
+
+  duplicateNames <- names(m00) %>% intersect(.[duplicated(.)])
+  for (i in duplicateNames) {
+    dupIndex <- which(names(m00) == i)
+    #newNames <- sapply(seq_along(dupIndex), function(j) sprintf("%s_%04d", names(m00)[dupIndex[j]], j)); print(newNames)
+    names(m00)[dupIndex] <- sapply(seq_along(dupIndex), function(j) sprintf("%s_%04d", names(m00)[dupIndex[j]], j))
+  }
+
+  g00 <- dplyr::rename(g00, !!!m00)
+  dev_null <- mapply(get_climate_series_names(g00), seq(0, by = spaghetti_sep, length.out = length(series00)), FUN = function(a, b) { g00[[a]] <<- g00[[a]] + b; NULL })
+  #plot_climate_data(g00, series = get_climate_series_names(g00), yearly = TRUE, baseline = NULL, conf_int = FALSE, lwd = 1, ylim = NULL, make_standardized_plot_filename... = list(suffix = ""), save_png = FALSE)
+
+  N <- g00 %>% dplyr::select(c(get_climate_series_names(g00, invert = TRUE))) %>% is.na %>% `!` %>% rowSums
+  ss <- g00 %>% dplyr::select(c(get_climate_series_names(g00, invert = FALSE))) %>% dplyr::mutate(`station count` = N)
+
+  if (make_plot) {
+    plot_climate_dataArgs <- list(
+      x = ss,
+      series = "station count",
+      start = start_year, end = end_year,
+      type = "p", col = "blue", pch = 1,
+      main = sprintf("GHCN v4 %s Station Counts", region_name),
+      ylab = "Number of stations",
+      legend... = list(lty = 0, pch = 1),
+      make_standardized_plot_filename... = list(suffix = sprintf("_%s", tolower(region_name))),
+      save_png = save_png
+    )
+    plot_climate_dataArgs <- utils::modifyList(plot_climate_dataArgs, plot_climate_data..., keep.null = TRUE)
+
+    do.call(plot_climate_data, plot_climate_dataArgs)
+    #plot_climate_data(ss, series = "station count", start_year, end_year, type = "p", col = "blue", pch = 1, main = sprintf("GHCN v4 %s Station Counts", region_name), ylab = "Number of stations", legend... = list(lty = 0, pch = 1), make_standardized_plot_filename... = list(suffix = sprintf("_%s", tolower(region_name))), save_png = save_png)
+  }
+
+  list(
+    metadata = m,
+    station_series = g0,
+    station_id_name_map = m00,
+    station_spaghetti_series = g00,
+    station_counts_series = ss
+  )
+}
 
 
 ## Starting w/ a random station, select n total that are maximally separated on the globe.

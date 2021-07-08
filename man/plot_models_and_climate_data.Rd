@@ -17,6 +17,7 @@ plot_models_and_climate_data(
   yearly = FALSE,
   ma_sides = 1L,
   ylim = c(-1, 1),
+  bg = scales::alpha("gray", 0.1),
   scenario_text = "Scenario Realizations",
   center_fun = "mean",
   smooth_center = FALSE,

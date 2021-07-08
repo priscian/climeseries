@@ -10,7 +10,21 @@
 \alias{data_urls}
 \alias{common_columns}
 \title{Package Constants}
-\format{Various.}
+\format{
+Various.
+
+An object of class \code{character} of length 12.
+
+An object of class \code{character} of length 12.
+
+An object of class \code{integer} of length 1.
+
+An object of class \code{integer} of length 1.
+
+An object of class \code{list} of length 289.
+
+An object of class \code{character} of length 4.
+}
 \usage{
 MOS
 

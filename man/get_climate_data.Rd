@@ -5,7 +5,7 @@
 \title{Get Monthly Climatological Data from a Local Data Set or from the Internet}
 \usage{
 get_climate_data(
-  download,
+  download = FALSE,
   data_dir,
   filename_base,
   urls = climeseries::data_urls,

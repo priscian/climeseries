@@ -18,6 +18,7 @@ plot_climate_data(
   plot_type = c("single", "multiple"),
   as_zoo = TRUE,
   type = "l",
+  bg = scales::alpha("gray", 0.1),
   xlab = "Year",
   ylab = NULL,
   unit = NULL,

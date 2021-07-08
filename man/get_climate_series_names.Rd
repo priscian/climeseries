@@ -4,7 +4,13 @@
 \alias{get_climate_series_names}
 \title{Get Names of Climate Time Series from Data Set}
 \usage{
-get_climate_series_names(x, conf_int = FALSE, invert = TRUE)
+get_climate_series_names(
+  x,
+  conf_int = FALSE,
+  invert = TRUE,
+  keep = NULL,
+  skip = NULL
+)
 }
 \arguments{
 \item{x}{A data frame (down)loaded by function \code{\link{get_climate_data}}.}

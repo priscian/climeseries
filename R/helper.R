@@ -1785,10 +1785,20 @@ add_loess_variables <- function(inst, series, ...)
 
 ## Fit segmented linear models to selected climate data.
 #' @export
-fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(length(series),"Paired")), start=NULL, end=NULL, yearly=TRUE, breakpoints...=list(), segmented...=list(), seg.control...=list(seed=100), make_yearly_data...=list(), ...)
+fit_segmented_model <- function(
+  x,
+  series,
+  col = suppressWarnings(brewer.pal(length(series),"Paired")),
+  start = NULL, end = NULL,
+  yearly = TRUE,
+  breakpoints... = list(),
+  segmented... = list(), seg.control... = list(seed=100),
+  make_yearly_data... = list(),
+  ...
+)
 {
-  r <- list(data=x, series=series)
-  r$range <- list(start=start, end=end)
+  r <- list(data = x, series = series)
+  r$range <- list(start = start, end = end)
   r$col <- col
   length(r$col) <- length(r$series); names(r$col) <- r$series
 
@@ -1799,7 +1809,7 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
     make_yearly_dataArgs <- list(
       x = r$data
     )
-    make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data...)
+    make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data..., keep.null = TRUE)
     g <- as.data.frame(do.call("make_yearly_data", make_yearly_dataArgs))
     if (!is.null(start)) start <- trunc(start)
     if (!is.null(end)) end <- trunc(end)
@@ -1812,15 +1822,15 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
     r$piecewise[[i]] <- list()
     r$piecewise[[i]]$col <- r$piecewise$col[i]
 
-    h <- oss(g, i)[na_unwrap(g[[i]]), , drop=FALSE]
+    h <- oss(g, i)[na_unwrap(g[[i]]), , drop = FALSE]
     h <- h[h[[yearVar]] >= ifelse(!is.null(start), start, -Inf) & h[[yearVar]] <= ifelse(!is.null(end), end, Inf), ]
 
     breakpointsArgs <- list(
-      formula = eval(substitute(Y ~ X, list(X=as.name(yearVar), Y=as.name(i)))),
+      formula = eval(substitute(Y ~ X, list(X = as.name(yearVar), Y = as.name(i)))),
       data = h,
       breaks = NULL
     )
-    breakpointsArgs <- modifyList(breakpointsArgs, breakpoints...)
+    breakpointsArgs <- modifyList(breakpointsArgs, breakpoints..., keep.null = TRUE)
     r$piecewise[[i]]$bp <- do.call("breakpoints", breakpointsArgs)
 
     r$piecewise[[i]]$breaks <- r$piecewise[[i]]$bp$X[, yearVar][r$piecewise[[i]]$bp$breakpoint]
@@ -1833,10 +1843,10 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
       random = FALSE,
       h = 0.3
     )
-    seg.controlArgs <- modifyList(seg.controlArgs, seg.control...)
+    seg.controlArgs <- modifyList(seg.controlArgs, seg.control..., keep.null = TRUE)
     segControl <- do.call("seg.control", seg.controlArgs)
 
-    r$piecewise[[i]]$lm <- lm(breakpointsArgs$formula, data=h, x=TRUE, y=TRUE)
+    r$piecewise[[i]]$lm <- lm(breakpointsArgs$formula, data = h, x = TRUE, y = TRUE)
 
     segmentedArgs <- list(
       obj = r$piecewise[[i]]$lm,
@@ -1844,7 +1854,7 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
       psi = r$piecewise[[i]]$breaks,
       control = segControl
     )
-    segmentedArgs <- modifyList(segmentedArgs, segmented...)
+    segmentedArgs <- modifyList(segmentedArgs, segmented..., keep.null = TRUE)
     #r$piecewise[[i]]$sm <- do.call("segmented", segmentedArgs)
 
     run_segmented <- function()
@@ -1872,7 +1882,7 @@ fit_segmented_model <- function(x, series, col=suppressWarnings(brewer.pal(lengt
         },
           error = function(e) {
             message("Error: ", e$message)
-            if (any(grepl("one coef is NA: breakpoint(s) at the boundary", e$message, fixed=TRUE)))
+            if (any(grepl("one coef is NA: breakpoint(s) at the boundary", e$message, fixed = TRUE)))
               invokeRestart("restart")
           }
       )
