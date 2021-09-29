@@ -599,6 +599,9 @@ make_ghcn_temperature_series <- function(
   attr(gg, "filters") <- filters
 
   if (!is.null(spreadsheet_path)) {
+    if (!dir.exists(dirname(spreadsheet_path)))
+      dir.create(dirname(spreadsheet_path), recursive = TRUE)
+
     ## N.B. This takes a while!
     cat(sprintf("Creating spreadsheet %s...", basename(spreadsheet_path))); utils::flush.console()
 

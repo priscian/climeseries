@@ -1455,7 +1455,14 @@ show_warmest_years <- function(
 
 
 #' @export
-get_yearly_difference <- function(series, start, end=current_year - 1, data, digits = 3, unit = "\u00b0C", loess = FALSE, ...)
+get_yearly_difference <- function(
+  series,
+  start, end = current_year - 1,
+  data,
+  digits = 3,
+  unit = "\u00b0C",
+  loess = FALSE, ...
+)
 {
   if (missing(data))
     data <- get_climate_data(download = FALSE, baseline = FALSE)
@@ -1464,26 +1471,30 @@ get_yearly_difference <- function(series, start, end=current_year - 1, data, dig
     data <- add_loess_variables(data, series, ...)
 
   g <- make_yearly_data(data)
-  h <- g[g$year %in% c(start, end), series %_% ifelse(loess, " (LOESS fit)", "")] %>%
-    `rownames<-`(NULL)
+  # if (loess) g <- add_loess_variables(g, series, ...)
+  h <- g[c(which(g$year == start), which(g$year == end)), series %_% ifelse(loess, " (LOESS fit)", ""), drop = FALSE] %>%
+    `rownames<-`(c(start, end))
+
+  plot_climate_data(g, c(series, names(h)) %>% unique, start, end, yearly = FALSE, lwd = 2, conf_int = FALSE, trend = FALSE, make_standardized_plot_filename... = list(suffix = ""), save_png = FALSE)
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
   cat("Difference in ", unit ," from ", start, "\u2013", end, sep = "", fill = TRUE)
-  print(t(h[2, ] - h[1, ] ) %>% `colnames<-`("diff"), digits = digits, row.names = FALSE)
+  print(t(h[2, ] - h[1, ]) %>% `colnames<-`("diff"), digits = digits, row.names = FALSE)
   cat(fill = TRUE)
   cat("Decadal rate in ", unit ,"/dec. from ", start, "\u2013", end, sep = "", fill = TRUE)
   print((10 * t(h[2, ] - h[1, ]) / (end - start)) %>% `colnames<-`("rate"), digits = digits, row.names = FALSE)
 
   attr(h, "range") <- c(start = start, end = end)
 
+  #browser()
   return (h)
 }
 
 ## usage:
-# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "BEST Global (Air Ice Temp.)")
+# series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "BEST Global (Air Ice Temp.)")
 # ytd <- get_yearly_difference(series, 1880)
-# ytd <- get_yearly_difference(series, 1880, loess=TRUE)
-# ytd <- get_yearly_difference(series, 1880, loess=TRUE, loess...=list(span=0.4))
+# ytd <- get_yearly_difference(series, 1880, loess = TRUE)
+# ytd <- get_yearly_difference(series, 1880, loess = TRUE, loess... = list(span = 0.4))
 # ytd <- get_yearly_difference(series, 1970)
 
 
@@ -1735,9 +1746,11 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
 #' @export
 create_loess_variables <- function(inst, series, loess... = list(), unwrap = TRUE, keep_interpolated = FALSE, ...)
 {
+  yearVar <- ifelse(is.null(inst$month), "year", "yr_part")
+
   baselineAttribute <- attr(inst, "baseline")
 
-  d <- inst[, c(common_columns, series)]
+  d <- inst[, c(names(inst)[names(inst) %in% common_columns], series)]
   if (unwrap)
     d <- subset(d, na_unwrap(d[, series]))
 
@@ -1745,7 +1758,7 @@ create_loess_variables <- function(inst, series, loess... = list(), unwrap = TRU
     d[[i %_% " (interpolated)"]] <- drop(interpNA(d[, i], "fmm"))
 
     loessArgs = list(
-      formula = eval(substitute(s ~ yr_part, list(s = as.name(i %_% " (interpolated)")))),
+      formula = eval(substitute(s ~ yr_part, list(s = as.name(i %_% " (interpolated)"), yr_part = as.name(yearVar)))),
       data = d,
       span = 0.2
     )
@@ -1770,7 +1783,7 @@ add_loess_variables <- function(inst, series, ...)
 {
   d <- create_loess_variables(inst, series, ...)
   baselineAttribute <- attr(inst, "baseline")
-  r <- base::merge(inst, d[, setdiff(names(d), series)], by = common_columns, all.x = TRUE)
+  r <- base::merge(inst, d[, setdiff(names(d), series)], by = names(d)[names(d) %in% common_columns], all.x = TRUE)
 
   attr(r, "baseline") <- baselineAttribute
   r
@@ -1792,7 +1805,7 @@ fit_segmented_model <- function(
   start = NULL, end = NULL,
   yearly = TRUE,
   breakpoints... = list(),
-  segmented... = list(), seg.control... = list(seed=100),
+  segmented... = list(), seg.control... = list(seed = 100),
   make_yearly_data... = list(),
   ...
 )

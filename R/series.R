@@ -906,8 +906,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       x <- NULL
 
       tryCatch({
-        #x <- read.table(p, comment.char=";", check.names=FALSE) # N.B. This is currently (19 Aug 2019) offline; use local copy instead.
-        x <- read.table(system.file("extdata/tsi/TIM_TSI_Reconstruction.txt", package = "climeseries"), comment.char = ";", check.names = FALSE)
+        x <- read.table(p, comment.char=";", check.names=FALSE) # N.B. This is currently (19 Aug 2019) offline; use local copy instead.
+        #x <- read.table(system.file("extdata/tsi/TIM_TSI_Reconstruction.txt", package = "climeseries"), comment.char = ";", check.names = FALSE)
       }, error=Error, warning=Error)
 
       yrs <- as.numeric(sub("(.+?)\\..+?", "\\1", x$V1, perl=TRUE))

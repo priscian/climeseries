@@ -182,9 +182,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202104.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202104.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202104.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202107.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202107.txt", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202107.txt", type="ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -336,7 +336,7 @@ data_urls <- c(list(
   `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
   `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),
-  `TSI Reconstructed` = list(path="http://spot.colorado.edu/~koppg/TSI/TIM_TSI_Reconstruction.txt", type="solar"), # Now a bad link
+  `TSI Reconstructed` = list(path="https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type="solar"),
   # https://web.archive.org/web/20190711132454/https://spot.colorado.edu/~koppg/TSI/TIM_TSI_Reconstruction.txt
   `SORCE TSI` = list(path="http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt", type="solar"),
   `Rutgers NH Snow Cover` = list(path=rutgerssnowBase %_% "nhland.txt", type="snow"),

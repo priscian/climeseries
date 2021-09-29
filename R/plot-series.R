@@ -346,6 +346,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   do.call("legend", legendArgs)
 
   ## LOESS smooth.
+  ## N.B. This LOESS fit is done only over the abscissa range & should be used for display purposes only!
+  ## For fits over the entire variable, use function 'add_loess_variables()'.
   if (loess) local({
     loessSeries <- series
     if (!is_invalid(loess_series))
@@ -961,7 +963,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
   op <- par(mar = c(5, 5, 4, 2) + 0.1)
-  plot(wiz[, get_climate_series_names(wiz, conf_int=FALSE), drop=FALSE], screens=1L, bty="n", xaxs="r", xaxt=xaxt, axes = FALSE, xlab=xlab, ylab=ylab, main=main, type="n", ylim=ylim, ...) # I.e. 'plot.zoo()'.
+  plot(wiz[, get_climate_series_names(wiz, conf_int = FALSE), drop = FALSE], screens = 1L, bty = "n", xaxs = "r", xaxt = xaxt, yaxt = "n", xlab = xlab, ylab = ylab, main = main, type = "n", ylim = ylim, ...) # I.e. 'plot.zoo()'.
 
   if (!is.null(bg)) {
     graphics::rect(par("usr")[1], par("usr")[3], par("usr")[2], par("usr")[4], border = NA, col = bg)
