@@ -88,8 +88,9 @@ graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
 ## Reanalyses:
 make_reanalysis_urls <- function()
 {
+  ## What's available: https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.pl
   ## 3 Jan 2022: Needed to add '&level=1000mb&level2=1000mb' to meet server requirements to retrieve data (should be irrelevant for 2-m air, though):
-  writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=2m+Air+Temperature&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year)
+  writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year)
   reanalyses <- list(
     `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
     `ERA5` = sub("@@SERIES@@", "ERA5", writBase),
@@ -107,7 +108,10 @@ make_reanalysis_urls <- function()
     "Surface Air NH Polar",
     "Surface Air Global",
     "Surface Air Tropics",
-    "Surface Air USA 48"
+    "Surface Air USA 48",
+    "Sea Surface SH",
+    "Sea Surface NH",
+    "Sea Surface Global"
   )
 
   reanalysisMaskSuffixes <- c("All" = 0, "Land" = 1, "Ocean" = 2)
@@ -118,14 +122,18 @@ make_reanalysis_urls <- function()
       uri <- reanalyses[[a]]
 
       r <- list(
-        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "0", "-90")),
-        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "-60", "-90")),
-        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "90", "0")),
-        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "90", "60")),
-        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "90", "-90")),
-        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-180", "180", "20", "-20")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("2m+Air+Temperature", "-180", "180", "0", "-90")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("2m+Air+Temperature", "-180", "180", "-60", "-90")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("2m+Air+Temperature", "-180", "180", "90", "0")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("2m+Air+Temperature", "-180", "180", "90", "60")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("2m+Air+Temperature", "-180", "180", "90", "-90")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("2m+Air+Temperature", "-180", "180", "20", "-20")),
         ## For the US: https://www.quora.com/What-is-the-longitude-and-latitude-of-a-bounding-box-around-the-continental-United-States
-        mgsub::mgsub(uri, c("@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("-125", "-70", "50", "25"))
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("2m+Air+Temperature", "-125", "-70", "50", "25")),
+        ## SSTs
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("Sea+Surface%2FSkin+Temp", "-180", "180", "0", "-90")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("Sea+Surface%2FSkin+Temp", "-180", "180", "90", "0")),
+        mgsub::mgsub(uri, c("@@VAR@@", "@@LON1@@", "@@LON2@@", "@@LAT1@@", "@@LAT2@@"), c("Sea+Surface%2FSkin+Temp", "-180", "180", "90", "-90"))
       )
       names(r) <- paste(a, reanalysisSeriesSuffixes)
 
@@ -151,7 +159,12 @@ make_reanalysis_urls <- function()
       r
     }, simplify = FALSE)
 
-  purrr::flatten(rrr)
+  rv <- purrr::flatten(rrr)
+  ## Remove the unecessary/paradoxical SST series
+  rv <- rv[names(rv) %>% stringr::str_detect("Sea Surface.+?(Land|Ocean)$", negate = TRUE)]
+  rv <- rv[names(rv) %>% stringr::str_detect("^(JRA-55|ERA5|NCEP/CSFR|MERRA-2).*?Sea Surface", negate = TRUE)]
+
+  rv
 }
 reanalysis_urls <- make_reanalysis_urls()
 ## Make list of switch strings from these URLs:
@@ -159,6 +172,7 @@ reanalysis_urls <- make_reanalysis_urls()
 
 #' @rdname constants
 #' @export
+#data_urls <- c(reanalysis_urls, list( # To test or add the reanalysis series first
 data_urls <- c(list(
   ## AIRS
   `AIRS Zonal` = gistempBaseV4 %_% "T_AIRS/ZonAnn.Ts+dSST.csv",

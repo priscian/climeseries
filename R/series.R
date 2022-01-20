@@ -1379,6 +1379,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `NCEP/NCAR R1 Surface Air USA 48` =,
     `NCEP/NCAR R1 Surface Air USA 48 Land` =,
     `NCEP/NCAR R1 Surface Air USA 48 Ocean` =,
+    `NCEP/NCAR R1 Sea Surface SH` =,
+    `NCEP/NCAR R1 Sea Surface NH` =,
+    `NCEP/NCAR R1 Sea Surface Global` =,
     `NCEP/DOE R2 Surface Air SH` =,
     `NCEP/DOE R2 Surface Air SH Land` =,
     `NCEP/DOE R2 Surface Air SH Ocean` =,
@@ -1400,6 +1403,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `NCEP/DOE R2 Surface Air USA 48` =,
     `NCEP/DOE R2 Surface Air USA 48 Land` =,
     `NCEP/DOE R2 Surface Air USA 48 Ocean` =,
+    `NCEP/DOE R2 Sea Surface SH` =,
+    `NCEP/DOE R2 Sea Surface NH` =,
+    `NCEP/DOE R2 Sea Surface Global` =,
     `NCEP/CSFR Surface Air SH` =,
     `NCEP/CSFR Surface Air SH Land` =,
     `NCEP/CSFR Surface Air SH Ocean` =,
@@ -1462,7 +1468,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `20th C. Reanalysis V3 Surface Air Tropics Ocean` =,
     `20th C. Reanalysis V3 Surface Air USA 48` =,
     `20th C. Reanalysis V3 Surface Air USA 48 Land` =,
-    `20th C. Reanalysis V3 Surface Air USA 48 Ocean` = (function(p) {
+    `20th C. Reanalysis V3 Surface Air USA 48 Ocean` =,
+    `20th C. Reanalysis V3 Sea Surface SH` =,
+    `20th C. Reanalysis V3 Sea Surface NH` =,
+    `20th C. Reanalysis V3 Sea Surface Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -1915,9 +1924,9 @@ get_climate_data <- function(download = FALSE, data_dir, filename_base, urls=cli
 }
 
 ## Get column names for including in the README file:
-# cat("1. " %_% names(e), sep="\n")
+# cat("1. " %_% names(e$raw), sep="\n")
 ## Get count of individual data sets:
-# length(get_climate_series_names(e))
+# length(get_climate_series_names(e$raw))
 
 
 #' Get Names of Climate Time Series from Data Set

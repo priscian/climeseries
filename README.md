@@ -131,8 +131,7 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global",
-  "Cowtan & Way Krig. Global")
+series <- c("HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global", "Cowtan & Way Krig. Global")
 plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green"), lwd = 1,
   segmented = TRUE,
   save_png = FALSE)
@@ -199,6 +198,9 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. met_year
 1. yr_part
 1. month
+1. 20th C. Reanalysis V3 Sea Surface Global
+1. 20th C. Reanalysis V3 Sea Surface NH
+1. 20th C. Reanalysis V3 Sea Surface SH
 1. 20th C. Reanalysis V3 Surface Air Global
 1. 20th C. Reanalysis V3 Surface Air Global Land
 1. 20th C. Reanalysis V3 Surface Air Global Ocean
@@ -388,74 +390,74 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. GISTEMP v4 Zonal Land 44S-24S
 1. GISTEMP v4 Zonal Land 64S-44S
 1. GISTEMP v4 Zonal Land 90S-64S
-1. GRACE-FO Antarctic Ice Mass AIS [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_301 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_302 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_303 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_304 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_305 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_306 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_307 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_308 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_309 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_310 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_311 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_312 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_313 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_314 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_315 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_316 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_317 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_318 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_319 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_320 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_321 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_322 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_323 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_324 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS_325 [Gt]
-1. GRACE-FO Antarctic Ice Mass AIS [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_301 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_302 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_303 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_304 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_305 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_306 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_307 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_308 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_309 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_310 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_311 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_312 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_313 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_314 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_315 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_316 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_317 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_318 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_319 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_320 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_321 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_322 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_323 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_324 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass AIS_325 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS [Gt]
-1. GRACE-FO Greenland Ice Mass GIS_301 [Gt]
-1. GRACE-FO Greenland Ice Mass GIS_302 [Gt]
-1. GRACE-FO Greenland Ice Mass GIS_303 [Gt]
-1. GRACE-FO Greenland Ice Mass GIS_304 [Gt]
-1. GRACE-FO Greenland Ice Mass GIS_305 [Gt]
-1. GRACE-FO Greenland Ice Mass GIS_306 [Gt]
-1. GRACE-FO Greenland Ice Mass GIS_307 [Gt]
-1. GRACE-FO Greenland Ice Mass GIS [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_301 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_302 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_303 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_304 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_305 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_306 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass GIS_307 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass global [Gt]
+1. GRACE-FO Antarctic Ice Mass 301 [Gt]
+1. GRACE-FO Antarctic Ice Mass 302 [Gt]
+1. GRACE-FO Antarctic Ice Mass 303 [Gt]
+1. GRACE-FO Antarctic Ice Mass 304 [Gt]
+1. GRACE-FO Antarctic Ice Mass 305 [Gt]
+1. GRACE-FO Antarctic Ice Mass 306 [Gt]
+1. GRACE-FO Antarctic Ice Mass 307 [Gt]
+1. GRACE-FO Antarctic Ice Mass 308 [Gt]
+1. GRACE-FO Antarctic Ice Mass 309 [Gt]
+1. GRACE-FO Antarctic Ice Mass 310 [Gt]
+1. GRACE-FO Antarctic Ice Mass 311 [Gt]
+1. GRACE-FO Antarctic Ice Mass 312 [Gt]
+1. GRACE-FO Antarctic Ice Mass 313 [Gt]
+1. GRACE-FO Antarctic Ice Mass 314 [Gt]
+1. GRACE-FO Antarctic Ice Mass 315 [Gt]
+1. GRACE-FO Antarctic Ice Mass 316 [Gt]
+1. GRACE-FO Antarctic Ice Mass 317 [Gt]
+1. GRACE-FO Antarctic Ice Mass 318 [Gt]
+1. GRACE-FO Antarctic Ice Mass 319 [Gt]
+1. GRACE-FO Antarctic Ice Mass 320 [Gt]
+1. GRACE-FO Antarctic Ice Mass 321 [Gt]
+1. GRACE-FO Antarctic Ice Mass 322 [Gt]
+1. GRACE-FO Antarctic Ice Mass 323 [Gt]
+1. GRACE-FO Antarctic Ice Mass 324 [Gt]
+1. GRACE-FO Antarctic Ice Mass 325 [Gt]
+1. GRACE-FO Antarctic Ice Mass global [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 301 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 302 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 303 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 304 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 305 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 306 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 307 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 308 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 309 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 310 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 311 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 312 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 313 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 314 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 315 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 316 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 317 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 318 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 319 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 320 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 321 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 322 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 323 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 324 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass 325 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass global [Gt]
+1. GRACE-FO Greenland Ice Mass 301 [Gt]
+1. GRACE-FO Greenland Ice Mass 302 [Gt]
+1. GRACE-FO Greenland Ice Mass 303 [Gt]
+1. GRACE-FO Greenland Ice Mass 304 [Gt]
+1. GRACE-FO Greenland Ice Mass 305 [Gt]
+1. GRACE-FO Greenland Ice Mass 306 [Gt]
+1. GRACE-FO Greenland Ice Mass 307 [Gt]
+1. GRACE-FO Greenland Ice Mass global [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass 301 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass 302 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass 303 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass 304 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass 305 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass 306 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass 307 [Gt]_uncertainty
 1. Greenland Land Ice Mass Variation
 1. Greenland Land Ice Mass Variation_uncertainty
 1. HadCET
@@ -751,6 +753,9 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEP/CSFR Surface Air USA 48
 1. NCEP/CSFR Surface Air USA 48 Land
 1. NCEP/CSFR Surface Air USA 48 Ocean
+1. NCEP/DOE R2 Sea Surface Global
+1. NCEP/DOE R2 Sea Surface NH
+1. NCEP/DOE R2 Sea Surface SH
 1. NCEP/DOE R2 Surface Air Global
 1. NCEP/DOE R2 Surface Air Global Land
 1. NCEP/DOE R2 Surface Air Global Ocean
@@ -772,6 +777,9 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEP/DOE R2 Surface Air USA 48
 1. NCEP/DOE R2 Surface Air USA 48 Land
 1. NCEP/DOE R2 Surface Air USA 48 Ocean
+1. NCEP/NCAR R1 Sea Surface Global
+1. NCEP/NCAR R1 Sea Surface NH
+1. NCEP/NCAR R1 Sea Surface SH
 1. NCEP/NCAR R1 Surface Air Global
 1. NCEP/NCAR R1 Surface Air Global Land
 1. NCEP/NCAR R1 Surface Air Global Ocean
