@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20210928.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20220120.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -45,10 +45,11 @@ airs_series <- "AIRS v7 Global"; baseline <- 1981:2010
 new_airs <- interpolate_baseline(airs_series, baseline = baseline)
 inst0 <- get_climate_data(download = FALSE, baseline = FALSE)
 inst0[[airs_series]] <- new_airs[[airs_series]]
-series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
   "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
-  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global", airs_series)
+  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global", "RATPAC-A Surface GLOBE",
+  airs_series)
 inst <- inst0 %>%
   dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
   recenter_anomalies(baseline = baseline, keep = series, skip = "AIRS v7 Global")
@@ -64,9 +65,9 @@ plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("Cowtan & Way Krig. Global", "HadCRUT4 Global", "HadCRUT5 Global")
+series <- c("Cowtan & Way Krig. Global", "HadCRUT5 Global")
 plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int = TRUE,
-  col = c("red", "blue", "green"), alpha = 0.2, ci_alpha = 0.1, save_png = FALSE)
+  col = c("red", "blue"), alpha = 0.2, ci_alpha = 0.1, save_png = FALSE)
 ```
 
 ![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/cw14.ci-hadcrut4.ci_1850.1-recent_yearly_baseline1981-2010.png)
@@ -93,7 +94,7 @@ plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start 
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5", subdir = "tas + tos")
-series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global")
 plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5", start = 1880, end = 2025.99,
   yearly = TRUE, ma = 12, baseline = 1970:2000, scenario_text = "Scenario TAS + TOS Realizations",
@@ -109,7 +110,7 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
 ########################################
 
-series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "HadCRUT5 Global",
+series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
   "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
   "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global")
@@ -130,9 +131,9 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("HadCRUT4 Global", "HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global",
+series <- c("HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global",
   "Cowtan & Way Krig. Global")
-plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green", "yellow"), lwd = 1,
+plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green"), lwd = 1,
   segmented = TRUE,
   save_png = FALSE)
 ```
@@ -186,7 +187,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20210928.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20220120.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:

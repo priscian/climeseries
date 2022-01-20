@@ -88,7 +88,8 @@ graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
 ## Reanalyses:
 make_reanalysis_urls <- function()
 {
-  writBase <- "https://psl.noaa.gov/psd/cgi-bin/data/testdap/timeseries.proc.pl?dataset1=@@SERIES@@&var=2m+Air+Temperature&fyear=1840&fyear2=2019&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@"
+  ## 3 Jan 2022: Needed to add '&level=1000mb&level2=1000mb' to meet server requirements to retrieve data (should be irrelevant for 2-m air, though):
+  writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=2m+Air+Temperature&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year)
   reanalyses <- list(
     `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
     `ERA5` = sub("@@SERIES@@", "ERA5", writBase),
@@ -165,9 +166,9 @@ data_urls <- c(list(
   `AIRS NH` = gistempBaseV4 %_% "T_AIRS/NH.Ts+dSST.csv",
   `AIRS SH` = gistempBaseV4 %_% "T_AIRS/SH.Ts+dSST.csv",
   ## http://gravis.gfz-potsdam.de/antarctica (also new COST-G series)
-  `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/imc/AIS/?release=rl06", type = "land ice"),
+  `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/imc/AIS/?release=GFZOP", type = "land ice"),
   ## http://gravis.gfz-potsdam.de/greenland (also new COST-G series)
-  `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/imc/GIS/?release=rl06", type = "land ice"),
+  `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/imc/GIS/?release=GFZOP", type = "land ice"),
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
@@ -182,9 +183,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202107.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202107.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202107.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202111.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202111.txt", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202111.txt", type="ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",

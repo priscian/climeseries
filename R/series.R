@@ -1267,6 +1267,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
         uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
         uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
+
+        if (httr::http_error(uri)) {
+          uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM@@", currentYear, p))
+          uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
+        }
       }
 
       x <- NULL

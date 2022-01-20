@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.5, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -258,7 +258,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   }
 
   ## N.B. My custom x-axis ticks are causing some problems, so let's just ditch them for now (24 Sep 2020).
-  xaxt <- "n"
+  xaxt <- xaxt
   #xaxt <- "s"
   if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
     dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
@@ -515,6 +515,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   if (!is.null(end_callback))
     eval(end_callback)
+
+  if (sign)
+    eval(sign_callback)
 
   if (save_png)
     dev.off()
@@ -782,7 +785,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -1131,6 +1134,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   if (!is.null(end_callback))
     eval(end_callback)
+
+  if (sign)
+    eval(sign_callback)
 
   if (save_png)
     dev.off()
