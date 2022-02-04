@@ -680,13 +680,15 @@ get_station_counts <- function(
   ## This is probably the best one can do in a spaghetti plot:
   g00 <- recenter_anomalies(g0, baseline)
   series00 <- get_climate_series_names(g00)
-  m00 <- structure(m$id, .Names = trimws(m$name)) # id-to-name map
+  m00 <- structure(m$id %>% as.character, .Names = trimws(m$name)) # id-to-name map
 
   duplicateNames <- names(m00) %>% intersect(.[duplicated(.)])
-  for (i in duplicateNames) {
+  for(i in duplicateNames) {
     dupIndex <- which(names(m00) == i)
-    #newNames <- sapply(seq_along(dupIndex), function(j) sprintf("%s_%04d", names(m00)[dupIndex[j]], j)); print(newNames)
-    names(m00)[dupIndex] <- sapply(seq_along(dupIndex), function(j) sprintf("%s_%04d", names(m00)[dupIndex[j]], j))
+    ## Replace w/ sequential numbers:
+    # names(m00)[dupIndex] <- sapply(seq_along(dupIndex), function(j) sprintf("%s_%04d", names(m00)[dupIndex[j]], j))
+    ## Replace w/ station ID:
+    names(m00)[dupIndex] <- paste(names(m00)[dupIndex], m00[dupIndex], sep = "_")
   }
 
   g00 <- dplyr::rename(g00, !!!m00)
@@ -702,7 +704,7 @@ get_station_counts <- function(
       series = "station count",
       start = start_year, end = end_year,
       type = "p", col = "blue", pch = 1,
-      main = sprintf("GHCN v4 %s Station Counts", region_name),
+      main = sprintf("GHCN %s Station Counts", region_name),
       ylab = "Number of stations",
       legend... = list(lty = 0, pch = 1),
       make_standardized_plot_filename... = list(suffix = sprintf("_%s", tolower(region_name))),
