@@ -61,21 +61,29 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 
 #' @export
 #' @import data.table
-plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
+plot_horse_race <- function(x, series, top_n_years = NULL, baseline = TRUE, size = 1)
 {
-  inst <- get_climate_data(download=FALSE, baseline=baseline)
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
 
-  d <- inst[, c("year", "month", series)]
+  d <- x[, c("year", "month", series)]
   d <- subset(d, na_unwrap(d[, series]))
-  d1 <- data.table::data.table(dcast(d, year ~ month, value.var=series))
+  d1 <- data.table::data.table(dcast(d, year ~ month, value.var = series))
   d2 <- data.table::copy(d1)
   ## Calculate cumulative average by row.
-  d2[, names(d2[, !1, with=FALSE]) := as.list((function(x) { cumsum(as.matrix(x)[1, ]) / seq_along(x) })(.SD)), .SDcols=names(d2[, !1, with=FALSE]), by=1:nrow(d2)]
+  d2[, names(d2[, !1, with = FALSE]) :=
+    as.list((function(x) { cumsum(as.matrix(x)[1, ]) / seq_along(x) })(.SD)),
+      .SDcols = names(d2[, !1, with = FALSE]), by = 1:nrow(d2)]
   ## Melt data set for plotting.
-  d3 <- dplyr::arrange(data.table::melt(d2, id.vars=c("year"), variable.name="month", value.name="YTD mean temp."), year, month)
+  d3 <- dplyr::arrange(data.table::melt(d2, id.vars = c("year"),
+    variable.name = "month", value.name = "YTD mean temp."), year, month) %>%
+    as.data.table()
   d4 <- data.table::copy(d2)
-  d4[, `latest YTD mean temp.` := as.list((function(x) { y <- as.matrix(x)[1, ]; tail(y[!is.na(y)], 1) })(.SD)), .SDcols=names(d4[, !1, with=FALSE]), by=1:nrow(d4)]
-  d4 <- dplyr::arrange(d4[, .(year, `latest YTD mean temp.`)], desc(`latest YTD mean temp.`))
+  d4[, `latest YTD mean temp.` :=
+    as.list((function(x) { y <- as.matrix(x)[1, ]; tail(y[!is.na(y)], 1) })(.SD)),
+      .SDcols = names(d4[, !1, with = FALSE]), by = 1:nrow(d4)]
+  d4 <- dplyr::arrange(d4[, .(year, `latest YTD mean temp.`)], desc(`latest YTD mean temp.`)) %>%
+    as.data.table()
 
   ## Top n warmest years:
   if (!is.null(top_n_years)) {
@@ -95,16 +103,17 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
   if (!is.null(baseline))
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
 
-  subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep="")
-  ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep="")), list(b=baselineText)))
-  g <- ggplot(d3, aes(x=month, y=`YTD mean temp.`, group=factor(year), color=factor(year))) +
+  subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep = "")
+  ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep = "")),
+    list(b = baselineText)))
+  g <- ggplot(d3, aes(x = month, y = `YTD mean temp.`, group = factor(year), color = factor(year))) +
     theme_bw() +
     geom_line(size=size) +
     #scale_colour_discrete(guide = "none") +
     labs(color = "Year") +
-    scale_x_discrete(expand=c(0, 1)) +
-    directlabels::geom_dl(aes(label=year), method = list(directlabels::dl.trans(x=x + 0.2), "last.points", cex = 0.8)) +
-    labs(title="Year-to-Date Temperature Anomalies", subtitle=subtitle, y=ylab)
+    scale_x_discrete(expand = c(0, 1)) +
+    directlabels::geom_dl(aes(label = year), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.8)) +
+    labs(title="Year-to-Date Temperature Anomalies", subtitle = subtitle, y = ylab)
 
   print(g)
 
@@ -115,10 +124,12 @@ plot_horse_race <- function(series, top_n_years=NULL, baseline=TRUE, size=1)
 # ytd <- plot_horse_race("GISTEMP Global")
 # ytd <- plot_horse_race("UAH TLT 6.0 Global", 10)
 # ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
-# print(as.data.frame(ytd), digits=3, row.names=FALSE, right=FALSE)
+# print(as.data.frame(ytd), digits = 3, row.names = FALSE, right = FALSE)
 ## Zoom in w/out clipping data:
 # ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
-# ytd$grob + coord_cartesian(ylim = c(-1, 2.5))
+# ytd$grob + coord_cartesian(ylim = c(-0.5, 2.5))
+## Check:
+# show_warmest_years(inst0, "NCEI US Avg. Temp.")
 
 
 #' @export
@@ -394,7 +405,7 @@ create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_va
 {
   d <- x[, var_names]
   if (interpolate)
-    d <- interpNA(d, method = method, unwrap=TRUE)
+    d <- interpNA(d, method = method, unwrap = TRUE)
 
   r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r })
   if (interpolate)
@@ -1438,7 +1449,7 @@ show_warmest_years <- function(
 
   y <- make_yearly_data(oss(x, series))
 
-  l <- sapply(y[, -1],
+  l <- sapply(y[, -1, drop = FALSE],
     function(x)
     {
       r <- dplyr::arrange(dataframe(year = y$year, temp = x), desc(temp))[seq(num_top_years), ]

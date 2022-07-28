@@ -130,7 +130,7 @@ find_planetary_grid_square <- function(p, lat, long)
   if (abs(gridLatValues[gridRow] - lat) > gridSize[1] / 2) gridRow <- NA
   if (abs(gridLongValues[gridCol] - long) > gridSize[2] / 2) gridCol <- NA
 
-  c(row=gridRow, col=gridCol)
+  c(row = gridRow, col = gridCol)
 }
 
 ## usage:
@@ -140,10 +140,18 @@ find_planetary_grid_square <- function(p, lat, long)
 
 #' @export
 get_series_from_ghcn_gridded <- function(
-  ver = 3, # Or 4
-  temp = c("avg", "min", "max"),
+  ver = 3, # Or 2 or 4
+  temp = c("avg", "min", "max", "mean"),
   quality = "u", # 'u' or 'a' for v3; 'u', 'f', 'e' for v4
   files = list(
+    v2 = list(
+      #base_url = "https://web.archive.org/web/19970808013347if_/http://www.ncdc.noaa.gov:80/pub/data/ghcn/v2/", # 14 May 1997
+      base_url = "https://web.archive.org/web/20030124203721if_/http://www1.ncdc.noaa.gov:80/pub/data/ghcn/v2", # 10 Jan 2003
+      archive = "v2.%s%s.Z",
+      countries = "v2.country.codes",
+      readme = "readme.temperature.Z",
+      inv = "v2.temperature.inv"
+    ),
     v3 = list(
       base_url = "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3",
       archive = "ghcnm.t%s.latest.qc%s.tar.gz",
@@ -185,6 +193,8 @@ get_series_from_ghcn_gridded <- function(
     countries = paste(fileStrings$base_url, fileStrings$countries, sep = "/"),
     readme = paste(fileStrings$base_url, fileStrings$readme, sep = "/")
   )
+  if (!is.null(fileStrings$inv))
+    uris$inv <- paste(fileStrings$base_url, fileStrings$inv, sep = "/")
 
   if (download) {
     fileList <- sapply(uris$archive,
@@ -193,9 +203,22 @@ get_series_from_ghcn_gridded <- function(
         archiveName <- paste(dataDir, basename(i), sep = "/")
 
         download.file(i, archiveName, mode = "wb", quiet = TRUE)
-        untar(archiveName, exdir = dataDir, list = FALSE) # extras = "--overwrite" not supported
 
-        untar(archiveName, list = TRUE)
+        if (ver == 2) {
+          ghcnmSubdir <- sprintf("ghcnm.v2.0.0.%s", make_current_timestamp(fmt = "%Y%m%d"))
+          if (!dir.exists(paste(dataDir, ghcnmSubdir, sep = "/")))
+            dir.create(paste(dataDir, ghcnmSubdir, sep = "/"), recursive = TRUE)
+
+          destfile <-
+            paste(dataDir, ghcnmSubdir, tools::file_path_sans_ext(basename(archiveName)) %_% ".dat", sep= "/")
+          unzip_Z(archiveName, destfile)
+
+          paste(ghcnmSubdir, tools::file_path_sans_ext(basename(archiveName)) %_% ".dat", sep= "/")
+        } else {
+          untar(archiveName, exdir = dataDir, list = FALSE) # extras = "--overwrite" not supported
+
+          untar(archiveName, list = TRUE)
+        }
       }, simplify = FALSE)
 
     archiveDir <- paste(dataDir, dirname(fileList[[1]][1]), sep = "/")
@@ -207,7 +230,15 @@ get_series_from_ghcn_gridded <- function(
     if (!is.null(fileStrings$flags))
       download.file(paste(fileStrings$base_url, fileStrings$flags, sep = "/"), paste(archiveDir, fileStrings$flags, sep = "/"), mode = "wb", quiet = TRUE)
 
-    download.file(uris$readme, paste(archiveDir, fileStrings$readme, sep = "/"), mode = "wb", quiet = TRUE)
+    readmePath <- paste(archiveDir, fileStrings$readme, sep = "/")
+    download.file(uris$readme, readmePath, mode = "wb", quiet = TRUE)
+    if (ver == 2) {
+      unzip_Z(readmePath, tools::file_path_sans_ext(readmePath))
+
+      ## For v2, download separate INV file
+      invPath <- paste(archiveDir, tools::file_path_sans_ext(basename(fileList[[1]][1])) %_% ".inv", sep = "/")
+      download.file(uris$inv, invPath, mode = "wb", quiet = TRUE)
+    }
   }
 
   ## Now retrieve the latest files by searching for them.
@@ -220,11 +251,19 @@ get_series_from_ghcn_gridded <- function(
   latest <- sort(archiveDirs, decreasing = TRUE)[1]
   if (latest_modification_time)
     latest <- archiveDirs[order(file.mtime(archiveDirs), decreasing = TRUE)][1]
+  ver_ <- ver
+  if (ver_ == 2) {
+    flit <- temp; temp <- ver; ver <- flit
+  }
   inv <- list.files(latest, sprintf(data_files_re, temp, ver, quality, "inv"), full.names = TRUE, ignore.case = TRUE)[1]
   dat <- list.files(latest, sprintf(data_files_re, temp, ver, quality, "dat"), full.names = TRUE, ignore.case = TRUE)[1]
+  if (ver_ == 2) {
+    flit <- temp; temp <- ver; ver <- flit
+  }
 
   rdata_filepath <- paste(dataDir, tools::file_path_sans_ext(sprintf(fileStrings$archive, temp, quality), compression = TRUE) %_% ".RData", sep = "/")
 
+  #browser()
   if (download) {
     ## Station metadata
     stationFormat <- c(11, -1, 8, -1, 9, -1, 6, -1, 30, -1, 4, 1, 5, 2, 2, 2, 2, 1, 2, 16, 1)
@@ -324,7 +363,8 @@ make_ghcn_temperature_series <- function(
   uncertainty = TRUE, boot_seed = 666, boot... = list(),
   round_to_nearest = NULL, # NULL or ±a, where 'a' describes dist'n U(-a, +a),
   runif_seed = 666, use_runif = TRUE, # Use 'stats::runif()' instead of rounding when SD close to error range
-  spreadsheet_path = NULL # Set equal to a file path to make an Excel spreadsheet from the data
+  spreadsheet_path = NULL, # Set equal to a file path to make an Excel spreadsheet from the data
+  use_weighted_median = FALSE
 )
 {
   ver <- attr(station_metadata, "version")
@@ -475,12 +515,15 @@ make_ghcn_temperature_series <- function(
     weights <- lat_zonal_weights * weights
   }
 
-  rrr <- apply(rr, 1, stats::weighted.mean, w = weights, na.rm = TRUE)
+  if (!use_weighted_median)
+    rrr <- apply(rr, 1, stats::weighted.mean, w = weights, na.rm = TRUE)
+  else
+    rrr <- apply(rr, 1, matrixStats::weightedMedian, w = weights, na.rm = TRUE)
   is.na(rrr) <- is.nan(rrr)
 
   gg <- g[, c("year", "month")] %>% dplyr::mutate(!!series_name := rrr)
 
-  station_weights <- weighted_station_data <- NULL
+  station_weights <- weighted_station_data <- unweighted_station_data <- NULL
   if (uncertainty) local({
     d <- sapply(t(p0), function(a) { if (is.data.frame(a[[1]])) return(a[[1]]); NULL }, simplify = FALSE) %>% purrr::compact() %>% purrr::reduce(dplyr::bind_cols) %>% data.matrix
 
@@ -544,7 +587,10 @@ make_ghcn_temperature_series <- function(
     wcl1 <- 1/lat_observations_weights1
 
     w <- wc1 * wl1 * wcl1; colnames(w) <- get_climate_series_names(d) # Use this below to speed things up.
-    i <- 0; dd <- apply(d, 1, function(a) { i <<- i + 1; stats::weighted.mean(a, w = w[i, ], na.rm = TRUE) }); is.na(dd) <- is.nan(dd)
+    if (!use_weighted_median)
+      { i <- 0; dd <- apply(d, 1, function(a) { i <<- i + 1; stats::weighted.mean(a, w = w[i, ], na.rm = TRUE) }); is.na(dd) <- is.nan(dd) }
+    else
+      { i <- 0; dd <- apply(d, 1, function(a) { i <<- i + 1; matrixStats::weightedMedian(a, w = w[i, ], na.rm = TRUE) }); is.na(dd) <- is.nan(dd) }
 
     ## Test to make sure the series resulting from 'd' looks correct.
     ddd <- cbind(attr(p0, "time_coverage"), GHCN_orig = rrr, GHCN = dd)
@@ -559,7 +605,7 @@ make_ghcn_temperature_series <- function(
     ## N.B. This is MUCH faster than using an equivalent 'sapply()' call!
     i <- 0; h <- t(apply(ggg, 1, function(a) { i <<- i + 1; r <- a * (w[i, ]/sum(w[i, !is.na(a)])) * sum(!is.na(a)); is.na(r) <- is.nan(r); r })) %>% data.table::data.table()
     ## all.equal(dd, rowMeans(h, na.rm = TRUE)) # TRUE, only off by very small tolerance
-    station_weights <<- w; weighted_station_data <<- as.data.frame(h)
+    station_weights <<- w; unweighted_station_data <<- as.data.frame(ggg); weighted_station_data <<- as.data.frame(h)
 
     ## V. https://stats.idre.ucla.edu/r/faq/how-can-i-generate-bootstrap-statistics-in-r/
     bf <- function(x, i)
@@ -611,9 +657,13 @@ make_ghcn_temperature_series <- function(
       `station-data` = ghcn %>% dplyr::select(c("month", "year", "yr_part", get_climate_series_names(.))),
       `station-metadata` = station_metadata
     )
-    l[["stations_filtered_base" %_% str_baseline]] <- g %>% dplyr::select(c("month", "year", "yr_part", get_climate_series_names(.)))
+    l[["stations_regional_base" %_% str_baseline]] <- g %>% dplyr::select(c("month", "year", "yr_part", get_climate_series_names(.)))
     l[["cell-counts" %_% stringr::str_flatten(sprintf("%.1f", attr(p0, "grid_size")), collapse = "x")]] <-
       structure(sapply(p0, function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p0), .Dimnames = dimnames(p0))
+    if (!is.null(unweighted_station_data)) {
+      l[["unweight-stations_base" %_% str_baseline]] <-
+        dplyr::bind_cols(dplyr::select(g, c("month", "year", "yr_part")), unweighted_station_data[, colnames(unweighted_station_data), drop = FALSE])
+    }
     if (!is.null(station_weights))
       l$`all-weights` <- station_weights
     if (!is.null(weighted_station_data)) {
@@ -628,10 +678,10 @@ make_ghcn_temperature_series <- function(
     ## This is no good; too many columns for Excel:
     # rio::export(head(l, 2), sprintf(pathTemplate, "a"), rowNames = head(rowNames, 2), colNames = TRUE)
     rio::export(l[[1]], sprintf(pathTemplate, "stations") %_% ".csv")
-    rio::export(l[2], sprintf(pathTemplate, "metadata"), rowNames = rowNames[2], colNames = TRUE)
-    rio::export(tail(l, -2), sprintf(pathTemplate, "analyzed"), rowNames = tail(rowNames, -2), colNames = TRUE)
+    rio::export(l[2], sprintf(pathTemplate, "metadata"), rowNames = rowNames[2], colNames = TRUE, overwrite = TRUE)
+    rio::export(tail(l, -2), sprintf(pathTemplate, "analyzed"), rowNames = tail(rowNames, -2), colNames = TRUE, overwrite = TRUE)
 
-    ## Put this list in the global envirnoment in case I need it for anything.
+    ## Put this list in the global environment in case I need it for anything.
     assign(series_name, l, envir = .GlobalEnv)
 
     cat(". Done.", fill = TRUE); utils::flush.console()

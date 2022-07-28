@@ -183,7 +183,8 @@ data_urls <- c(list(
   `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/imc/AIS/?release=GFZOP", type = "land ice"),
   ## http://gravis.gfz-potsdam.de/greenland (also new COST-G series)
   `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/imc/GIS/?release=GFZOP", type = "land ice"),
-  `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
+  #`HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
+  `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/data/meantemp_monthly_totals.txt",
   `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
   `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@/@@MONTHNUM@@/ERA5_1981-2010/ts_1month_anomaly_Global_ERA5_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1981-2010_v01.csv",

@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.7, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.9, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -197,12 +197,12 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   get_x_axis_ticks <- function(min, max, by)
   {
-    yearGroups <- seq(min, max, by=by)
+    yearGroups <- seq(min, max, by = by)
     plotStart <- startTS[1]
     plotEnd <- endTS[1]
 
     plotStart <- nearest_below(yearGroups, plotStart, TRUE); plotEnd <- nearest_above(yearGroups, plotEnd, TRUE)
-    xaxisTicks <- seq(plotStart, plotEnd, by=by)
+    xaxisTicks <- seq(plotStart, plotEnd, by = by)
 
     return (xaxisTicks)
   }
@@ -285,8 +285,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (maText != "") mtext(maText, 3L)
 
   if (!add) {
-    grid(nx=NA, ny=NULL, col="gray", lty="dotted", lwd=par("lwd"))
-    abline(v=xaxisTicks, col="gray", lty="dotted", lwd=par("lwd"))
+    grd_lty <- "solid" # Was "dotted"
+    grid(nx = NA, ny = NULL, col = "gray", lty = grd_lty, lwd = par("lwd"))
+    abline(v = xaxisTicks, col = "gray", lty = grd_lty, lwd = par("lwd"))
   }
 
   if (!is.null(start_callback))
@@ -320,7 +321,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   ## Convert to 'zoo' object for plotting.
   if (as_zoo)
-    wz <- as.zoo(w)
+    wz <- zoo(w)
   else
     wz <- w
 
@@ -475,6 +476,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         alpha = alpha
       )
       plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
+      ## 'alpha' may not have any effect, so explicitly apply it to 'col':
+      plot.segmentedArgs$col <- scales::alpha(plot.segmentedArgs$col, plot.segmentedArgs$alpha)
 
       if (!is.null(x) && inherits(x, "segmented")) {
         dev_null <- do.call("plot", plot.segmentedArgs)
@@ -493,9 +496,13 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
             points.segmentedArgs <- list(
               x = sm$piecewise[[i]]$sm,
               col = col[i],
-              pch = 4 # Like '×'
+              pch = 4, # Like '×'
+              alpha = alpha
             )
             points.segmentedArgs <- modifyList(points.segmentedArgs, points.segmented...)
+            ## 'alpha' may not have any effect, so explicitly apply it to 'col':
+            points.segmentedArgs$col <- scales::alpha(points.segmentedArgs$col, points.segmentedArgs$alpha)
+            points.segmentedArgs$alpha <- NULL
             do.call("points", points.segmentedArgs)
           }
 
@@ -785,7 +792,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.2, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.5, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.1, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.9, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -986,7 +993,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   ## Create different colors for each scenario.
   modelColors <- col_m
   if (is.null(modelColors))
-    modelColors <- gray.colors(length(scenario), 0.90, 0.85)
+    #modelColors <- gray.colors(length(scenario), 0.90, 0.85)
+    modelColors <- gray.colors(length(scenario), 0.85, 0.80) # 25 Apr 2022
   if (length(modelColors) == 1L && length(scenario) > 1L)
     modelColors <- vary_brightness(modelColors, length(scenario))
   if (length(modelColors) < length(scenario))
@@ -995,8 +1003,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   #par(new = TRUE); plot(wmz[, get_climate_series_names(wmz), drop=FALSE], screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", col=eachModelColor, ...) # I.e. 'plot.zoo()'.
   a_ply(wmz[, get_climate_series_names(wmz), drop = FALSE], 2, function(a) { lines(a, col = eachModelColor) }) # I.e. 'lines.zoo()'.
 
-  grid(nx=NA, ny=NULL, col="lightgray", lty="dotted", lwd=par("lwd"))
-  abline(v=xaxisTicks, col="lightgray", lty="dotted", lwd=par("lwd"))
+  grd_lty <- "solid" # Was "dotted"
+  grid(nx=NA, ny=NULL, col="lightgray", lty=grd_lty, lwd=par("lwd"))
+  abline(v=xaxisTicks, col="lightgray", lty=grd_lty, lwd=par("lwd"))
 
   if (!is.null(start_callback))
     eval(start_callback)
@@ -1008,7 +1017,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     modelsMiddle <- sapply(modelsMiddle, function(m) predict(loess(m ~ year), data.frame(year=year)), simplify=FALSE)
   meanColor <- col_m_mean
   if (is.null(meanColor))
-    meanColor <- gray(0.6)
+    #meanColor <- gray(0.6)
+    meanColor <- grDevices::gray(0.4)
   if (length(meanColor) == 1L && length(scenario) > 1L)
     meanColor <- vary_brightness(meanColor, length(scenario))
   if (length(meanColor) < length(scenario))

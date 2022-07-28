@@ -276,7 +276,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `HadCET` = (function(p) {
       x <- NULL
 
-      skip <- 7L
+      #skip <- 7L
+      skip <- 5L
 
       tryCatch({
         x <- read.table(p, header=FALSE, as.is=TRUE, na.strings=c("-99.9", "-99.99"), skip=skip, check.names=FALSE, stringsAsFactors=FALSE)

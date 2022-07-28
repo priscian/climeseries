@@ -628,3 +628,40 @@ get_index_from_element <- function(i, m)
 ## usage:
 # m <- array(1:24, dim = 2:4)
 # get_index_from_element(1:24, m)
+
+
+## https://stevemosher.wordpress.com/2010/09/13/handling-z-files/
+#' @export
+unzip_Z <- function(
+  zfile,
+  destfile,
+  readBin_n = 99999999,
+  remove = FALSE
+)
+{
+  ## This function is called for the side effect of uncompressing a .Z file
+  ## 'zfile' is a path to the Zfile
+  ## 'destfile' is the uncompressed file to be written
+  ##   N.B. No protection against overwriting!
+  ## If 'remove' is TRUE, delete the Z file afterwards
+
+  if (!file.exists(zfile))
+    stop(cat(zfile, " does not exist"))
+
+  handle <- file(zfile, "rb")
+  data <- readBin(handle, "raw", readBin_n)
+  close(handle)
+
+  ## https://cran.r-project.org/src/contrib/Archive/uncompress/
+  ## Make v1.34 into v1.35; in "zzz.R", change '.First.lib' to '.onLoad' & install e.g.:
+  ## devtools::install("[...]/Downloads/climate/GHCN/v2/uncompress", upgrade = "never")
+
+  uncomp_data <- uncompress::uncompress(data)
+
+  desthandle <- file(destfile, "wb")
+  writeBin(uncomp_data, desthandle)
+  close(desthandle)
+
+  if (remove == TRUE)
+    unlink(zfile)
+}
