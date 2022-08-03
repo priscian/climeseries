@@ -50,7 +50,7 @@ gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
 gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncdc.noaa.gov/cag/time-series/"
 #nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
-nceiGlobalMonthly <- "/p12/12/1880-2021/data.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
+nceiGlobalMonthly <- sprintf("/p12/12/1880-%s/data.csv", current_year); nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
 crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
@@ -198,9 +198,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
   `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202111.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202111.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202111.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202205.txt", type="land ice"),
+  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202205.txt", type="land ice"),
+  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202205.txt", type="ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",

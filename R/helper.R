@@ -2084,8 +2084,8 @@ read_cru_hemi <- function(filename)
   hemi <- data.frame(
     year = tab[seq(1, nrows, 2), 1],
     annual = tab[seq(1, nrows, 2), 14],
-    month = array(tab[seq(1, nrows, 2), 2:13]),
-    cover = array(tab[seq(2, nrows, 2), 2:13])
+    month = tab[seq(1, nrows, 2), 2:13] %>% `colnames<-`(seq(NCOL(.))),
+    cover = tab[seq(2, nrows, 2), 2:13] %>% `colnames<-`(seq(NCOL(.)))
   )
   # mask out months with 0 coverage
   hemi$month.1[which(hemi$cover.1 == 0)] <- NA
