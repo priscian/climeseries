@@ -2,11 +2,11 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20220803.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20221119.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
-```
+```r
 install.packages("remotes") # If necessary.
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true") # https://github.com/r-lib/remotes#environment-variables
 remotes::install_github("priscian/climeseries")
@@ -18,11 +18,11 @@ library(climeseries)
 
 ## Using *climeseries*
 *climeseries* will by default store downloaded data sets in the current working directory (i.e. `getwd()`) of your R session, and will also load existing data sets from that directory. If you want to change *climeseries*'s default directory, set the following option (with a directory of your choice) before you use *climeseries*:
-```
+```r
 options(climeseries_data_dir = "C:/common/data/climate/climeseries")
 ```
 Now you're ready to go:
-```
+```r
 ## Download a current climatological data set from the Internet.
 inst <- get_climate_data(download = TRUE)
 
@@ -36,7 +36,7 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 
 ### Making plots
 *climeseries* has a pair of functions, `plot_climate_data()` and `plot_models_and_climate_data()`, to simplify plotting climate time series. Some examples follow.
-```
+```r
 ########################################
 ## Plot several global instrumental temperature series.
 ########################################
@@ -59,7 +59,7 @@ plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(
 
 ![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-recent_yearly_baseline1981-2010.png)
 
-```
+```r
 ########################################
 ## Plot global instrumental temperature series with 95% confidence intervals.
 ########################################
@@ -72,7 +72,7 @@ plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int 
 
 ![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/cw14.ci-hadcrut4.ci_1850.1-recent_yearly_baseline1981-2010.png)
 
-```
+```r
 ########################################
 ## Plot all CMIP5 scenario realizations, no instrumental temperature series.
 ########################################
@@ -86,7 +86,7 @@ plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start 
 
 ![CMIP5 scenario realizations.](inst/images/cmip5-realizations_1950.1-2100.1_ma12_baseline1981-2010.png)
 
-```
+```r
 ########################################
 ## CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the primary land+SST series.
 ## Cf. Fig. 4(a) of Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888
@@ -104,7 +104,7 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 
 ![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp85-realizations.range+land-sst_1880.1-2020.1_yearly_baseline1970-2000.png)
 
-```
+```r
 ########################################
 ## Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
@@ -124,7 +124,7 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 
 ![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1970.1-recent_yearly_baseline1981-2010.png)
 
-```
+```r
 ########################################
 ## Estimate optimal number and location of significant changepoints in piecewise regression of climate series.
 ## Cf. Figure 1 of Cahill et al. 2015, dx.doi.org/10.1088/1748-9326/10/8/084002
@@ -139,7 +139,7 @@ plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", 
 
 ![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/hadcrut4+ncei+gistemp+cw14_1850.1-recent_yearly_baseline1981-2010_seg.png)
 
-```
+```r
 ########################################
 ## Has past sea-level rise accelerated?
 ## V. Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1.
@@ -159,7 +159,7 @@ plot_climate_data(g, series_adj, yearly = TRUE, ylab = ylab, main = main, col = 
 
 ![Has past sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-anomalies_1880.1-recent_yearly_seg.png)
 
-```
+```r
 ########################################
 ## Has recent sea-level rise accelerated?
 ## V. https://tamino.wordpress.com/2017/10/24/what-is-sea-level-up-to-lately
@@ -180,17 +180,17 @@ plot_climate_data(g, series_adj, ylab = ylab, main = main, col = "blue", segment
 
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
-```
+```r
 library(help = climeseries)
 ```
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20220803.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20221119.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
-```
+```r
 ?get_climate_data
 ```
 

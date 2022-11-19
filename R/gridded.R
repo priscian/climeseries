@@ -718,6 +718,7 @@ get_station_counts <- function(
   make_plot = TRUE,
   start_year = NULL, end_year = NULL, # Can take fractions of a year
   save_png = FALSE,
+
   plot_climate_data... = list()
 )
 {

@@ -1577,6 +1577,7 @@ show_single_value <- function
     data <- get_climate_data(download = FALSE, baseline = baseline)
 
   ## N.B. Data must have complete year-month pairs for this to be accurate!
+  ## This doesn't work correctly, so check:
   complete <- data %>% dplyr::select(!!series) %>%
     dplyr::group_by(data$year) %>%
     dplyr::group_map(
@@ -1980,9 +1981,11 @@ create_hadcrut4_zonal_data <- function(x,
   what = c("hadcrut", "crutem", "cw"),
   data_dir = getOption("climeseries_data_dir"),
   hadcrut_url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc",
+  ## HadCRUT4 url: https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc
   crutem_url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.1.0.anomalies.nc",
   cw_url = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.nc.gz",
-  series_suffix = NULL
+  series_suffix = NULL,
+  series_name = NULL, temp_var = NULL
 )
 {
   what <- match.arg(what)
@@ -1992,13 +1995,13 @@ create_hadcrut4_zonal_data <- function(x,
 
   if (is.null(data_dir)) data_dir <- getwd()
 
-  temp_var <- "temperature_anomaly"
+  #tempVar <- "temperature_anomaly"
 
   if (what == "hadcrut") {
     series <- "HadCRUT5"
     flit <- basename(hadcrut_url)
     download.file(hadcrut_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
-    temp_var <- "tas_mean"
+    tempVar <- "tas_mean"
   } else if (what == "cw") {
     series <- "Cowtan & Way Krig."
     flit <- basename(cw_url)
@@ -2009,10 +2012,12 @@ create_hadcrut4_zonal_data <- function(x,
     series <- "CRUTEM5"
     flit <- basename(crutem_url)
     download.file(crutem_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
-    temp_var <- "tas"
+    tempVar <- "tas"
   }
+  if (!is.null(temp_var))
+    tempVar <- temp_var
   n <- nc_open(paste(data_dir, flit, sep = "/")) # 'print(n)' or just 'n' for details.
-  a <- ncvar_get(n, temp_var)
+  a <- ncvar_get(n, tempVar)
   ## Structure of 'a' is temperature_anomaly[longitude, latitude, time], 72 × 36 × Inf (monthly since Jan. 1850)
   lat <- ncvar_get(n, "latitude")
   long <- ncvar_get(n, "longitude")
@@ -2056,6 +2061,9 @@ create_hadcrut4_zonal_data <- function(x,
   lat_long_to_text <- function(x, sufs) { suf <- sufs[2]; r <- abs(x); if (x < 0) suf <- sufs[1]; r %_% suf }
   subLatText <- sapply(sub_lat, lat_long_to_text, sufs = c("S", "N"), simplify = TRUE)
   subLongText <- sapply(sub_long, lat_long_to_text, sufs = c("W", "E"), simplify = TRUE)
+
+  if (!is.null(series_name))
+    series <- series_name
 
   if (is.null(series_suffix))
     seriesOut <- paste0(series, " (", paste(subLatText, collapse = "-"), ", ", paste(subLongText, collapse = "-"), ")")
