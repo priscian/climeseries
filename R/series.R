@@ -45,10 +45,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
       ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
-      curl <- getCurlHandle()
-      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+      curl <- RCurl::getCurlHandle()
+      RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
-        #r <- getURL(p, curl=curl)
+        #r <- RCurl::getURL(p, curl=curl)
         #x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
         x <- read.csv(p, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
@@ -72,10 +72,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       ## N.B. GISS blocks HTTP/1.0 requests, so use package "RCurl". V. discussion at:
       ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
-      curl <- getCurlHandle()
-      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+      curl <- RCurl::getCurlHandle()
+      RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
-        #r <- getURL(p, curl=curl)
+        #r <- RCurl::getURL(p, curl=curl)
         #x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
         x <- read.csv(p, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
       }, error=Error, warning=Error)
@@ -116,7 +116,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
-      yearMatches <- str_match(x[[1]], re) # Column name "Year" or "Date".
+      yearMatches <- stringr::str_match(x[[1]], re) # Column name "Year" or "Date".
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(yearMatches[, 3L])
 
@@ -136,7 +136,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0L
 
       tryCatch({
-        fileNames <- strsplit(getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
+        fileNames <- strsplit(RCurl::getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
         ## Keep only monthly data files.
         re <- "^aravg\\.mon\\.(?<type>.+?)\\.(?<lat1>.+?)\\.(?<lat2>.+?)\\..*?\\.asc$"
         fileNames <- grep(re, fileNames, value=TRUE, perl=TRUE)
@@ -201,7 +201,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})/(\\d{2})"
-      yearMatches <- str_match(x$V1, re)
+      yearMatches <- stringr::str_match(x$V1, re)
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(yearMatches[, 3L])
 
@@ -231,16 +231,16 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       tryCatch({
         flit <- tempfile()
         download.file(p, flit, mode = "wb", quiet = TRUE)
-        n <- nc_open(flit) # 'print(n)' or just 'n' for details.
+        n <- ncdf4::nc_open(flit) # 'print(n)' or just 'n' for details.
         tas_var <- "tas"
         if (names(n$var) %>% stringr::str_detect("tas_mean") %>% any)
           tas_var <- "tas_mean"
-        a <- ncvar_get(n, tas_var)
-        u <- ncvar_get(n, "tas_upper")
-        l <- ncvar_get(n, "tas_lower")
-        times <- ncvar_get(n, "time")
-        tunits <- ncatt_get(n,"time", "units")
-        nc_close(n)
+        a <- ncdf4::ncvar_get(n, tas_var)
+        u <- ncdf4::ncvar_get(n, "tas_upper")
+        l <- ncdf4::ncvar_get(n, "tas_lower")
+        times <- ncdf4::ncvar_get(n, "time")
+        tunits <- ncdf4::ncatt_get(n,"time", "units")
+        ncdf4::nc_close(n)
       }, error = Error, warning = Error)
 
       # [1] "days since 1850-1-1 00:00:00"
@@ -303,7 +303,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})\\.(\\d{3})"
-      yearMatches <- str_match(x$V1, re)
+      yearMatches <- stringr::str_match(x$V1, re)
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(factor(yearMatches[, 3L]))
 
@@ -389,7 +389,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         flit <- tempfile()
         download.file(p, flit, quiet=TRUE)
         con <- file(flit) # R does transparent decompression of certain compressed files, e.g. ".gz".
-        comments <- str_extract(readLines(con), "^#.*$")
+        comments <- stringr::str_extract(readLines(con), "^#.*$")
         comments <- comments[!is.na(comments)]
         m <- read.table(text=comments, comment.char="") # 'm' for "meta".
         x <- read.table(con, skip=skip, comment.char="#")
@@ -433,7 +433,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             sflit <- data.frame(year=syear, yr_part=syear + (2 * i - 1)/24, month=i, temp=NA, check.names=FALSE, stringsAsFactors=FALSE)
             if (length(lineNo > 0L)) {
               lineNo <- lineNo[1L]
-              stemp <- str_match(y[lineNo], tempRe)[2L]
+              stemp <- stringr::str_match(y[lineNo], tempRe)[2L]
               sflit$temp <- as.numeric(stemp)
             }
             e <- rbind(e, sflit)
@@ -751,7 +751,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `CO2 Mauna Loa` = (function(p) {
       x <- NULL
 
-      skip <- 57L
+      skip <- 60L
 
       tryCatch({
         x <- read.csv(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="\"")
@@ -883,7 +883,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})(\\d{2})"
-      yearMatches <- str_match(trunc(x$V1), re)
+      yearMatches <- stringr::str_match(trunc(x$V1), re)
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(factor(yearMatches[, 3L]))
 
@@ -963,7 +963,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error = Error, warning = Error)
 
       re <- "(\\d{4})\\.(\\d{3})"
-      yearMatches <- str_match(x$V1, re)
+      yearMatches <- stringr::str_match(x$V1, re)
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(factor(yearMatches[, 3L]))
 
@@ -1100,18 +1100,18 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     })(path),
 
     `MODIS Aerosol Optical Thickness (550 nm)` = (function(p) {
-      curl <- getCurlHandle()
-      curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
+      curl <- RCurl::getCurlHandle()
+      RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
       tryCatch({
         ## Get new session ID.
-        r <- getURLContent("http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl", curl=curl)
-        xml_ <- xmlParse(r, useInternalNodes=TRUE)
+        r <- RCurl::getURLContent("http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl", curl=curl)
+        xml_ <- XML::xmlParse(r, useInternalNodes=TRUE)
         sessionId <- XML::xpathSApply(xml_, "/session", xmlAttrs)["id"]
         submitUrl <- sub("@@DATE@@", format(today(), "%Y-%m-%d"), sub("@@SESSIONID@@", sessionId, p))
 
         ## Set off build of MODIS AOD data set.
-        sessionContent <- getURLContent(submitUrl, curl=curl)
-        sessionJson <- fromJSON(sessionContent, simplifyVector=TRUE, flatten=TRUE)
+        sessionContent <- RCurl::getURLContent(submitUrl, curl=curl)
+        sessionJson <- jsonlite::fromJSON(sessionContent, simplifyVector=TRUE, flatten=TRUE)
         resultsetId <- sessionJson$session$resultset$id
         resultId <- sessionJson$session$resultset$result[[1]]$id
 
@@ -1122,8 +1122,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           cat("    Data build", percentComplete %_% "% complete.", fill=TRUE); flush.console()
           progressUrlBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl?session=@@SESSIONID@@&resultset=@@RESULTSETID@@&result=@@RESULTID@@&portal=GIOVANNI&format=json"
           progressUrl <- sub("@@RESULTID@@", resultId, sub("@@RESULTSETID@@", resultsetId, sub("@@SESSIONID@@", sessionId, progressUrlBase)))
-          progressContent <- getURLContent(progressUrl, curl=curl)
-          progressJson <- fromJSON(progressContent, simplifyVector=TRUE, flatten=TRUE)
+          progressContent <- RCurl::getURLContent(progressUrl, curl=curl)
+          progressJson <- jsonlite::fromJSON(progressContent, simplifyVector=TRUE, flatten=TRUE)
           percentComplete <- progressJson$session$result$result[[1]]$status[[1]]$percentComplete[[1]]$value
           Sys.sleep(15) # Pause for 15 s.
         }
@@ -1136,7 +1136,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})-(\\d{2})"
-      dateMatches <- str_match(x[[1]], re)
+      dateMatches <- stringr::str_match(x[[1]], re)
       yearValue <- as.numeric(dateMatches[, 2L])
       monthValue <- as.numeric(dateMatches[, 3L])
       d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, temp=x[[2]], check.names=FALSE, stringsAsFactors=FALSE)
@@ -1156,7 +1156,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})\\.(\\d{3})"
-      yearMatches <- str_match(x$V1, re)
+      yearMatches <- stringr::str_match(x$V1, re)
       yearValue <- as.numeric(yearMatches[, 2L])
       monthValue <- as.numeric(factor(yearMatches[, 3L]))
 
@@ -1178,17 +1178,17 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       datasetPaths <- datasetPathBase %_% c("Data Fields/AerosolExtinction", "Geolocation Fields/" %_% c("Altitude", "Latitude", "Longitude"))
       names(datasetPaths) <- c("extinction", "alt", "long", "lat")
       #tryCatch({
-        dirNames <- strsplit(getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
+        dirNames <- strsplit(RCurl::getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
         x <- list()
         cat(fill=TRUE)
         for (i in dirNames) {
-          fileNames <- strsplit(getURL(paste0(p, i, "/"), dirlistonly=TRUE), "\r*\n")[[1L]]
+          fileNames <- strsplit(RCurl::getURL(paste0(p, i, "/"), dirlistonly=TRUE), "\r*\n")[[1L]]
           ## Make sure the following regex doesn't change or lead to mixed file versions.
           fileNames <- grep("^OSIRIS-Odin_L2-Aerosol-Limb-MART", fileNames, value=TRUE)
           x[[i]] <- list()
           for (j in fileNames) {
             re <- ".*?_(\\d{4})m(\\d{4})\\..*$"
-            dateMatches <- str_match(j, re)
+            dateMatches <- stringr::str_match(j, re)
             yyyymmdd <- paste(dateMatches[, 2:3], collapse="")
 
             cat("    Downloading file", j, fill=TRUE); flush.console()
@@ -1257,8 +1257,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       else { currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear }
 
       #uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
-      uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM@@", currentYear, p))
-      uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
+      uri <- gsub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM@@", currentYear, p))
+      uri <- gsub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
       if (httr::http_error(uri)) { ## Does the previous month's data exist?
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
         else currentMonth <- currentMonth - 1
@@ -1266,12 +1266,12 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         if (currentMonthLastMonth == 1) { currentYearLastMonth <- currentYearLastMonth - 1; currentMonthLastMonth <- 12 }
         else currentMonthLastMonth <- currentMonthLastMonth - 1
 
-        uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
-        uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
+        uri <-gsub("@@MONTHNUM@@", sprintf("%02d", currentMonth), gsub("@@YEARNUM@@", currentYear, p))
+        uri <- gsub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
 
         if (httr::http_error(uri)) {
-          uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM@@", currentYear, p))
-          uri <- sub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), sub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
+          uri <- gsub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM@@", currentYear, p))
+          uri <- gsub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
         }
       }
 
@@ -1284,7 +1284,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       }, error=Error, warning=Error)
 
       re <- "(\\d{4})(\\d{2})"
-      dateMatches <- str_match(x[[1]], re)
+      dateMatches <- stringr::str_match(x[[1]], re)
       yearValue <- as.numeric(dateMatches[, 2L])
       monthValue <- as.numeric(dateMatches[, 3L])
 
@@ -1479,7 +1479,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         flit <- httr::GET(p)
-        localPath <- drop(stringr::str_match(content(flit, "text"), stringr::regex("tmp/.*?\\.txt", ignore_case = TRUE)))
+        localPath <- drop(stringr::str_match(httr::content(flit, "text"), stringr::regex("tmp/.*?\\.txt", ignore_case = TRUE)))
         if (length(localPath) > 1)
           warning("Web scrape found multiple hits for local data path (should only find one).")
         purl <- httr::parse_url(p)
@@ -1506,7 +1506,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0L
 
       tryCatch({
-        x <- rio::import(p, format = "csv", skip = skip)
+        flit <- tempfile(fileext = ".zip")
+        download.file(p, flit, mode = "wb", quiet = TRUE)
+        x <- rio::import(flit, format = "csv", skip = skip)
       }, error = Error, warning = Error)
 
       matches <- stringr::str_match(x$`time [yyyy_doy]`, "^(\\d{4})_(\\d+)$")
@@ -1515,7 +1517,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       y <- lubridate::year(yearTemp)
       m <- lubridate::month(yearTemp)
 
-      flit <- x[, -1, drop = FALSE]
+      flit <- x[, -(1:2), drop = FALSE]
       flitNames <- names(flit)
       names(flit) <- paste(series, stringr::str_replace(flitNames, "^std_(.*?)$", "\\1_uncertainty"))
 

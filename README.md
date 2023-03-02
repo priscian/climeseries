@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20221119.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20230302.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -153,7 +153,7 @@ ylab <- "Global Mean Sea Level (mm)"
 main <- "Reconstructed GMSL"
 plot_climate_data(g, series_adj, yearly = TRUE, ylab = ylab, main = main, col = "blue", conf_int = TRUE,
   segmented = TRUE, mark_segments = "lines", vline... = list(text... = list(y = 125)),
-  segmented... = list(yearly = FALSE, breakpoints... = list(h = 360, breaks = NULL)),
+  segmented... = list(yearly = FALSE, breakpoints... = list(h = 36, breaks = NULL)),
   plot.segmented... = list(col = "red"), save_png = FALSE)
 ```
 
@@ -186,7 +186,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20221119.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20230302.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -391,73 +391,73 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. GISTEMP v4 Zonal Land 64S-44S
 1. GISTEMP v4 Zonal Land 90S-64S
 1. GRACE-FO Antarctic Ice Mass global [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_global [Gt]
 1. GRACE-FO Antarctic Ice Mass 301 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_301 [Gt]
 1. GRACE-FO Antarctic Ice Mass 302 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_302 [Gt]
 1. GRACE-FO Antarctic Ice Mass 303 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_303 [Gt]
 1. GRACE-FO Antarctic Ice Mass 304 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_304 [Gt]
 1. GRACE-FO Antarctic Ice Mass 305 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_305 [Gt]
 1. GRACE-FO Antarctic Ice Mass 306 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_306 [Gt]
 1. GRACE-FO Antarctic Ice Mass 307 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_307 [Gt]
 1. GRACE-FO Antarctic Ice Mass 308 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_308 [Gt]
 1. GRACE-FO Antarctic Ice Mass 309 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_309 [Gt]
 1. GRACE-FO Antarctic Ice Mass 310 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_310 [Gt]
 1. GRACE-FO Antarctic Ice Mass 311 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_311 [Gt]
 1. GRACE-FO Antarctic Ice Mass 312 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_312 [Gt]
 1. GRACE-FO Antarctic Ice Mass 313 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_313 [Gt]
 1. GRACE-FO Antarctic Ice Mass 314 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_314 [Gt]
 1. GRACE-FO Antarctic Ice Mass 315 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_315 [Gt]
 1. GRACE-FO Antarctic Ice Mass 316 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_316 [Gt]
 1. GRACE-FO Antarctic Ice Mass 317 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_317 [Gt]
 1. GRACE-FO Antarctic Ice Mass 318 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_318 [Gt]
 1. GRACE-FO Antarctic Ice Mass 319 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_319 [Gt]
 1. GRACE-FO Antarctic Ice Mass 320 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_320 [Gt]
 1. GRACE-FO Antarctic Ice Mass 321 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_321 [Gt]
 1. GRACE-FO Antarctic Ice Mass 322 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_322 [Gt]
 1. GRACE-FO Antarctic Ice Mass 323 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_323 [Gt]
 1. GRACE-FO Antarctic Ice Mass 324 [Gt]
+1. GRACE-FO Antarctic Ice Mass uncertainty_324 [Gt]
 1. GRACE-FO Antarctic Ice Mass 325 [Gt]
-1. GRACE-FO Antarctic Ice Mass global [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 301 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 302 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 303 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 304 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 305 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 306 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 307 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 308 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 309 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 310 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 311 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 312 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 313 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 314 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 315 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 316 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 317 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 318 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 319 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 320 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 321 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 322 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 323 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 324 [Gt]_uncertainty
-1. GRACE-FO Antarctic Ice Mass 325 [Gt]_uncertainty
+1. GRACE-FO Antarctic Ice Mass uncertainty_325 [Gt]
 1. GRACE-FO Greenland Ice Mass global [Gt]
+1. GRACE-FO Greenland Ice Mass uncertainty_global [Gt]
 1. GRACE-FO Greenland Ice Mass 301 [Gt]
+1. GRACE-FO Greenland Ice Mass uncertainty_301 [Gt]
 1. GRACE-FO Greenland Ice Mass 302 [Gt]
+1. GRACE-FO Greenland Ice Mass uncertainty_302 [Gt]
 1. GRACE-FO Greenland Ice Mass 303 [Gt]
+1. GRACE-FO Greenland Ice Mass uncertainty_303 [Gt]
 1. GRACE-FO Greenland Ice Mass 304 [Gt]
+1. GRACE-FO Greenland Ice Mass uncertainty_304 [Gt]
 1. GRACE-FO Greenland Ice Mass 305 [Gt]
+1. GRACE-FO Greenland Ice Mass uncertainty_305 [Gt]
 1. GRACE-FO Greenland Ice Mass 306 [Gt]
+1. GRACE-FO Greenland Ice Mass uncertainty_306 [Gt]
 1. GRACE-FO Greenland Ice Mass 307 [Gt]
-1. GRACE-FO Greenland Ice Mass global [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass 301 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass 302 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass 303 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass 304 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass 305 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass 306 [Gt]_uncertainty
-1. GRACE-FO Greenland Ice Mass 307 [Gt]_uncertainty
+1. GRACE-FO Greenland Ice Mass uncertainty_307 [Gt]
 1. Greenland Land Ice Mass Variation
 1. Greenland Land Ice Mass Variation_uncertainty
 1. HadCET

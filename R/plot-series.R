@@ -192,7 +192,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     #col <- matlab.like2(length(col)) # From package "colorRamps".
   }
   col <- rep(col, length.out=length(series))
-  col <- alpha(col, alpha)
+  col <- scales::alpha(col, alpha)
   names(col) <- series
 
   get_x_axis_ticks <- function(min, max, by)
@@ -296,12 +296,12 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (conf_int) { # Plot confidence bands for temp series that have them.
     confintNames <- intersect(series %_% "_uncertainty", colnames(w))
     if (length(confintNames) != 0L) {
-      seriesNames <- str_match(confintNames, "^(.*?)_uncertainty$")[, 2L]
+      seriesNames <- stringr::str_match(confintNames, "^(.*?)_uncertainty$")[, 2L]
       for (i in seq_along(confintNames)) {
         value <- w[, seriesNames[i]]
         ci <- w[, confintNames[i]]
         upper <- value + ci/2; lower <- value - ci/2
-        ciCol <- alpha(col[seriesNames[i]], ci_alpha)
+        ciCol <- scales::alpha(col[seriesNames[i]], ci_alpha)
         cidf <- data.frame(yr_part=y[, "yr_part"], lower = lower, upper = upper); cidf <- cidf[complete.cases(cidf), ]
         polygonArgs <- list(
           x = c(cidf$yr_part, rev(cidf$yr_part)),
@@ -321,7 +321,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   ## Convert to 'zoo' object for plotting.
   if (as_zoo)
-    wz <- zoo(w)
+    wz <- zoo::zoo(w)
   else
     wz <- w
 
@@ -445,7 +445,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   if (segmented) local({
     segmentedArgs <- list(
-      x = x,
+      x = y,  # Was 'x = x', which is wrong for certain baseline changes
       series = series,
       start = start,
       end = end,
@@ -697,7 +697,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
     ciArgs <- list(
       x = c(ccYears, rev(ccYears)),
       y = c(ccRates[, "lwr"], rev(ccRates[, "upr"])),
-      col = alpha("gray", 0.6),
+      col = scales::alpha("gray", 0.6),
       border = NA # Border color; NULL means use par("fg"), NA omits borders.
     )
     ciArgs <- modifyList(ciArgs, ci...)
@@ -723,7 +723,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
   if (!is.null(mark_years)) {
     ablineArgs <- list(
       v = mark_years,
-      col = alpha("red", 0.4)
+      col = scales::alpha("red", 0.4)
     )
     ablineArgs <- modifyList(ablineArgs, abline...)
 
@@ -890,8 +890,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   }
 
   ## Convert to 'zoo' objects for plotting.
-  wiz <- as.zoo(wi)
-  wmz <- as.zoo(wm)
+  wiz <- zoo::as.zoo(wi)
+  wmz <- zoo::as.zoo(wm)
 
   baselineText <- ""
   baselineAttribute <- attr(instrumental, "baseline")
@@ -1051,7 +1051,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     if (!is.null(alpha_envelope)) {
       mapply(function(le, ue, color) {
         cidf <- data.frame(yr_part=wmz[, "yr_part"], lower=le, upper=ue); cidf <- cidf[complete.cases(cidf), ]
-        ciCol <- alpha(color, alpha_envelope)
+        ciCol <- scales::alpha(color, alpha_envelope)
         polygon(x=c(cidf$yr_part, rev(cidf$yr_part)), y=c(cidf$upper, rev(cidf$lower)), col=ciCol, border=NA)
       }, lowerEnvelope, upperEnvelope, meanColor)
     }
@@ -1063,7 +1063,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
       n = length(series)
     )
     col_i_funArgs <- modifyList(col_i_funArgs, col_i_fun...)
-    instrumentalColors <- suppressWarnings(alpha(do.call(col_i_fun, col_i_funArgs), alpha_i))
+    instrumentalColors <- suppressWarnings(scales::alpha(do.call(col_i_fun, col_i_funArgs), alpha_i))
     length(instrumentalColors) <- length(series)
     names(instrumentalColors) <- series
 
@@ -1085,12 +1085,12 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     if (conf_int_i) { # Plot confidence bands for temp series that have them.
       confintNames <- intersect(series %_% "_uncertainty", colnames(cis))
         if (length(confintNames) != 0) {
-        seriesNames <- str_match(confintNames, "^(.*?)_uncertainty$")[, 2L]
+        seriesNames <- stringr::str_match(confintNames, "^(.*?)_uncertainty$")[, 2L]
         for (j in seq_along(confintNames)) {
           value <- i[, seriesNames[j]]
           ci <- cis[, confintNames[j]]
           upper <- value + ci/2; lower <- value - ci/2
-          ciCol <- alpha(instrumentalColors[seriesNames[j]], ci_alpha_i)
+          ciCol <- scales::alpha(instrumentalColors[seriesNames[j]], ci_alpha_i)
           cidf <- data.frame(yr_part=wiz[, "yr_part"], lower=lower, upper=upper); cidf <- cidf[complete.cases(cidf), ]
           polygon(x=c(cidf$yr_part, rev(cidf$yr_part)), y=c(cidf$upper, rev(cidf$lower)), col=ciCol, border=NA)
         }

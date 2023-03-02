@@ -1,14 +1,18 @@
 Package: climeseries
 Title: Download, Aggregate, Process, and Plot Monthly Climatological Data
-Version: 0.130.0
-Authors@R: person("Jim", "Java", email = "priscian@gmail.com", role = c("aut", "cre"))
+Version: 0.131.0
+Authors@R: person("Jim", "Java", email = "priscian@gmail.com", role = c("aut", "cre")),
+  comment = c(ORCID = "0000-0002-8254-3177"))
 Description: These are various functions for collecting, processing, and
     plotting monthly climatological data.
-Depends: R (>= 3.5.0), dtplyr, ggplot2, directlabels, grDevices, lubridate, RCurl, httr, jsonlite, RColorBrewer, colorRamps, reshape2, scales, stringr, XML, splines, zoo, rhdf5, ncdf4, strucchange, segmented
-Imports: data.table, plyr, R.utils, matrixStats
-Suggests: knitr, testthat, colorRamps, forecast, ggfortify
+Depends: R (>= 3.5.0), magrittr, tribe
+Suggests: knitr, pander, testthat, colorRamps, forecast, ggfortify
+Imports: data.table, plyr, R.utils, matrixStats, dtplyr, ggplot2, directlabels,
+  grDevices, lubridate, RCurl, httr, jsonlite, RColorBrewer, colorRamps,
+  reshape2, scales, stringr, XML, splines, zoo, rhdf5, ncdf4, strucchange,
+  segmented
 VignetteBuilder: knitr
 License: Artistic-2.0
 LazyData: true
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0

@@ -32,7 +32,7 @@ vline <- function(mark_years, abline...=list(), text...=list())
 {
   ablineArgs <- list(
     v = mark_years,
-    col = alpha("black", 0.4),
+    col = scales::alpha("black", 0.4),
     lty = "dashed"
   )
   ablineArgs <- modifyList(ablineArgs, abline...)

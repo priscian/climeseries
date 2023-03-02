@@ -382,7 +382,7 @@ remove_periodic_cycle <- function(
   if (!is.null(uncertaintyDf))
     d <- merge(d, uncertaintyDf[c("yr_part", get_climate_series_names(uncertaintyDf, conf_int=TRUE))], all.x = TRUE, by = "yr_part", sort = TRUE)
 
-  d
+  d %>% as.data.frame
 }
 
 ## usage:
@@ -1210,65 +1210,87 @@ create_cmip5_atmosphere_temps <- function(
 
 
 #' @export
-create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", daily_filename="OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", planetary_grid=NULL, extract=FALSE)
+create_osiris_daily_saod_data <- function(
+  data_path = ".",
+  rdata_path = ".",
+  daily_filename = "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData",
+  planetary_grid = NULL,
+  extract = FALSE
+)
 {
   if (extract) {
-    datasetPathBase <- "/HDFEOS/SWATHS/OSIRIS\\Odin Aerosol MART/"
-    datasetPaths <- datasetPathBase %_% c("Data Fields/AerosolExtinction", "Geolocation Fields/" %_% c("Altitude", "Latitude", "Longitude"))
-    names(datasetPaths) <- c("extinction", "alt", "lat", "long")
-    dirNames <- list.dirs(data_path, recursive=FALSE)
-    x <- list()
-    cat(fill=TRUE)
-    for (i in dirNames) {
-      ## Make sure the following regex 'pattern' doesn't change or lead to mixed file versions.
-      fileNames <- list.files(i, pattern="^OSIRIS-Odin_L2-Aerosol-Limb-MART", full.names=TRUE)
-      x[[basename(i)]] <- list()
-      for (j in fileNames) {
-        re <- ".*?_(\\d{4})m(\\d{4})\\..*$"
-        dateMatches <- stringr::str_match(j, re)
-        yyyymmdd <- paste(dateMatches[, 2:3], collapse="")
+    fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_2-", full.names = TRUE)
+    fileDates <- tools::file_path_sans_ext(basename(fileNames)) %>% stringr::str_extract("\\d{6}$")
+    x <- sapply(fileNames,
+      function(i)
+      {
+        cat("    Processing file", basename(i), fill = TRUE); flush.console()
 
-        cat("    Processing file", basename(j), fill=TRUE); flush.console()
-        #flit <- tempfile()
-        flit <- j
+        nc0 <- RNetCDF::open.nc(i)
+        origin <- sub("^\\s*days since\\s*", "", RNetCDF::att.get.nc(nc0, "time", "units"), ignore.case = TRUE)
+        dates <- RNetCDF::var.get.nc(nc0, "time") %>% as.Date(origin = origin)
+        RNetCDF::close.nc(nc0)
+        datesC <- dates %>% as.character
 
-        x[[basename(i)]][[basename(j)]] <- list()
-        for (k in names(datasetPaths))
-          x[[basename(i)]][[basename(j)]][[k]] <- h5read(flit, datasetPaths[k])
-      }
-    }
+        nc <- tidync::tidync(i)
+        varNames <- c("extinction", "altitude", "latitude", "longitude")
+        x <- sapply(varNames,
+          function(a)
+          {
+            substitute(tidync::hyper_tbl_cube(nc %>% tidync::activate(A))$mets[[B]], list(A = as.name(a), B = a)) %>% eval
+          }, simplify = FALSE)
 
-    save(x, file=paste(rdata_path, "OSIRIS-Odin_L2-Aerosol-Limb-MART_v5-07.RData", sep="/"))
+        xx <- by(seq_along(datesC), datesC,
+          function(a)
+          {
+            list(
+              extinction = x$extinction[, a, drop = FALSE] %>% unclass %>% { `[<-`(., is.nan(.), NA) },
+              alt = x$altitude,
+              lat = x$latitude[a],
+              long = x$longitude[a]
+            )
+          }, simplify = FALSE) %>% unclass
+
+        xx
+      }, simplify = FALSE)
+
+    names(x) <- fileDates
+
+    save(x, file = paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_2.RData", sep = "/"))
   }
   else
-    load(paste(rdata_path, "OSIRIS-Odin_L2-Aerosol-Limb-MART_v5-07.RData", sep="/"))
+    load(paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_2.RData", sep = "/"))
 
   ### Process the extinction data to calculate monthly SAOD.
 
   saodDaily <- NULL
 
-  cat(fill=TRUE)
+  cat(fill = TRUE)
   for (i in names(x)) {
     re <- "(\\d{4})(\\d{2})"
     yearMatches <- stringr::str_match(i, re)
     yearValue <- as.numeric(yearMatches[, 2L])
     monthValue <- as.numeric(yearMatches[, 3L])
-    saodDailyTemplate <- data.frame(year=yearValue, month=monthValue, day=NA, saod=NA, check.names=FALSE, stringsAsFactors=FALSE)
+    saodDailyTemplate <-
+      data.frame(year = yearValue, month = monthValue, day = NA, saod = NA, check.names = FALSE, stringsAsFactors = FALSE)
 
     for (j in seq_along(x[[i]])) {
-      dayValue <- as.numeric(str_match(names(x[[i]])[j], ".*?_\\d{4}m\\d{2}(\\d{2})\\..*$")[, 2])
-      cat("    Processing object", paste(i, tools::file_path_sans_ext(names(x[[i]])[j]), sep="/"), fill=TRUE); flush.console()
+      #dayValue <- as.numeric(stringr::str_match(names(x[[i]])[j], ".*?_\\d{4}m\\d{2}(\\d{2})\\..*$")[, 2])
+      #cat("    Processing object", paste(i, tools::file_path_sans_ext(names(x[[i]])[j]), sep = "/"), fill = TRUE); flush.console()
+      dayValue <- as.numeric(stringr::str_match(names(x[[i]])[j], "\\d{4}-\\d{2}-(\\d{2})")[, 2])
+      cat("    Processing object", names(x[[i]])[j], fill = TRUE); flush.console()
       extinction <- x[[i]][[j]]$extinction
       ## Missing values are given as -9999.
-      is.na(extinction) <- extinction == -9999
+      #is.na(extinction) <- extinction == -9999
       alt <- x[[i]][[j]]$alt
-      extinction <- data.frame(extinction, check.names=FALSE, stringsAsFactors=FALSE)
+      extinction <- data.frame(extinction, check.names = FALSE, stringsAsFactors = FALSE)
       rownames(extinction) <- alt
       lat <- x[[i]][[j]]$lat
       long <- x[[i]][[j]]$long
-      coords <- mapply(function(x, y) c(lat=x, long=y), lat, long, SIMPLIFY=FALSE)
+      coords <- mapply(function(x, y) c(lat = x, long = y), lat, long, SIMPLIFY = FALSE)
 
-      ## Get stratospheric subset of extinction values from 15–35 km. (After Sato et al. 1993 and Rieger et al. 2015; but v. Ridley et al. 2014 for including some aerosol effects below 15 km.)
+      ## Get stratospheric subset of extinction values from 15–35 km. (After Sato et al. 1993 and Rieger et al. 2015;
+      ##   but v. Ridley et al. 2014 for including some aerosol effects below 15 km.)
       keepRows <- alt >= 15 & alt <= 35
       e <- subset(extinction, keepRows)
       for (k in seq_along(coords)) {
@@ -1320,32 +1342,38 @@ create_osiris_daily_saod_data <- function(data_path=".", rdata_path=".", daily_f
       d <- sapply(g,
         function(y)
         {
-          r <- c(value=NA, weight=attr(y, "weight"))
+          r <- c(value = NA, weight = attr(y, "weight"))
           if (all(is.na(y[[1]]))) return (r)
-          r["value"] <- mean(y[[1]], na.rm=TRUE)
+          r["value"] <- mean(y[[1]], na.rm = TRUE)
 
           r
         }, simplify = FALSE
       )
 
       d <- data.matrix(Reduce(rbind, d))
-      saodToday <- stats::weighted.mean(d[, "value"], d[, "weight"], na.rm=TRUE)
+      saodToday <- stats::weighted.mean(d[, "value"], d[, "weight"], na.rm = TRUE)
       is.na(saodToday) <- is.nan(saodToday)
       saodTodayDf <- saodDailyTemplate
       saodTodayDf$day <- dayValue
       saodTodayDf$saod <- saodToday
 
-      saodDaily <- rbind(saodDaily, saodTodayDf, make.row.names=FALSE, stringsAsFactors=FALSE)
+      saodDaily <- rbind(saodDaily, saodTodayDf, make.row.names = FALSE, stringsAsFactors = FALSE)
     }
   }
 
   saod_daily <- saodDaily
-  save(saod_daily, file=paste(rdata_path, daily_filename, sep="/"))
+  save(saod_daily, file = paste(rdata_path, daily_filename, sep = "/"))
 }
 
 
 #' @export
-create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData", series_name="OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global", create_daily=FALSE, ...)
+create_osiris_saod_data <- function(
+  path = NULL,
+  filename = "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData",
+  series_name = "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global",
+  create_daily = FALSE,
+  ...
+)
 {
   if (is.null(path)) {
     if (!is.null(getOption("climeseries_saod_data_dir")))
@@ -1354,14 +1382,15 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
       path <- "."
   }
   if (create_daily)
-    create_osiris_daily_saod_data(rdata_path=path, daily_filename=filename, ...)
+    create_osiris_daily_saod_data(rdata_path = path, daily_filename = filename, ...)
 
-  load(paste(path, filename, sep="/"), envir=environment())
+  load(paste(path, filename, sep = "/"), envir = environment())
 
   r <- plyr::arrange(Reduce(rbind,
     by(saod_daily, list(saod_daily$year, saod_daily$month),
-      function(x) data.frame(year=x$year[1], month=x$month[1], flit=mean(x$saod, na.rm=TRUE), check.names=FALSE, stringsAsFactors=FALSE),
-      simplify=FALSE)), year, month)
+      function(x) data.frame(year = x$year[1], month = x$month[1], flit = mean(x$saod, na.rm = TRUE),
+        check.names = FALSE, stringsAsFactors = FALSE),
+      simplify = FALSE)), year, month)
   r$yr_part <- r$year + (2 * r$month - 1)/24
 
   names(r)[names(r) %in% "flit"] <- series_name
@@ -1370,17 +1399,17 @@ create_osiris_saod_data <- function(path=NULL, filename="OSIRIS-Odin_Stratospher
 }
 
 ## usage:
-# inst <- get_climate_data(download=FALSE, baseline=FALSE)
+# inst <- get_climate_data(download = FALSE, baseline = FALSE)
 # allSeries <- list(
 #   inst,
 #   create_osiris_saod_data()
 # )
-# d <- Reduce(merge_fun_factory(all=TRUE, by=c(Reduce(intersect, c(list(climeseries::common_columns), lapply(allSeries, names))))), allSeries)
+# d <- Reduce(merge_fun_factory(all = TRUE, by = c(Reduce(intersect, c(list(climeseries::common_columns), lapply(allSeries, names))))), allSeries)
 # series <- c("GISS Stratospheric Aerosol Optical Depth (550 nm) Global", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global")
-# plot_climate_data(d, series, start=1985, ylab="SAOD", main="Global Mean Stratospheric Aerosol Optical Depth")
+# plot_climate_data(d, series, start = 1985, ylab = "SAOD", main = "Global Mean Stratospheric Aerosol Optical Depth")
 ## Save only OSIRIS data as CSV file.
 # keepRows <- na_unwrap(d$`OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global`)
-# write.csv(d[keepRows, c("year", "month", "yr_part", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global")], "./OSIRIS-SAOD_2001.11-2016.7.csv", row.names=FALSE)
+# write.csv(d[keepRows, c("year", "month", "yr_part", "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global")], "./OSIRIS-SAOD_2001.11-2016.7.csv", row.names = FALSE)
 
 
 #' @export
@@ -1425,10 +1454,10 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
 
 ## usage:
 ## Reproduce a plot here: https://tamino.wordpress.com/2017/01/01/tony-hellers-snow-job/.
-# g <- make_yearly_data(na_rm=FALSE) # Allow NA values for 'mean()'; possibly better for very seasonally sensitive series.
+# g <- make_yearly_data(na_rm = FALSE) # Allow NA values for 'mean()'; possibly better for very seasonally sensitive series.
 # series <- "Rutgers NH Snow Cover"
-# h <- eval(substitute(g[na_unwrap(SERIES)][year >= min(year) & !is.na(SERIES)], list(SERIES=as.name(series))))
-# plot(h$year, h[[series]]/1e6, lwd=2, pch=19, type="o")
+# h <- eval(substitute(g[na_unwrap(SERIES)][year >= min(year) & !is.na(SERIES)], list(SERIES = as.name(series))))
+# plot(h$year, h[[series]]/1e6, lwd = 2, pch = 19, type = "o")
 
 
 #' @export
@@ -1646,13 +1675,13 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
   ff <- list.files(path, "^.*?\\.dat$", recursive=TRUE, ignore.case=TRUE, full.names=TRUE)
   modelSummary <- sapply(ff,
     function(a) {
-      modelVariable <- str_match(a, "\\S(tas|tas land|tos)\\S")[2L]
-      pathway <- str_match(a, "rcp(\\d{2})")[2L]
-      modelType <- str_match(a, "\\S(all models|all members|one member per model)\\S")[2L]
+      modelVariable <- stringr::str_match(a, "\\S(tas|tas land|tos)\\S")[2L]
+      pathway <- stringr::str_match(a, "rcp(\\d{2})")[2L]
+      modelType <- stringr::str_match(a, "\\S(all models|all members|one member per model)\\S")[2L]
       l <- readLines(a)
       re <- "^#.*?from\\s+(.*?),?\\s+(RCP|experiment|model).*$"
       modelLine <- grep(re, l, value=TRUE)
-      model <- str_match(modelLine, re)[2L]
+      model <- stringr::str_match(modelLine, re)[2L]
 
       r <- data.frame(model=model, type=tolower(modelType), variable=tolower(modelVariable), RCP=as.numeric(pathway)/10, path=a,
         check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
@@ -1847,7 +1876,8 @@ fit_segmented_model <- function(
     r$piecewise[[i]] <- list()
     r$piecewise[[i]]$col <- r$piecewise$col[i]
 
-    h <- oss(g, i)[na_unwrap(g[[i]]), , drop = FALSE]
+    #h <- oss(g, i)[na_unwrap(g[[i]]), , drop = FALSE]
+    h <- oss(g, i)[na_unwrap(g[, i]), , drop = FALSE] %>% as.data.frame
     h <- h[h[[yearVar]] >= ifelse(!is.null(start), start, -Inf) & h[[yearVar]] <= ifelse(!is.null(end), end, Inf), ]
 
     breakpointsArgs <- list(
@@ -1856,7 +1886,7 @@ fit_segmented_model <- function(
       breaks = NULL
     )
     breakpointsArgs <- modifyList(breakpointsArgs, breakpoints..., keep.null = TRUE)
-    r$piecewise[[i]]$bp <- do.call("breakpoints", breakpointsArgs)
+    r$piecewise[[i]]$bp <- do.call(strucchange::breakpoints, breakpointsArgs)
 
     r$piecewise[[i]]$breaks <- r$piecewise[[i]]$bp$X[, yearVar][r$piecewise[[i]]$bp$breakpoint]
 
@@ -1869,7 +1899,7 @@ fit_segmented_model <- function(
       h = 0.3
     )
     seg.controlArgs <- modifyList(seg.controlArgs, seg.control..., keep.null = TRUE)
-    segControl <- do.call("seg.control", seg.controlArgs)
+    segControl <- do.call(segmented::seg.control, seg.controlArgs)
 
     r$piecewise[[i]]$lm <- lm(breakpointsArgs$formula, data = h, x = TRUE, y = TRUE)
 
@@ -1888,7 +1918,7 @@ fit_segmented_model <- function(
 
       while (TRUE) {
         withRestarts({
-          sm <- do.call("segmented", segmentedArgs)
+          sm <- do.call(segmented::segmented, segmentedArgs)
           break
         },
           restart = function() {

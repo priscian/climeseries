@@ -15,7 +15,7 @@
 #' "Hello " %_% who %_% "!"
 #'
 #' @export
-`%_%` <- function(a, b, sep='') paste(a, b, sep=sep)
+`%_%` <- function(a, b, sep='') paste(a, b, sep = sep)
 
 #' Package Constants
 #'
@@ -35,10 +35,12 @@ MONTHS <- month.name
 #' @rdname constants
 #' @export
 current_month <- as.integer(format(Sys.Date(), "%m"))
+#current_month <- 12
 
 #' @rdname constants
 #' @export
 current_year <- as.integer(format(Sys.Date(), "%Y"))
+#current_year <- 2022
 
 dataDir <- "."
 filenameBase <- "climate-series_"
@@ -48,9 +50,8 @@ defaultBaseline <- 1981:2010
 ## Some climatological time-series base URLs.
 gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
 gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
-nceiBase <- "https://www.ncdc.noaa.gov/cag/time-series/"
-#nceiGlobalMonthly <- "/p12/12/1880-2100.csv"; nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
-nceiGlobalMonthly <- sprintf("/p12/12/1880-%s/data.csv", current_year); nceiUsMonthly <- "/p12/12/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
+nceiBase <- "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/"
+nceiGlobalMonthly <- sprintf("/all/1/1850-%s.csv", current_year); nceiUsMonthly <- "/all/1/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
 crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
@@ -69,7 +70,7 @@ rssTmt <- sub("@@CHANNEL@@", "TMT", rssChannel)
 rssTts <- sub("@@CHANNEL@@", "TTS", rssChannel)
 rssTtt <- sub("@@CHANNEL@@", "TTT", rssChannel)
 uahBase <- "http://www.nsstc.uah.edu/data/msu/"
-esrlBase <- "https://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype=1&level=2000&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&lon1=@@LON1@@&lon2=@@LON2@@&var=@@VAR@@"
+esrlBase <- "https://www.esrl.noaa.gov/psd/cgi-bin/data/timeseries/timeseries.pl?ntype = 1&level=2000&iseas=0&mon1=0&mon2=11&iarea=1&typeout=1&Submit=Create+Timeseries&lat1=@@LAT1@@&lat2=@@LAT2@@&lon1=@@LON1@@&lon2=@@LON2@@&var=@@VAR@@"
 esrlLatOnlyBase <- sub("@@LON1@@", "-180", sub("@@LON2@@", "180", esrlBase))
 ## Start here: http://www.esrl.noaa.gov/psd/data/timeseries/
 rutgerssnowBase <- "http://climate.rutgers.edu/snowcover/files/moncov."
@@ -79,11 +80,11 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 ## https://confluence.ecmwf.int/display/CKB/How+to+download+ERA-Interim+data+from+the+ECMWF+data+archive
 eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/ftp-data/temperature/"
 noaaOhcBase <- "https://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
-#nasaLandIceMassBase <- "ftp://podaac-ftp.jpl.nasa.gov/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
-#nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L3/mascon/RL05/JPL/CRI/mass_variability_time_series/"
-nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ice_mass/RL06/v02/mascon_CRI/"
-nasaOceanMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ocean_mass/RL06/v02/mascon_CRI/"
-graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
+nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ice_mass/RL06.1/v03/mascon_CRI/"
+nasaOceanMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ocean_mass/RL06.1/v03/mascon_CRI/"
+#graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
+graceFoBase <- "http://gravis.gfz-potsdam.de/zipcsvdata/"
+
 
 ## Reanalyses:
 make_reanalysis_urls <- function()
@@ -180,27 +181,26 @@ data_urls <- c(list(
   `AIRS NH` = gistempBaseV4 %_% "T_AIRS/NH.Ts+dSST.csv",
   `AIRS SH` = gistempBaseV4 %_% "T_AIRS/SH.Ts+dSST.csv",
   ## http://gravis.gfz-potsdam.de/antarctica (also new COST-G series)
-  `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/imc/AIS/?release=GFZOP", type = "land ice"),
+  `GRACE-FO Antarctic Ice Mass` = list(path = graceFoBase %_% "AIS/GFZOP/", type = "land ice"),
   ## http://gravis.gfz-potsdam.de/greenland (also new COST-G series)
-  `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/imc/GIS/?release=GFZOP", type = "land ice"),
-  #`HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/cetml1659on.dat",
+  `GRACE-FO Greenland Ice Mass` = list(path = graceFoBase %_% "GIS/GFZOP/", type = "land ice"),
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/data/meantemp_monthly_totals.txt",
-  `NCEI Ocean Heat Content` = list(path=noaaOhcBase, type="OHC"),
+  `NCEI Ocean Heat Content` = list(path = noaaOhcBase, type = "OHC"),
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
-  `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM@@/@@MONTHNUM@@/ERA5_1981-2010/ts_1month_anomaly_Global_ERA5_2T_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1981-2010_v01.csv",
+  `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM_LASTMONTH@@/@@MONTHNUM_LASTMONTH@@/ERA5_1981-2010/ts_1month_anomaly_Global_ERA5_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1981-2010_v01.1.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
   ## Check here in case of failure of ERA5 sea ice: https://climate.copernicus.eu/sea-ice-cover-march-2020 etc.
   #`ERA5 Sea Ice Extent` = list(path = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/ts_1month_anomaly_polar_ea_CIA_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_v01.csv", type = "sea ice"),
-  `ESRL AMO` = list(path="https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type="AMO"),
-  #`MODIS Aerosol Optical Thickness (550 nm)` = list(path=modisAodBase, type="AOD"),
-  `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type="SAOD"),
-  `Multivariate ENSO Index` = list(path="https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type="ENSO"),
-  `Extended Multivariate ENSO Index` = list(path="http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type="ENSO"),
+  `ESRL AMO` = list(path = "https://www.esrl.noaa.gov/psd/data/correlation/amon.us.long.data", type = "AMO"),
+  #`MODIS Aerosol Optical Thickness (550 nm)` = list(path = modisAodBase, type = "AOD"),
+  `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = list(path = "ftp://osirislevel2user:hugin@odin-osiris.usask.ca/Level2/daily/", type = "SAOD"),
+  `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
+  `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "antarctica_mass_200204_202207.txt", type="land ice"),
-  `Greenland Land Ice Mass Variation` = list(path=nasaLandIceMassBase %_% "greenland_mass_200204_202207.txt", type="land ice"),
-  `Ocean Mass Variation` = list(path=nasaOceanMassBase %_% "ocean_mass_200204_202207.txt", type="ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "antarctica_mass_200204_202211.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "greenland_mass_200204_202211.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "ocean_mass_200204_202211.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -219,24 +219,24 @@ data_urls <- c(list(
   `GISTEMP v4 NH Land` = gistempBaseV4 %_% "NH.Ts.csv",
   `GISTEMP v4 Zonal` = gistempBaseV4 %_% "ZonAnn.Ts+dSST.csv",
   `GISTEMP v4 Zonal Land` = gistempBaseV4 %_% "ZonAnn.Ts.csv",
-  ## NCEI
-  `NCEI Global` = nceiBase %_% "global/globe/land_ocean" %_% nceiGlobalMonthly,
-  `NCEI SH` = nceiBase %_% "global/shem/land_ocean" %_% nceiGlobalMonthly,
-  `NCEI NH` = nceiBase %_% "global/nhem/land_ocean" %_% nceiGlobalMonthly,
-  `NCEI Global Land` = nceiBase %_% "global/globe/land" %_% nceiGlobalMonthly,
-  `NCEI SH Land` = nceiBase %_% "global/shem/land" %_% nceiGlobalMonthly,
-  `NCEI NH Land` = nceiBase %_% "global/nhem/land" %_% nceiGlobalMonthly,
-  `NCEI Global Ocean` = nceiBase %_% "global/globe/ocean" %_% nceiGlobalMonthly,
-  `NCEI SH Ocean` = nceiBase %_% "global/shem/ocean" %_% nceiGlobalMonthly,
-  `NCEI NH Ocean` = nceiBase %_% "global/nhem/ocean" %_% nceiGlobalMonthly,
-  `NCEI US Avg. Temp.` = nceiBase %_% "us/110/00/tavg" %_% nceiUsMonthly, # Schema "110/00" appears to be "region/division".
-  `NCEI US Max. Temp.` = nceiBase %_% "us/110/00/tmax" %_% nceiUsMonthly,
-  `NCEI US Min. Temp.` = nceiBase %_% "us/110/00/tmin" %_% nceiUsMonthly,
-  `NCEI US Precip.` = list(path=nceiBase %_% "us/110/00/pcp" %_% nceiUsMonthly, type="precipitation"),
-  `NCEI US PDSI` = list(path=nceiBase %_% "us/110/00/pdsi" %_% nceiUsMonthly, type="drought"),
-  `NCEI US PHDI` = list(path=nceiBase %_% "us/110/00/phdi" %_% nceiUsMonthly, type="drought"),
-  `NCEI US PMDI` = list(path=nceiBase %_% "us/110/00/pmdi" %_% nceiUsMonthly, type="drought"),
-  `NCEI US Palmer Z-Index` = list(path=nceiBase %_% "us/110/00/zndx" %_% nceiUsMonthly, type="drought"),
+  ## NCEI (N.B. All the NCEI URLs need attention!)
+  `NCEI Global` = nceiBase %_% "global/time-series/globe/land_ocean" %_% nceiGlobalMonthly,
+  `NCEI SH` = nceiBase %_% "global/time-series/shem/land_ocean" %_% nceiGlobalMonthly,
+  `NCEI NH` = nceiBase %_% "global/time-series/nhem/land_ocean" %_% nceiGlobalMonthly,
+  `NCEI Global Land` = nceiBase %_% "global/time-series/globe/land" %_% nceiGlobalMonthly,
+  `NCEI SH Land` = nceiBase %_% "global/time-series/shem/land" %_% nceiGlobalMonthly,
+  `NCEI NH Land` = nceiBase %_% "global/time-series/nhem/land" %_% nceiGlobalMonthly,
+  `NCEI Global Ocean` = nceiBase %_% "global/time-series/globe/ocean" %_% nceiGlobalMonthly,
+  `NCEI SH Ocean` = nceiBase %_% "global/time-series/shem/ocean" %_% nceiGlobalMonthly,
+  `NCEI NH Ocean` = nceiBase %_% "global/time-series/nhem/ocean" %_% nceiGlobalMonthly,
+  `NCEI US Avg. Temp.` = nceiBase %_% "national/time-series/110/tavg" %_% nceiUsMonthly, # Schema "110/00" appears to be "region/division".
+  `NCEI US Max. Temp.` = nceiBase %_% "national/time-series/110/tmax" %_% nceiUsMonthly,
+  `NCEI US Min. Temp.` = nceiBase %_% "national/time-series/110/tmin" %_% nceiUsMonthly,
+  `NCEI US Precip.` = list(path = nceiBase %_% "national/time-series/110/pcp" %_% nceiUsMonthly, type = "precipitation"),
+  `NCEI US PDSI` = list(path = nceiBase %_% "national/time-series/110/pdsi" %_% nceiUsMonthly, type = "drought"),
+  `NCEI US PHDI` = list(path = nceiBase %_% "national/time-series/110/phdi" %_% nceiUsMonthly, type = "drought"),
+  `NCEI US PMDI` = list(path = nceiBase %_% "national/time-series/110/pmdi" %_% nceiUsMonthly, type = "drought"),
+  `NCEI US Palmer Z-Index` = list(path = nceiBase %_% "national/time-series/110/zndx" %_% nceiUsMonthly, type = "drought"),
   ## USCRN (individual sites)
   ## https://www1.ncdc.noaa.gov/pub/data/uscrn/products/monthly01/
   ## ERSSTv4
@@ -345,33 +345,30 @@ data_urls <- c(list(
   # `NCEP/NCAR Surface Air USA 48` = sub("@@LON1@@", "-125", sub("@@LON2@@", "-70", sub("@@LAT1@@", "50", sub("@@LAT2@@", "25", sub("@@VAR@@", "Air+Temperature", esrlBase))))),
   ## China: CMA-LSAT, dx.doi.org/10.1007/s00382-017-3755-1
   ## CO2
-  `CO2 Mauna Loa` = list(path="https://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type="CO2"), # Mauna Loa CO2 series.
-  `CO2 NOAA ESRL` = list(path="ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt", type="CO2"),
-  `CO2 Cape Grim` = list(path="http://capegrim.csiro.au/GreenhouseGas/data/CapeGrim_CO2_data_download.csv", type="CO2"),
+  `CO2 Mauna Loa` = list(path = "https://scrippsco2.ucsd.edu/assets/data/atmospheric/stations/in_situ_co2/monthly/monthly_in_situ_co2_mlo.csv", type = "CO2"), # Mauna Loa CO2 series.
+  `CO2 NOAA ESRL` = list(path = "ftp://aftp.cmdl.noaa.gov/products/trends/co2/co2_mm_mlo.txt", type = "CO2"),
+  `CO2 Cape Grim` = list(path = "http://capegrim.csiro.au/GreenhouseGas/data/CapeGrim_CO2_data_download.csv", type = "CO2"),
   ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
-  `NSIDC Sea Ice` = list(path="ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type="sea ice"),
-  `PIOMAS Arctic Sea Ice Volume` = list(path="http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type="sea ice"),
-  `PMOD TSI` = list(path="ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type="solar"),
-  `TSI Reconstructed` = list(path="https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type="solar"),
-  # https://web.archive.org/web/20190711132454/https://spot.colorado.edu/~koppg/TSI/TIM_TSI_Reconstruction.txt
-  `SORCE TSI` = list(path="http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt", type="solar"),
-  `Rutgers NH Snow Cover` = list(path=rutgerssnowBase %_% "nhland.txt", type="snow"),
-  `Rutgers Eurasia Snow Cover` = list(path=rutgerssnowBase %_% "eurasia.txt", type="snow"),
-  `Rutgers N. America Snow Cover` = list(path=rutgerssnowBase %_% "namgnld.txt", type="snow"),
-  `Rutgers N. America (No Greenland) Snow Cover` = list(path=rutgerssnowBase %_% "nam.txt", type="snow"),
-  #`NOAA Sunspot No.` = list(path="http://solarscience.msfc.nasa.gov/greenwch/SN_m_tot_V2.0.txt", type="solar"),
-  `NOAA Sunspot No.` = list(path="http://www.sidc.be/silso/DATA/SN_m_tot_V2.0.txt", type="solar"),
+  `NSIDC Sea Ice` = list(path = "ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type = "sea ice"),
+  `PIOMAS Arctic Sea Ice Volume` = list(path = "http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type = "sea ice"),
+  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"),
+  `TSI Reconstructed` = list(path = "https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type = "solar"),
+  `SORCE TSI` = list(path = "http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt", type = "solar"),
+  `Rutgers NH Snow Cover` = list(path = rutgerssnowBase %_% "nhland.txt", type = "snow"),
+  `Rutgers Eurasia Snow Cover` = list(path = rutgerssnowBase %_% "eurasia.txt", type = "snow"),
+  `Rutgers N. America Snow Cover` = list(path = rutgerssnowBase %_% "namgnld.txt", type = "snow"),
+  `Rutgers N. America (No Greenland) Snow Cover` = list(path = rutgerssnowBase %_% "nam.txt", type = "snow"),
+  `NOAA Sunspot No.` = list(path = "http://www.sidc.be/silso/DATA/SN_m_tot_V2.0.txt", type = "solar"),
   # http://www.sidc.be/silso/datafiles
   # https://www.ngdc.noaa.gov/stp/solar/ssndata.html
-  `CSIRO Global Mean Sea Level` = list(path="ftp://ftp.csiro.au/legresy/gmsl_files/CSIRO_Alt.csv", type="sea level"), # Not updated monthly!
-  #`CSIRO Global Mean Sea Level` = list(path="https://hpc.csiro.au/users/326141/Sea_Level_data_201810/CSIRO_Alt.csv", type="sea level"),
-  `NOAA Global Mean Sea Level` = list(path="https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv", type="sea level"),
-  `CSIRO Reconstructed Global Mean Sea Level` = list(path="http://www.cmar.csiro.au/sealevel/downloads/church_white_gmsl_2011_up.zip", type="sea level"),
+  `CSIRO Global Mean Sea Level` = list(path = "ftp://ftp.csiro.au/legresy/gmsl_files/CSIRO_Alt.csv", type = "sea level"), # Not updated monthly!
+  `NOAA Global Mean Sea Level` = list(path = "https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv", type = "sea level"),
+  `CSIRO Reconstructed Global Mean Sea Level` = list(path = "http://www.cmar.csiro.au/sealevel/downloads/church_white_gmsl_2011_up.zip", type = "sea level"),
   # ftp://podaac.jpl.nasa.gov/allData/merged_alt/L2/TP_J1_OSTM/global_mean_sea_level/GMSL_TPJAOS_V4_199209_201704.txt
   # ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt
   # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_all_66.csv
   # http://www.psmsl.org/products/reconstructions/jevrejevaetal2008.php
-  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path="http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type="SAOD")
+  `GISS Stratospheric Aerosol Optical Depth (550 nm)` = list(path = "http://data.giss.nasa.gov/modelforce/strataer/tau.line_2012.12.txt", type = "SAOD")
   #`AIRS Surface Skin Global` = "https://acdisc.gesdisc.eosdis.nasa.gov/data/Aqua_AIRS_Level3/AIRS3STM.006/"
   ## TODO: Ocean heat content. More snow and ice?
   # https://climatedataguide.ucar.edu/climate-data/ocean-temperature-analysis-and-heat-content-estimate-institute-atmospheric-physics
