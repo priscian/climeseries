@@ -61,12 +61,12 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 
 #' @export
 #' @import data.table
-plot_horse_race <- function(x, series, top_n_years = NULL, baseline = TRUE, size = 1)
+plot_horse_race <- function(series, top_n_years = NULL, baseline = TRUE, data, size = 1)
 {
-  if (missing(x))
-    x <- get_climate_data(download = FALSE, baseline = FALSE)
+  if (missing(data))
+    data <- get_climate_data(download = FALSE, baseline = baseline)
 
-  d <- x[, c("year", "month", series)]
+  d <- data[, c("year", "month", series)]
   d <- subset(d, na_unwrap(d[, series]))
   d1 <- data.table::data.table(dcast(d, year ~ month, value.var = series))
   d2 <- data.table::copy(d1)
@@ -106,14 +106,14 @@ plot_horse_race <- function(x, series, top_n_years = NULL, baseline = TRUE, size
   subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep = "")
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep = "")),
     list(b = baselineText)))
-  g <- ggplot(d3, aes(x = month, y = `YTD mean temp.`, group = factor(year), color = factor(year))) +
-    theme_bw() +
-    geom_line(size=size) +
-    #scale_colour_discrete(guide = "none") +
-    labs(color = "Year") +
-    scale_x_discrete(expand = c(0, 1)) +
-    directlabels::geom_dl(aes(label = year), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.8)) +
-    labs(title="Year-to-Date Temperature Anomalies", subtitle = subtitle, y = ylab)
+  g <- ggplot2::ggplot(d3, ggplot2::aes(x = month, y = `YTD mean temp.`, group = factor(year), color = factor(year))) +
+    ggplot2::theme_bw() +
+    ggplot2::geom_line(size = size) +
+    #ggplot2::scale_colour_discrete(guide = "none") +
+    ggplot2::labs(color = "Year") +
+    ggplot2::scale_x_discrete(expand = c(0, 1)) +
+    directlabels::geom_dl(ggplot2::aes(label = year), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.8)) +
+    ggplot2::labs(title = "Year-to-Date Temperature Anomalies", subtitle = subtitle, y = ylab)
 
   print(g)
 
@@ -124,10 +124,12 @@ plot_horse_race <- function(x, series, top_n_years = NULL, baseline = TRUE, size
 # ytd <- plot_horse_race("GISTEMP Global")
 # ytd <- plot_horse_race("UAH TLT 6.0 Global", 10)
 # ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
-# print(as.data.frame(ytd), digits = 3, row.names = FALSE, right = FALSE)
+# print(as.data.frame(ytd$data), digits = 3, row.names = FALSE, right = FALSE)
 ## Zoom in w/out clipping data:
 # ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
-# ytd$grob + coord_cartesian(ylim = c(-0.5, 2.5))
+## Or, if the current year is incomplete:
+# ytd <- plot_horse_race(data = get_climate_data() %>% dplyr::filter(year < climeseries::current_year), "NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+# ytd$grob + ggplot2::coord_cartesian(ylim = c(-0.5, 2.5))
 ## Check:
 # show_warmest_years(inst0, "NCEI US Avg. Temp.")
 
