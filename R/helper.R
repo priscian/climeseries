@@ -473,16 +473,16 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable = "CO2 
 
   ## TSI
   if (use_adjusted_tsi) {
-    ## "PMOD TSI (new VIRGO)" is shaped very much like SORCE but shifted downwards a bit;
+    ## "PMOD TSI VIRGO A+B (new)" is shaped very much like "TSI Reconstructed" but shifted downwards a bit;
     ## so, shift it up and fill in the monthly details missing from "TSI Reconstructed".
-    flit <- make_yearly_data(x[, c(common_columns, "PMOD TSI (new VIRGO)", "SORCE TSI")])
-    tsiDifference <- flit$`PMOD TSI (new VIRGO)` - flit$`SORCE TSI`
-    x$`PMOD TSI (new VIRGO adj.)` <- x$`PMOD TSI (new VIRGO)` - mean(tsiDifference, na.rm = TRUE)
-    #x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO)", "SORCE TSI"), "TSI Aggregate Global", type = "head", ...)
-    x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI (new VIRGO adj.)", "SORCE TSI"), "TSI Aggregate Global", type = "head", ...)
+    flit <- make_yearly_data(x[, c(common_columns, "PMOD TSI VIRGO A+B (new)", "TSI Reconstructed")])
+    tsiDifference <- flit[[2]] - flit[[3]]
+    x$`PMOD TSI VIRGO A+B (new adj.)` <- x$`PMOD TSI VIRGO A+B (new)` - mean(tsiDifference, na.rm = TRUE)
+
+    x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI VIRGO A+B (new adj.)"), "TSI Aggregate Global", type = "head", ...)
   }
   else { # Otherwise, for less monthly detail and less interpolation, just use "Reconstructed" and SORCE.
-    x <- create_aggregate_variable(x, c("TSI Reconstructed", "SORCE TSI"), "TSI Aggregate Global", type = "head", ...)
+    x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI VIRGO A+B (new)"), "TSI Aggregate Global", type = "head", ...)
   }
 
   aggregateName <- "CO2 Aggregate Global"
@@ -1436,8 +1436,8 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
   ## V. stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation/26647#26647
   cnames <- get_climate_series_names(x, conf_int = TRUE)
   l <- list(cnames[stringr::str_ends(cnames, "_uncertainty", negate = TRUE)], cnames[stringr::str_ends(cnames, "_uncertainty", negate = FALSE)])
-  r <- list(.vars = dplyr::lst(!!l[[1]], !!l[[2]]),
-      .funs = dplyr::lst(
+  r <- list(.vars = tibble::lst(!!l[[1]], !!l[[2]]),
+      .funs = tibble::lst(
         function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm = na_rm); r },
         function(a) { r <- NA_real_; if (!all(is.na(a))) r <- sqrt(mean(a^2, na.rm = na_rm)); r }
       )) %>%

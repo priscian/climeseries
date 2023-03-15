@@ -351,12 +351,13 @@ data_urls <- c(list(
   ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
   `NSIDC Sea Ice` = list(path = "ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type = "sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path = "http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type = "sea ice"),
-  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"), # 1976–2016 (daily)
+  #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"), # 1976–2016 (daily)
+  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20230101.zip", type = "solar"), # 1996– (daily)
   `TSI Reconstructed` = list(path = "https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type = "solar"), # 1610–2018 (yearly)
   # `TSIS/TIM TSI` = list(path = "https://lasp.colorado.edu/data/tsis/tsi_data/tsis_tsi_L3_c24h_latest.txt", type = "solar") # Replaces SORCE; 2018– (daily)
   ## Also see: https://www.pmodwrc.ch/en/research-development/solar-physics/tsi-composite/
-  ##   ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/TSIcomposite/MergedPMOD_NobaselineScaleCycle23_January2023.txt # 1980–
-  `SORCE TSI` = list(path = "http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt", type = "solar"),
+  ##   ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/TSI_composite/MergedPMOD_NobaselineScaleCycle23_January2023.txt # 1980–
+  #`SORCE TSI` = list(path = "http://lasp.colorado.edu/data/sorce/tsi_data/daily/sorce_tsi_L3_c24h_latest.txt", type = "solar"), # 2003–2020 (daily)
   `Rutgers NH Snow Cover` = list(path = rutgerssnowBase %_% "nhland.txt", type = "snow"),
   `Rutgers Eurasia Snow Cover` = list(path = rutgerssnowBase %_% "eurasia.txt", type = "snow"),
   `Rutgers N. America Snow Cover` = list(path = rutgerssnowBase %_% "namgnld.txt", type = "snow"),

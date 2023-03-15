@@ -856,19 +856,64 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `PMOD TSI` = (function(p) {
       x <- NULL
 
+      f <- tempfile(fileext = ".zip")
       tryCatch({
-        x <- read.table(p, skip=1L, comment.char=";", check.names=FALSE, colClasses=c(V1="character"))
-      }, error=Error, warning=Error)
+        utils::download.file(url = p, destfile = f, mode = "wb", quiet = TRUE)
+        x0 <- readr::read_table(f, comment = ";", skip = 1L, na = "nan", col_names = FALSE)
+        x <- x0 %>%
+          dplyr::transmute(
+            year = lubridate::year(X1),
+            month = lubridate::month(X1),
+            `PMOD TSI VIRGO A (orig.)` = X3,
+            `PMOD TSI VIRGO A+B (orig.)` = X4,
+            `PMOD TSI VIRGO A+B (orig.)_uncertainty` = 1.96 * X5, # Does X5 = 1σ?
+            `PMOD TSI VIRGO A (new)` = X6,
+            `PMOD TSI VIRGO A+B (new)` = X7
+          )
+      }, error = Error, warning = Error)
 
-      dates <- as.POSIXct(x$V2 * 86400, origin="1980-01-01")
-      d <- data.frame(year(dates), month(dates), check.names=FALSE, stringsAsFactors=FALSE)
+      d <- x %>% dplyr::group_by(year, month) %>%
+        dplyr::group_map(
+          function(a, b)
+          {
+            ## Use a better mean estimate for the "_uncertainty" columns.
+            ## V. stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation/26647#26647
+            cnames <- get_climate_series_names(a, conf_int = TRUE)
+            l <- list(cnames[stringr::str_ends(cnames, "_uncertainty", negate = TRUE)], cnames[stringr::str_ends(cnames, "_uncertainty", negate = FALSE)])
+            r <- list(.vars = tibble::lst(!!l[[1]], !!l[[2]]),
+                .funs = tibble::lst(
+                  function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm = TRUE); r },
+                  function(a) { r <- NA_real_; if (!all(is.na(a))) r <- sqrt(mean(a^2, na.rm = TRUE)); r }
+                )) %>%
+              ## For applying multiple functions to different columns in 'summarize_at()', see:
+              ## https://stackoverflow.com/questions/41109403/r-dplyr-summarise-multiple-functions-to-selected-variables/53981812#53981812
+              purrr::pmap(~ a %>% dplyr::summarize_at(.x, .y)) %>%
+              { purrr::reduce(c(list(b), .), cbind) }
+
+            r
+          }) %>% purrr::reduce(dplyr::bind_rows) %>%
+          dplyr::arrange(year, month) %>%
+          dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = month)
+
+      return (d)
+    })(path),
+
+    `PMOD TSI (old)` = (function(p) {
+      x <- NULL
+
+      tryCatch({
+        x <- read.table(p, skip = 1L, comment.char = ";", check.names = FALSE, colClasses = c(V1 = "character"))
+      }, error = Error, warning = Error)
+
+      dates <- as.POSIXct(x$V2 * 86400, origin = "1980-01-01")
+      d <- data.frame(year(dates), month(dates), check.names = FALSE, stringsAsFactors = FALSE)
       flit <- data.matrix(x[, -(1:2)])
       is.na(flit) <- flit < -98
       d <- cbind(d, flit)
       names(d) <- c("year", "month", "PMOD TSI (new VIRGO)", "PMOD TSI (orig. VIRGO)")
 
       ## This data is daily, so it needs to be turned into monthly averages.
-      d <- cbind(d[!duplicated(d[, 1:2]), 1:2], Reduce(rbind, by(d[, -(1:2)], list(d$month, d$year), colMeans, na.rm=TRUE, simplify=FALSE)))
+      d <- cbind(d[!duplicated(d[, 1:2]), 1:2], Reduce(rbind, by(d[, -(1:2)], list(d$month, d$year), colMeans, na.rm = TRUE, simplify = FALSE)))
 
       d$yr_part <- d$year + (2 * d$month - 1)/24
 
