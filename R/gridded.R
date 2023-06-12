@@ -717,6 +717,7 @@ get_station_counts <- function(
   spaghetti_sep = 1.0,
   make_plot = TRUE,
   start_year = NULL, end_year = NULL, # Can take fractions of a year
+  unwrap = TRUE,
   save_png = FALSE,
 
   plot_climate_data... = list()
@@ -748,6 +749,9 @@ get_station_counts <- function(
 
   N <- g00 %>% dplyr::select(c(get_climate_series_names(g00, invert = TRUE))) %>% is.na %>% `!` %>% rowSums
   ss <- g00 %>% dplyr::select(c(get_climate_series_names(g00, invert = FALSE))) %>% dplyr::mutate(`station count` = N)
+  if (unwrap)
+    ss %<>% dplyr::filter(na_unwrap(dplyr::pull(naniar::replace_with_na_at(., .vars = "station count",
+      .condition ~ .x == 0), `station count`)))
 
   if (make_plot) {
     plot_climate_dataArgs <- list(

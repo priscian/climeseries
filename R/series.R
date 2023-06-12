@@ -131,6 +131,38 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `STAR v5.0` = (function(p) {
+      skip <- 0L
+
+      tryCatch({
+        fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]]
+        dd <- sapply(fileNames,
+          function(a)
+          {
+            level <- stringr::str_match(a, "_(TLS|TLT|TMT|TUT)_")[, 2]
+            x <- read.table(p %_% a, header = TRUE, skip = skip, fill = TRUE, check.names = FALSE)
+            d <- x %>% dplyr::select(year = Year, month = Month, ends_with("_Anomaly")) %>%
+              dplyr::rename_with(function(b) { stringr::str_replace_all(b, "(_|Anomaly)", " ") %>% stringr::str_trim() %>%
+                sprintf("STAR v5.0 %s %s", level, .) }, .cols = ends_with("_Anomaly"))
+
+            d
+          }, simplify = FALSE) %>%
+          purrr::reduce(dplyr::full_join, by = c("year", "month")) %>% dplyr::arrange(year, month) -> d
+      }, error = Error, warning = Error)
+
+      ## Make TTT series
+      a24 <- 1.15 # TTT calculations given in Zou &al 2023 dx.doi.org/10.1029/2022JD037472
+      TMT <- dd[, stringr::str_detect(colnames(dd), " TMT ")] %>% data.matrix
+      TLS <- dd[, stringr::str_detect(colnames(dd), " TLS ")] %>% data.matrix
+      TTT <- (a24 * TMT + (1 - a24) * TLS) %>% as.data.frame %>%
+        `names<-`(stringr::str_replace(names(.), " (TMT|TLS) ", " TTT "))
+
+      d %<>% dplyr::bind_cols(TTT) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month")
+
+      return (d)
+    })(path),
+
     #`ERSSTv5` =,
     `NCEI v4` = (function(p) {
       skip <- 0L
@@ -314,6 +346,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         d[[series %_% "_uncertainty"]] <- 2 * 1.96 * x$V3
 
       return (d)
+    })(path),
+
+    `BEST Gridded` = (function(p) {
+      nh <- create_zonal_data(x = NULL, what = "be", sub_lat = c(0, 90), use_local = TRUE) %>%
+        dplyr::select(-yr_part)
+      sh <- create_zonal_data(x = NULL, what = "be", sub_lat = c(-90, 0), use_local = TRUE) %>%
+        dplyr::select(-yr_part)
+
+      d <- dplyr::full_join(nh, sh, by = c("year", "month")) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month") %>%
+        dplyr::arrange(year, month)
+
+      d
     })(path),
 
     `BEST Global Land` =,
@@ -783,13 +828,16 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       tryCatch({
         flit <- readLines(p)
-        flit <- flit[trimws(flit) != ""]
-        flit <- flit[grep("^\\d{4}", flit, perl=TRUE)]
-        x <- read.csv(header=FALSE, skip=0L, text=flit, fill=TRUE, check.names=FALSE)
-      }, error=Error, warning=Error)
+        #flit <- flit[trimws(flit) != ""]
+        #flit <- flit[grep("^\\d{4}", flit, perl=TRUE)] # Not as robust as 'stringr::str_detect()'
+        flit <- flit[stringr::str_trim(lapply(flit, iconv, to = "UTF-8") %>% unlist(use.names = FALSE)) != ""] %>% `[`(!is.na(.))
+        flit <- flit[stringr::str_detect(flit, "^\\d{4}")]
+        x <- read.csv(header = FALSE, skip = 0L, text = flit, fill = TRUE, check.names = FALSE, na.strings = "NaN")
+      }, error = Error, warning = Error)
 
-      d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V5, check.names=FALSE, stringsAsFactors=FALSE)
-      ## 'x$V3' is 1 × sigma, so 1.96 × sigma is a 95% CI, I think.
+      d <- data.frame(year = x$V1, yr_part = x$V1 + (2 * x$V2 - 1)/24, month = x$V2, temp = x$V5,
+        check.names = FALSE, stringsAsFactors = FALSE)
+      ## 'x$V6' is 1 × sigma, so 1.96 × sigma is a 95% CI, I think.
       d[[series %_% "_uncertainty"]] <- 2 * 1.96 * x$V6
 
       return (d)
@@ -1097,22 +1145,23 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         creds <- options("climeseries_podaac_creds")[[1]]
         x0 <- httr::GET(p, httr::authenticate(user = creds$user, password = creds$password))
 
-        x <- read.table(text = httr::content(x0), header = FALSE, skip = skip, check.names = FALSE, comment.char = "H")
+        x <- read.table(text = rawToChar(as.raw(httr::content(x0))),
+          header = FALSE, skip = skip, check.names = FALSE, comment.char = "H")
       }, error = Error, warning = Error)
 
       x <- x[, 1:3] # Ocean mass has more than 3 columns.
       colnames(x) <- c("yr_part", series, "_uncertainty")
 
       r <- range(trunc(x$yr_part))
-      flit <- expand.grid(month=1:12, year=seq(r[1], r[2], by=1))
+      flit <- expand.grid(month = 1:12, year=seq(r[1], r[2], by = 1))
       flit$yr_part <- flit$year + (2 * flit$month - 1)/24
       flit <- data.table::data.table(flit)
       data.table::setkey(flit, yr_part)
 
       m <- copy(x)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
-      m <- m[, lapply(.SD, mean, na.rm=TRUE), by=.(year, month), .SDcols=c(series, "_uncertainty")] # Remove year/month duplicates by averaging.
-      m <- dplyr::full_join(flit, m, by=c("year", "month"))
+      m <- m[, lapply(.SD, mean, na.rm = TRUE), by = .(year, month), .SDcols=c(series, "_uncertainty")] # Remove year/month duplicates by averaging.
+      m <- dplyr::full_join(flit, m, by = c("year", "month"))
       m <- data.table::as.data.table(m) # This need optimization for the future "climeseries" update.
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
       m[, `_uncertainty` := 2 * 1.96 * `_uncertainty`]
@@ -1494,6 +1543,48 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `MERRA-2 Surface Air USA 48` =,
     `MERRA-2 Surface Air USA 48 Land` =,
     `MERRA-2 Surface Air USA 48 Ocean` =,
+    `JMA Surface Air SH` =,
+    `JMA Surface Air SH Land` =,
+    `JMA Surface Air SH Ocean` =,
+    `JMA Surface Air SH Polar` =,
+    `JMA Surface Air SH Polar Land` =,
+    `JMA Surface Air SH Polar Ocean` =,
+    `JMA Surface Air NH` =,
+    `JMA Surface Air NH Land` =,
+    `JMA Surface Air NH Ocean` =,
+    `JMA Surface Air NH Polar` =,
+    `JMA Surface Air NH Polar Land` =,
+    `JMA Surface Air NH Polar Ocean` =,
+    `JMA Surface Air Global` =,
+    `JMA Surface Air Global Land` =,
+    `JMA Surface Air Global Ocean` =,
+    `JMA Surface Air Tropics` =,
+    `JMA Surface Air Tropics Land` =,
+    `JMA Surface Air Tropics Ocean` =,
+    `JMA Surface Air USA 48` =,
+    `JMA Surface Air USA 48 Land` =,
+    `JMA Surface Air USA 48 Ocean` =,
+    `ERA-20C Surface Air SH` =,
+    `ERA-20C Surface Air SH Land` =,
+    `ERA-20C Surface Air SH Ocean` =,
+    `ERA-20C Surface Air SH Polar` =,
+    `ERA-20C Surface Air SH Polar Land` =,
+    `ERA-20C Surface Air SH Polar Ocean` =,
+    `ERA-20C Surface Air NH` =,
+    `ERA-20C Surface Air NH Land` =,
+    `ERA-20C Surface Air NH Ocean` =,
+    `ERA-20C Surface Air NH Polar` =,
+    `ERA-20C Surface Air NH Polar Land` =,
+    `ERA-20C Surface Air NH Polar Ocean` =,
+    `ERA-20C Surface Air Global` =,
+    `ERA-20C Surface Air Global Land` =,
+    `ERA-20C Surface Air Global Ocean` =,
+    `ERA-20C Surface Air Tropics` =,
+    `ERA-20C Surface Air Tropics Land` =,
+    `ERA-20C Surface Air Tropics Ocean` =,
+    `ERA-20C Surface Air USA 48` =,
+    `ERA-20C Surface Air USA 48 Land` =,
+    `ERA-20C Surface Air USA 48 Ocean` =,
     `20th C. Reanalysis V3 Surface Air SH` =,
     `20th C. Reanalysis V3 Surface Air SH Land` =,
     `20th C. Reanalysis V3 Surface Air SH Ocean` =,
@@ -2082,28 +2173,48 @@ recenter_anomalies <- function(
 #' @return An object of class \code{\link[stats]{ts}}.
 #'
 #' @export
-make_time_series_from_anomalies <- function(x, frequency = 12L, offset = 0.5, ...)
+make_time_series_from_anomalies <- function(
+  x,
+  frequency = 12L,
+  offset = 0.5,
+  add_missing_dates = TRUE,
+  ...
+)
 {
   if (is.ts(x))
     return (x)
 
   startTime <- switch(as.character(frequency),
     `1` = (function() {
-      if (is.matrix (x))
-        r <- min(x[, "year"], na.rm = TRUE)
-      else
-        r <- min(x$year, na.rm = TRUE)
+      r <- min(x[, "year"], na.rm = TRUE)
 
-      r
+      structure(r, complete_dates = dataframe(year = seq(r,  max(x[, "year"], na.rm = TRUE))))
     })(),
 
     `12` = (function() {
       r <- unlist(x[1L, c("year", "month")])
       r[2] <- r[2] + offset
 
-      r
+      x_yr_part <- x[, "year"] + (2 * x[, "month"] - 1)/24
+      complete_dates <-
+        expand.grid(month = 1:12, year = seq(min(x[, "year"], na.rm = TRUE), max(x[, "year"], na.rm = TRUE))) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24) %>%
+        dplyr::filter(yr_part >= min(x_yr_part, na.rm = TRUE) & yr_part <= max(x_yr_part, na.rm = TRUE)) %>%
+        dplyr::select(month, year)
+      structure(r, complete_dates = complete_dates)
     })()
   )
+
+  complete_dates <- attr(startTime, "complete_dates")
+  if (add_missing_dates) {
+    ## Suppress message "Joining with 'by = join_by(...)'";
+    ## 'copy = TRUE' possibly needed for joining, say, a matrix & a data frame.
+    x <- suppressMessages(dplyr::full_join(complete_dates, x, copy = TRUE))
+    #x <- merge(complete_dates, x, all = TRUE) # Doesn't work as is
+
+    if (frequency == 12L)
+      x[, "yr_part"] <- x[, "year"] + (2 * x[, "month"] - 1)/24
+  }
 
   s <- ts(x, start = startTime, frequency = frequency)
 

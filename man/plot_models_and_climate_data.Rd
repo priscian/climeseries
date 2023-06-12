@@ -25,7 +25,7 @@ plot_models_and_climate_data(
   envelope_type = c("quantiles", "range", "normal"),
   plot_envelope = TRUE,
   smooth_envelope = TRUE,
-  smooth_span = 0.4,
+  smooth_span = NULL,
   unit = NULL,
   col_m = NULL,
   col_m_mean = NULL,

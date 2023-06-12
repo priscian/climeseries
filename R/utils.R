@@ -216,15 +216,25 @@ nearest <- function (x, v, value = FALSE, na.rm = FALSE)
 
 
 #' @export
-nearest_below <- function(v, x, value=FALSE) { l <- which(v == max(v[(v < x)])); if (value) v[l] else l }
+nearest_below <- function(v, x, value = FALSE) { l <- which(v == max(v[(v < x)])); if (value) v[l] else l }
 
 #' @export
-nearest_above <- function(v, x, value=FALSE) { l <- which(v == min(v[(v > x)])); if (value) v[l] else l }
+nearest_above <- function(v, x, value = FALSE) { l <- which(v == min(v[(v > x)])); if (value) v[l] else l }
 
 
 ## Use convolution filter to calculate n-month moving average.
+## N.B. "If sides = 1 the filter coefficients are for past values only; if sides = 2 they are centred around lag 0. In this
+##   case the length of the filter should be odd, but if it is even, more of the filter is forward in time than backward."
 #' @export
-moving_average <- function(x, n, sides=1L, ...) { if (is.null(n)) return (x); r <- stats::filter(x, rep(1/n, n), sides=sides, ...); colnames(r) <- colnames(x); return (r) } # 'n' is the window size.
+moving_average <- function(x, n, sides = 1L, ...) # 'n' is the window size
+{
+  if (is.null(n)) return (x)
+
+  r <- stats::filter(x, rep(1/n, n), sides = sides, ...) %>%
+    `colnames<-`(colnames(x))
+
+  return (r)
+}
 
 #' @export
 MA <- moving_average
@@ -446,7 +456,7 @@ integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear")
       lower = from,
       upper = to
     )
-    integrateArgs <- modifyList(integrateArgs, integrate...)
+    integrateArgs <- utils::modifyList(integrateArgs, integrate..., keep.null = TRUE)
     res <- do.call("integrate", integrateArgs)
     #res <- integrate(myfunction, lower=from, upper=to)$value
   }
@@ -564,7 +574,7 @@ make_current_timestamp <- function(fmt = "%Y-%m-%d", use_seconds = FALSE, second
   sysTime <- Sys.time()
   timestamp <- format(sysTime, fmt)
   if (use_seconds)
-    timestamp <- paste(timestamp, sprintf("%05d", lubridate::period_to_seconds(hms(format(Sys.time(), "%H:%M:%S")))), sep = seconds_sep)
+    timestamp <- paste(timestamp, sprintf("%05d", lubridate::period_to_seconds(lubridate::hms(format(Sys.time(), "%H:%M:%S")))), sep = seconds_sep)
 
   return (timestamp)
 }
@@ -664,4 +674,137 @@ unzip_Z <- function(
 
   if (remove == TRUE)
     unlink(zfile)
+}
+
+
+## Adapted from 'fANCOVA::loess.as()'; automatically choose 'span' parameter for 'stats::loess()'
+optimize_span <- function(
+  model,
+  criterion = c("aicc", "gcv"),
+  span_range = c(0.05, 0.95),
+  seed = 666
+)
+{
+  as.crit <- function(x)
+  {
+    span <- x$pars$span
+    traceL <- x$trace.hat
+    sigma2 <- sum(x$residuals^2)/(x$n - 1)
+    aicc <- log(sigma2) + 1 + 2 * (2 * (traceL + 1))/(x$n - traceL - 2)
+    gcv <- x$n * sigma2/(x$n - traceL)^2
+    result <- list(span = span, aicc = aicc, gcv = gcv)
+
+    return(result)
+  }
+
+  criterion <- match.arg(criterion)
+  fn <- function(span)
+  {
+    mod <- update(model, span = span)
+
+    as.crit(mod)[[criterion]]
+  }
+
+  if (!is.null(seed))
+    set.seed(seed)
+  result <- stats::optimize(fn, span_range)
+
+  #return (list(span = result$minimum, criterion = result$objective))
+  return (result$minimum)
+}
+
+
+## Drop-in replacement for 'stats::loess()' that chooses optimal span/bandwidth parameter when 'span = NULL';
+##   also produces a quick-view viz for 'plot = TRUE'.
+#' @export
+LOESS <- function(
+  formula,
+  data,
+  span = formals(stats::loess)$span,
+  plot = FALSE,
+  optimize_span... = list(),
+  ...
+)
+{
+  ## See equivalent code in 'stats::loess()' to create data frame from 'formula':
+  mf <- match.call(expand.dots = FALSE)
+  mf$span <- mf$plot <- mf$optimize_span... <- mf$... <- NULL
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+
+  opt.span <- optimize_span %>% `environment<-`(environment()) # Otherwise 'stats::optimize()' fails
+  form <- formula
+  # form <- formula %>% `environment<-`(environment()) # Allows use of e.g. 'stats::model.frame()'
+
+  if (is.null(span)) {
+    optimize_spanArgs <- list(
+      model = stats::loess(formula = form, data = mf, ...)
+    )
+    optimize_spanArgs <- utils::modifyList(optimize_spanArgs, optimize_span..., keep.null = TRUE)
+
+    span <- do.call(opt.span, optimize_spanArgs)
+  }
+
+  mod <- stats::loess(formula = form, data = mf, span = span, ...)
+
+  if (plot) { ## Adapted from 'fANCOVA::loess.as()'
+    x <- mod$x
+    modPlot <- update(mod, control = loess.control(surface = "direct"))
+
+    if (NCOL(x) == 1) {
+      m <- 100
+      xNew <- seq(min(x, na.rm = TRUE), max(x, na.rm = TRUE), length.out = m)
+      formVars <- all.vars(form)
+      fitNew <- stats::predict(modPlot, dataframe(xNew) %>% `names<-`(tail(formVars, -1)))
+
+      plot(form, mf, col = "grey", xlab = formVars[2], ylab = formVars[1], ...)
+      lines(xNew, fitNew, lwd = 1.5, ...)
+      mtext(sprintf("span: %1.2f", span), side = 3)
+    } else {
+      m <- 50
+      x1 <- seq(min(x[, 1]), max(x[, 1]), len = m)
+      x2 <- seq(min(x[, 2]), max(x[, 2]), len = m)
+      formVars <- all.vars(form)
+      xNew <- expand.grid(x1 = x1, x2 = x2) %>%
+        `names<-`(tail(formVars, -1)) %>% `length<-`(2)
+      fitNew <- matrix(stats::predict(modPlot, xNew), m, m)
+
+      graphics::persp(x1, x2, fitNew, theta = 40, phi = 30, ticktype = "detailed",
+        xlab = formVars[2], ylab = formVars[3], zlab = formVars[1], col = "lightblue", expand = 0.6)
+      mtext(sprintf("span: %1.2f", span), side = 3)
+    }
+  }
+
+  return (mod)
+}
+
+## usage:
+# (cars.lo <- LOESS(dist ~ speed, cars, span = NULL, plot = TRUE))
+# n2 <- 100
+# x21 <- runif(n2, min = 0, max = 3)
+# x22 <- runif(n2, min = 0, max = 3)
+# sd2 <- 0.25
+# e2 <- rnorm(n2, sd = sd2)
+# y2 <- sin(2 * x21) + sin(2 * x22) + 1 + e2
+# # (y2.fit <- fANCOVA::loess.as(cbind(x21, x22), y2, plot = TRUE))
+# dat <- cbind(x21, x22, y2) %>% as.data.frame
+# (y2.fit <- LOESS(y2 ~ x21 + x22, dat, span = NULL, plot = TRUE))
+
+
+#' @export
+poly_eval <- function(expr, envir = parent.frame(), env = rlang::caller_env(), ...)
+{
+  if (is.null(expr))
+    return (NULL)
+
+  if (is.function(expr)) {
+    #expr(...) # Change to 'do.call()' to include 'envir'
+    do.call(what = expr, args = get_dots(...)$arguments, envir = envir)
+  } else if (rlang::is_expression(expr)) {
+    rlang::eval_tidy(expr, env = env, ...)
+  } else if (is.expression(expr)) {
+    eval(expr, envir = envir, ...)
+  } else {
+    expr
+  }
 }

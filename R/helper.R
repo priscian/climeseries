@@ -331,7 +331,7 @@ remove_periodic_cycle <- function(
     uncertaintyDf <- do.call(remove_periodic_cycle, recursiveArgs)
   }
 
-  d <- inst[, c(common_columns, series %_% ifelse(!is_unc, "", unc_suffix))]
+  d <- inst[, c(intersect(common_columns, names(inst)), series %_% ifelse(!is_unc, "", unc_suffix))]
   if (unwrap)
     d <- subset(d, na_unwrap(d[, series %_% ifelse(!is_unc, "", unc_suffix)]))
   if (is_unc && !fit_unc) {
@@ -352,14 +352,16 @@ remove_periodic_cycle <- function(
   loessArgs = list(
     formula = eval(substitute(s ~ yr_part, list(s = as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix))))),
     data = d,
-    span = 0.2
+    span = 0.2,
+    na.action = na.exclude
   )
-  loessArgs <- modifyList(loessArgs, loess...)
+  loessArgs <- utils::modifyList(loessArgs, loess..., keep.null = TRUE)
 
-  l <- do.call("loess", loessArgs)
+  #l <- do.call(stats::loess, loessArgs)
+  l <- do.call(LOESS, loessArgs)
   if (keep_loess)
-    d[[series %_% " (LOESS fit)" %_% ifelse(!is_unc, "", unc_suffix)]] <- l$fit
-  r <- l$resid
+    d[[series %_% " (LOESS fit)" %_% ifelse(!is_unc, "", unc_suffix)]] <- predict(l)
+  r <- residuals(l)
 
   ## Construct model formula for given no. of harmonics.
   fBase <- "r ~ "; f <- NULL
@@ -367,8 +369,8 @@ remove_periodic_cycle <- function(
     f <- c(f, paste0(c("sin", "cos"), paste0("(", 2 * i, " * pi / period * yr_part)")))
   f <- as.formula(paste0(fBase, paste0(f, collapse = " + ")))
 
-  rfit <- lm(f, data = d, ...)
-  uncycled <- d[[series %_% ifelse(!is_unc, "", unc_suffix)]] - rfit$fit
+  rfit <- lm(f, data = d, na.action = na.exclude, ...)
+  uncycled <- d[[series %_% ifelse(!is_unc, "", unc_suffix)]] - predict(rfit)
 
   if (is.logical(center))
     d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center = center, scale = FALSE)[, 1]
@@ -441,7 +443,7 @@ create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...)
     by = intersect(common_columns, names(law)),
     all.x = TRUE
   )
-  mergeArgs <- modifyList(mergeArgs, merge...)
+  mergeArgs <- utils::modifyList(mergeArgs, merge..., keep.null = TRUE)
 
   ## Unlike the other aggregate variables, which use overlap means, the CO2 aggregate series has a distinct cutpoint between paleo and instrumental.
   x <- do.call("merge", mergeArgs)
@@ -1503,21 +1505,24 @@ get_yearly_difference <- function(
   data,
   digits = 3,
   unit = "\u00b0C",
-  loess = FALSE, ...
+  loess = FALSE,
+  plot_baseline = TRUE,
+  save_png = FALSE,
+  ...
 )
 {
   if (missing(data))
     data <- get_climate_data(download = FALSE, baseline = FALSE)
 
-  if (loess)
-    data <- add_loess_variables(data, series, ...)
-
+  # if (loess) data <- add_loess_variables(data, series, ...) # Ends up being a poor fit for yearly data
   g <- make_yearly_data(data)
-  # if (loess) g <- add_loess_variables(g, series, ...)
+  if (loess)
+    g <- add_loess_variables(g, series, ...)
   h <- g[c(which(g$year == start), which(g$year == end)), series %_% ifelse(loess, " (LOESS fit)", ""), drop = FALSE] %>%
     `rownames<-`(c(start, end))
 
-  plot_climate_data(g, c(series, names(h)) %>% unique, start, end, yearly = FALSE, lwd = 2, conf_int = FALSE, trend = FALSE, make_standardized_plot_filename... = list(suffix = ""), save_png = FALSE)
+  plot_climate_data(g, c(series, names(h)) %>% unique, start, end, yearly = FALSE, baseline = plot_baseline, lwd = 2, conf_int = FALSE, trend = FALSE,
+    make_standardized_plot_filename... = list(suffix = ""), save_png = save_png)
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
   cat("Difference in ", unit ," from ", start, "\u2013", end, sep = "", fill = TRUE)
@@ -1533,7 +1538,7 @@ get_yearly_difference <- function(
 }
 
 ## usage:
-# series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT4 Global", "BEST Global (Air Ice Temp.)")
+# series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global", "BEST Global (Air Ice Temp.)")
 # ytd <- get_yearly_difference(series, 1880)
 # ytd <- get_yearly_difference(series, 1880, loess = TRUE)
 # ytd <- get_yearly_difference(series, 1880, loess = TRUE, loess... = list(span = 0.4))
@@ -1542,7 +1547,7 @@ get_yearly_difference <- function(
 
 ## Make "cranberry plots" à la http://variable-variability.blogspot.com/2017/01/cherry-picking-short-term-trends.html.
 #' @export
-make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=0.2)
+make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=NULL)
 {
   if (missing(x)) g <- make_yearly_data()
   else g <- make_yearly_data(x)
@@ -1568,7 +1573,8 @@ make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=0.2)
       main = series, xlab = "year", ylab = ylab,
       panel.first=(function(){ grid(); abline(h=0.0) })(),
       panel.last=points(g$year, g[[i]], pch=19, col="red"))
-    l <- loess(h[[i]] ~ h$year, span=span)
+    #l <- loess(h[[i]] ~ h$year, span=span)
+    l <- LOESS(h[[i]] ~ h$year, span=span)
     lines(l$x, l$fitted, lwd=3, col="blue", type="l")
 
     ## Plot the LOESS residuals.
@@ -1803,11 +1809,12 @@ create_loess_variables <- function(inst, series, loess... = list(), unwrap = TRU
     loessArgs = list(
       formula = eval(substitute(s ~ yr_part, list(s = as.name(i %_% " (interpolated)"), yr_part = as.name(yearVar)))),
       data = d,
-      span = 0.2
+      span = NULL # Perform best fit to data (was 'span = 0.2')
     )
-    loessArgs <- modifyList(loessArgs, loess...)
+    loessArgs <- utils::modifyList(loessArgs, loess..., keep.null = TRUE)
 
-    l <- do.call("loess", loessArgs) # Removes NAs, so attend to it.
+    #l <- do.call("loess", loessArgs) # Removes NAs, so attend to it.
+    l <- do.call(LOESS, loessArgs) # Removes NAs, so attend to it.
     lContext <- d[[i %_% " (interpolated)"]]
     lContext[!is.na(lContext)] <- l$fit
     d[[i %_% " (LOESS fit)"]] <- lContext
@@ -1865,7 +1872,7 @@ fit_segmented_model <- function(
     make_yearly_dataArgs <- list(
       x = r$data
     )
-    make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data..., keep.null = TRUE)
+    make_yearly_dataArgs <- utils::modifyList(make_yearly_dataArgs, make_yearly_data..., keep.null = TRUE)
     g <- as.data.frame(do.call("make_yearly_data", make_yearly_dataArgs))
     if (!is.null(start)) start <- trunc(start)
     if (!is.null(end)) end <- trunc(end)
@@ -1887,7 +1894,7 @@ fit_segmented_model <- function(
       data = h,
       breaks = NULL
     )
-    breakpointsArgs <- modifyList(breakpointsArgs, breakpoints..., keep.null = TRUE)
+    breakpointsArgs <- utils::modifyList(breakpointsArgs, breakpoints..., keep.null = TRUE)
     r$piecewise[[i]]$bp <- do.call(strucchange::breakpoints, breakpointsArgs)
 
     r$piecewise[[i]]$breaks <- r$piecewise[[i]]$bp$X[, yearVar][r$piecewise[[i]]$bp$breakpoint]
@@ -1900,7 +1907,7 @@ fit_segmented_model <- function(
       random = FALSE,
       h = 0.3
     )
-    seg.controlArgs <- modifyList(seg.controlArgs, seg.control..., keep.null = TRUE)
+    seg.controlArgs <- utils::modifyList(seg.controlArgs, seg.control..., keep.null = TRUE)
     segControl <- do.call(segmented::seg.control, seg.controlArgs)
 
     r$piecewise[[i]]$lm <- lm(breakpointsArgs$formula, data = h, x = TRUE, y = TRUE)
@@ -1911,7 +1918,7 @@ fit_segmented_model <- function(
       psi = r$piecewise[[i]]$breaks,
       control = segControl
     )
-    segmentedArgs <- modifyList(segmentedArgs, segmented..., keep.null = TRUE)
+    segmentedArgs <- utils::modifyList(segmentedArgs, segmented..., keep.null = TRUE)
     #r$piecewise[[i]]$sm <- do.call("segmented", segmentedArgs)
 
     run_segmented <- function()
@@ -2008,72 +2015,115 @@ create_timeseries_from_gridded <- function(
 
 
 #' @export
-create_hadcrut4_zonal_data <- function(x,
+create_zonal_data <- function(
+  x, # series from call to 'get_climate_data()'
   sub_lat = c(-90, 90), sub_long = c(-180, 180),
-  what = c("hadcrut", "crutem", "cw"),
+  what = c("hadcrut", "crutem", "cw", "be"),
   data_dir = getOption("climeseries_data_dir"),
-  hadcrut_url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc",
-  ## HadCRUT4 url: https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc
-  crutem_url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.1.0.anomalies.nc",
-  cw_url = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.nc.gz",
+  metadata = list( # Names should be same as 'what' options
+    ## HadCRUT4 url: https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc
+    hadcrut = list(
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc",
+      tempvar = "tas_mean",
+      series = "HadCRUT5"
+    ),
+    crutem = list(
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.1.0.anomalies.nc",
+      tempvar = "tas",
+      series = "CRUTEM5"
+    ),
+    cw = list(
+      url = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.nc.gz",
+      tempvar = "temperature_anomaly",
+      series = "Cowtan & Way Krig. Land+SST"
+    ),
+    be = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Land_and_Ocean_LatLong1.nc",
+      tempvar = "temperature",
+      series = "BE Land+SST (Air Ice Temp.)"
+    )
+  ),
   series_suffix = NULL,
-  series_name = NULL, temp_var = NULL
+  use_local = FALSE
 )
 {
   what <- match.arg(what)
 
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
+  mergeWithOtherData <- TRUE
+  if (is.null(x))
+    mergeWithOtherData <- FALSE
 
   if (is.null(data_dir)) data_dir <- getwd()
 
-  #tempVar <- "temperature_anomaly"
+  gurl <- metadata[[what]]$url
+  tempVar <- metadata[[what]]$tempvar
+  series <- metadata[[what]]$series
 
-  if (what == "hadcrut") {
-    series <- "HadCRUT5"
-    flit <- basename(hadcrut_url)
-    download.file(hadcrut_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
-    tempVar <- "tas_mean"
-  } else if (what == "cw") {
-    series <- "Cowtan & Way Krig."
-    flit <- basename(cw_url)
-    download.file(cw_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
-    R.utils::gunzip(paste(data_dir, flit, sep = "/"), overwrite = TRUE, remove = FALSE)
-    flit <- basename(tools::file_path_sans_ext(cw_url))
-  } else if (what == "crutem") {
-    series <- "CRUTEM5"
-    flit <- basename(crutem_url)
-    download.file(crutem_url, paste(data_dir, flit, sep = "/"), mode = "wb", quiet = TRUE)
-    tempVar <- "tas"
-  }
-  if (!is.null(temp_var))
-    tempVar <- temp_var
-  n <- nc_open(paste(data_dir, flit, sep = "/")) # 'print(n)' or just 'n' for details.
-  a <- ncvar_get(n, tempVar)
+  filePathTemplate <- sprintf("%s/%%s", data_dir)
+  filePath <- sprintf(filePathTemplate, basename(gurl))
+
+  filePath <- switch(what,
+    cw = {
+      if (!use_local || !file.exists(filePath))
+        download.file(gurl, filePath, mode = "wb", quiet = TRUE)
+      R.utils::gunzip(filePath, overwrite = TRUE, remove = FALSE)
+      flit <- basename(tools::file_path_sans_ext(gurl))
+      filePath <- sprintf(filePathTemplate, flit)
+
+      filePath
+    },
+    hadcrut =,
+    crutem =,
+    be = {
+      if (!use_local || !file.exists(filePath))
+        download.file(gurl, filePath, mode = "wb", quiet = TRUE)
+
+      filePath
+    }
+  )
+
+  n <- ncdf4::nc_open(filePath) # 'print(n)' or just 'n' for details.
+  a <- ncdf4::ncvar_get(n, tempVar)
   ## Structure of 'a' is temperature_anomaly[longitude, latitude, time], 72 × 36 × Inf (monthly since Jan. 1850)
-  lat <- ncvar_get(n, "latitude")
-  long <- ncvar_get(n, "longitude")
-  times <- ncvar_get(n, "time")
-  tunits <- ncatt_get(n,"time", "units")
-  nc_close(n)
+  lat <- ncdf4::ncvar_get(n, "latitude")
+  long <- ncdf4::ncvar_get(n, "longitude")
+  times <- ncdf4::ncvar_get(n, "time")
+  tunits <- ncdf4::ncatt_get(n,"time", "units")
+  ncdf4::nc_close(n)
 
-  tunits
-  # $value
-  # [1] "days since 1850-1-1 00:00:00"
-  dtimes <- as.Date(times, origin = "1850-01-01")
-  ## This data set should have the same length as the "time" dimension of 'a':
-  h <- dataframe(year = year(dtimes), month = month(dtimes))
-  #h <- dataframe(year = year(dtimes), met_year = NA, month = month(dtimes))
-  #h$yr_part <- h$year + (h$month - 0.5) / 12L
+  if (what == "be") {
+    tunits
+    # $value
+    # [1] "year A.D."
+    r <- range(trunc(times))
+    flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
+    flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+    flit <- data.table::data.table(flit)
+    ## This data set should have the same NROW as the "time" dimension of 'a':
+    h <- flit[data.table::data.table(yr_part = times), roll = "nearest", on = "yr_part"] %>%
+      as.data.frame %>% dplyr::select(year, month)
+  } else {
+    tunits
+    # $value
+    # [1] "days since 1850-1-1 00:00:00"
+    dtimes <- as.Date(times, origin = "1850-01-01")
+    ## This data set should have the same NROW as the "time" dimension of 'a':
+    h <- dataframe(year = year(dtimes), month = month(dtimes))
+  }
 
   flit <- apply(a, 3,
     function(y)
     {
       x <- t(y)
-      w <- cos(matrix(rep(lat, ncol(x)), ncol = ncol(x), byrow = FALSE) * (pi / 180)) # Latitude weights.
+      w <- cos(matrix(rep(lat, NCOL(x)), ncol = NCOL(x), byrow = FALSE) * (pi / 180)) # Latitude weights.
 
       ## Use only subgrid for calculations.
-      keepSubGrid <- list(lat = lat >= sub_lat[1] & lat <= sub_lat[2], long = long >= sub_long[1] & long <= sub_long[2])
+      keepSubGrid <- list(
+        lat = lat >= sub_lat[1] & lat <= sub_lat[2],
+        long = long >= sub_long[1] & long <= sub_long[2]
+      )
       x1 <- x[keepSubGrid$lat, keepSubGrid$long, drop = FALSE]
       w1 <- w[keepSubGrid$lat, keepSubGrid$long, drop = FALSE]
 
@@ -2094,24 +2144,34 @@ create_hadcrut4_zonal_data <- function(x,
   subLatText <- sapply(sub_lat, lat_long_to_text, sufs = c("S", "N"), simplify = TRUE)
   subLongText <- sapply(sub_long, lat_long_to_text, sufs = c("W", "E"), simplify = TRUE)
 
-  if (!is.null(series_name))
-    series <- series_name
-
   if (is.null(series_suffix))
     seriesOut <- paste0(series, " (", paste(subLatText, collapse = "-"), ", ", paste(subLongText, collapse = "-"), ")")
   else
     seriesOut <- paste0(series, series_suffix)
 
   h[[seriesOut]] <- flit
-  x <- merge(x, h, by = c("year", "month"), all = TRUE)
+  if (mergeWithOtherData)
+    x <- merge(x, h, by = c("year", "month"), all = TRUE)
+  else
+    x <- h %>% dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month")
 
   x
 }
 
 ## usage:
-# g <- create_hadcrut4_zonal_data()
-# series <- c("Cowtan & Way Krig. Global", "Cowtan & Way Krig. (90S-90N, 180W-180E)")
-# plot_climate_data(g, series, yearly = TRUE) # These should overlap entirely.
+# g <- create_zonal_data(what = "cw", use_local = FALSE)
+# series <- c("HadCRUT5 Global", "HadCRUT5 (90S-90N, 180W-180E)")
+# series <- c("BEST Global (Air Ice Temp.)", "BEST Global (Water Ice Temp.)", "BE Land+SST (Air Ice Temp.) (90S-90N, 180W-180E)")
+# series <- c("Cowtan & Way Krig. Global", "Cowtan & Way Krig. Land+SST (90S-90N, 180W-180E)")
+# plot_climate_data(g, series, yearly = TRUE) # These should mostly overlap.
+#
+# g <- create_zonal_data(what = "be", sub_lat = c(0, 90), use_local = TRUE)
+# series <- c("BEST Global (Air Ice Temp.)", "BEST Global (Water Ice Temp.)", "BE Land+SST (Air Ice Temp.) (0N-90N, 180W-180E)")
+# plot_climate_data(g, series, yearly = TRUE) # These should mostly overlap.
+#
+# g <- create_zonal_data(what = "be", sub_lat = c(-90, 0), use_local = TRUE)
+# series <- c("BEST Global (Air Ice Temp.)", "BEST Global (Water Ice Temp.)", "BE Land+SST (Air Ice Temp.) (90S-0N, 180W-180E)")
+# plot_climate_data(g, series, yearly = TRUE) # These should mostly overlap.
 
 
 ## https://crudata.uea.ac.uk/cru/data/temperature/read_cru_hemi.r

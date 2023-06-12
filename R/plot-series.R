@@ -111,15 +111,16 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       make_yearly_dataArgs <- list(
         x = y
       )
-      make_yearly_dataArgs <- modifyList(make_yearly_dataArgs, make_yearly_data...)
+      make_yearly_dataArgs <- utils::modifyList(make_yearly_dataArgs, make_yearly_data..., keep.null = TRUE)
       y <- do.call("make_yearly_data", make_yearly_dataArgs)
       y$yr_part <- y$year
       y <- make_time_series_from_anomalies(y, frequency = 1L, conf_int = conf_int)
       ma <- NULL
     }
   } else {
-    startTS_abo <- stats::start(y); startTS_abo[2] <- 0
-    endTS_abo <- stats::end(y); endTS_abo[2] <- 0
+    flit <- window_default(y, start, end, extend = TRUE)
+    startTS_abo <- stats::start(flit); startTS_abo[2] <- 0
+    endTS_abo <- stats::end(flit); endTS_abo[2] <- 0
     y <- structure(cbind(y, yr_part = y[, "year"]), .Dimnames = list(NULL, c(colnames(y), "yr_part")))
     ma <- NULL
     yearly <- TRUE
@@ -182,7 +183,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     col_funArgs <- list(
       n = length(col)
     )
-    col_funArgs <- modifyList(col_funArgs, col_fun...)
+    col_funArgs <- utils::modifyList(col_funArgs, col_fun..., keep.null = TRUE)
     col <- suppressWarnings(do.call(col_fun, col_funArgs))
     ## Some other possible function calls:
     #col <- rainbow(length(col))
@@ -212,12 +213,12 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     max = 3000,
     by = 10
   )
-  get_x_axis_ticksArgs <- modifyList(get_x_axis_ticksArgs, get_x_axis_ticks...)
+  get_x_axis_ticksArgs <- utils::modifyList(get_x_axis_ticksArgs, get_x_axis_ticks..., keep.null = TRUE)
 
   xaxisTicks <- do.call("get_x_axis_ticks", get_x_axis_ticksArgs)
   if (length(xaxisTicks) < 8L) {
     get_x_axis_ticksArgs$by = 5
-    get_x_axis_ticksArgs <- modifyList(get_x_axis_ticksArgs, get_x_axis_ticks...)
+    get_x_axis_ticksArgs <- utils::modifyList(get_x_axis_ticksArgs, get_x_axis_ticks..., keep.null = TRUE)
     xaxisTicks <- do.call("get_x_axis_ticks", get_x_axis_ticksArgs)
   }
 
@@ -233,7 +234,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     segmented = segmented,
     series_max_length = 75L
   )
-  make_standardized_plot_filenameArgs <- modifyList(make_standardized_plot_filenameArgs, make_standardized_plot_filename...)
+  make_standardized_plot_filenameArgs <- utils::modifyList(make_standardized_plot_filenameArgs, make_standardized_plot_filename..., keep.null = TRUE)
   filename <- do.call(make_standardized_plot_filename, make_standardized_plot_filenameArgs)
 
   if (missing(save_png_dir)) {
@@ -253,7 +254,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       units = "in",
       res = 600
     )
-    pngArgs <- modifyList(pngArgs, png...)
+    pngArgs <- utils::modifyList(pngArgs, png..., keep.null = TRUE)
     do.call("png", pngArgs)
   }
 
@@ -343,7 +344,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     bty = "n",
     cex = 0.8
   )
-  legendArgs <- modifyList(legendArgs, legend...)
+  legendArgs <- utils::modifyList(legendArgs, legend..., keep.null = TRUE)
   do.call("legend", legendArgs)
 
   ## LOESS smooth.
@@ -357,18 +358,19 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       loessArgs = list(
         formula = eval(substitute(s ~ yr_part, list(s = as.name(s)))),
         data = y,
-        span = 0.2
+        span = NULL
       )
-      loessArgs <- modifyList(loessArgs, loess...)
+      loessArgs <- utils::modifyList(loessArgs, loess..., keep.null = TRUE)
 
-      l <- do.call("loess", loessArgs)
+      #l <- do.call("loess", loessArgs)
+      l <- do.call(LOESS, loessArgs)
 
       lines.loessArgs <- list(
         x = drop(l$x),
         y = l$fit,
         lwd = 2
       )
-      lines.loessArgs <- modifyList(lines.loessArgs, lines.loess...)
+      lines.loessArgs <- utils::modifyList(lines.loessArgs, lines.loess..., keep.null = TRUE)
       if (is_invalid(lines.loessArgs$col))
         lines.loessArgs$col = col[s]
 
@@ -451,7 +453,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       end = end,
       make_yearly_data... = make_yearly_data...
     )
-    segmentedArgs <- modifyList(segmentedArgs, segmented...)
+    segmentedArgs <- utils::modifyList(segmentedArgs, segmented..., keep.null = TRUE)
     if (is_invalid(segmentedArgs$col))
       segmentedArgs$col <- col[segmentedArgs$series]
     sm <- do.call("fit_segmented_model", segmentedArgs)
@@ -475,7 +477,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         col = col[i],
         alpha = alpha
       )
-      plot.segmentedArgs <- modifyList(plot.segmentedArgs, plot.segmented...)
+      plot.segmentedArgs <- utils::modifyList(plot.segmentedArgs, plot.segmented..., keep.null = TRUE)
       ## 'alpha' may not have any effect, so explicitly apply it to 'col':
       plot.segmentedArgs$col <- scales::alpha(plot.segmentedArgs$col, plot.segmentedArgs$alpha)
 
@@ -490,7 +492,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
             vlineArgs <- list(
               mark_years = sprintf(sm$piecewise[[i]]$sm$psi[, 2], fmt="%1.1f")
             )
-            vlineArgs <- modifyList(vlineArgs, vline...)
+            vlineArgs <- utils::modifyList(vlineArgs, vline..., keep.null = TRUE)
             do.call("vline", vlineArgs)
           } else if (mark_segments == "points") {
             points.segmentedArgs <- list(
@@ -499,7 +501,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
               pch = 4, # Like '×'
               alpha = alpha
             )
-            points.segmentedArgs <- modifyList(points.segmentedArgs, points.segmented...)
+            points.segmentedArgs <- utils::modifyList(points.segmentedArgs, points.segmented..., keep.null = TRUE)
             ## 'alpha' may not have any effect, so explicitly apply it to 'col':
             points.segmentedArgs$col <- scales::alpha(points.segmentedArgs$col, points.segmentedArgs$alpha)
             points.segmentedArgs$alpha <- NULL
@@ -521,10 +523,10 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   })
 
   if (!is.null(end_callback))
-    eval(end_callback)
+    poly_eval(end_callback)
 
   if (sign)
-    eval(sign_callback)
+    poly_eval(sign_callback)
 
   if (save_png)
     dev.off()
@@ -680,7 +682,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
     ylab = expression(paste("Trend (", phantom(l) * degree, "C/dec.)", sep="")),
     main = "Linear Temperature Trend (" %_% series %_% ") + 95% CIs"
   )
-  plotArgs <- modifyList(plotArgs, plot...)
+  plotArgs <- utils::modifyList(plotArgs, plot..., keep.null = TRUE)
 
   if (is.language(plotArgs$main))
     plotArgs$main <- eval(plotArgs$main)
@@ -700,7 +702,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
       col = scales::alpha("gray", 0.6),
       border = NA # Border color; NULL means use par("fg"), NA omits borders.
     )
-    ciArgs <- modifyList(ciArgs, ci...)
+    ciArgs <- utils::modifyList(ciArgs, ci..., keep.null = TRUE)
 
     do.call("polygon", ciArgs)
   }
@@ -715,7 +717,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
       code = 3
     )
     #ciArgs <- merge.list(ci..., ciArgs)
-    ciArgs <- modifyList(ciArgs, ci...)
+    ciArgs <- utils::modifyList(ciArgs, ci..., keep.null = TRUE)
 
     do.call("arrows", ciArgs)
   }
@@ -725,7 +727,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
       v = mark_years,
       col = scales::alpha("red", 0.4)
     )
-    ablineArgs <- modifyList(ablineArgs, abline...)
+    ablineArgs <- utils::modifyList(ablineArgs, abline..., keep.null = TRUE)
 
     do.call("abline", ablineArgs)
     text(mark_years, par("yaxp")[2L], mark_years, cex=0.8, srt=270, adj=c(NA, -0.25)) # 'par("usr")' for the whole plotting region.
@@ -792,7 +794,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = 0.4, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.1, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.9, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = NULL, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.1, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.9, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...) # Was 'smooth_span = 0.4'
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -943,7 +945,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   ## N.B. These aren't actually plot args (so they'll fail), but I'll leave them in case of further expansion of inst. plots here:
   if(!is.null(plot_i...$loess)) make_standardized_plot_filenameArgs$loess <- plot_i...$loess
   if(!is.null(plot_i...$trend)) make_standardized_plot_filenameArgs$trend <- plot_i...$trend
-  make_standardized_plot_filenameArgs <- modifyList(make_standardized_plot_filenameArgs, make_standardized_plot_filename...)
+  make_standardized_plot_filenameArgs <- utils::modifyList(make_standardized_plot_filenameArgs, make_standardized_plot_filename..., keep.null = TRUE)
   filename <- do.call(make_standardized_plot_filename, make_standardized_plot_filenameArgs)
 
   if (missing(save_png_dir)) {
@@ -963,7 +965,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
       units = "in",
       res = 600
     )
-    pngArgs <- modifyList(pngArgs, png...)
+    pngArgs <- utils::modifyList(pngArgs, png..., keep.null = TRUE)
     do.call("png", pngArgs)
   }
 
@@ -1008,13 +1010,13 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   abline(v=xaxisTicks, col="lightgray", lty=grd_lty, lwd=par("lwd"))
 
   if (!is.null(start_callback))
-    eval(start_callback)
+    poly_eval(start_callback)
 
   ## Plot model averages.
   year <- as.numeric(attr(wmz, "index"))
   modelsMiddle <- by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv) }) })
   if (smooth_center)
-    modelsMiddle <- sapply(modelsMiddle, function(m) predict(loess(m ~ year), data.frame(year=year)), simplify=FALSE)
+    modelsMiddle <- sapply(modelsMiddle, function(m) predict(LOESS(m ~ year, span = NULL), data.frame(year=year)), simplify=FALSE)
   meanColor <- col_m_mean
   if (is.null(meanColor))
     #meanColor <- gray(0.6)
@@ -1039,8 +1041,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   lowerEnvelope <- sapply(modelsRange, function(x) x[1L, ], simplify=FALSE); upperEnvelope <- sapply(modelsRange, function(x) x[2L, ], simplify=FALSE)
   ## Smooth the envelope.
   if (smooth_envelope) {
-    lowerEnvelope <- sapply(lowerEnvelope, function(e) predict(loess(e ~ year, span = smooth_span), data.frame(year=year)), simplify=FALSE)
-    upperEnvelope <- sapply(upperEnvelope, function(e) predict(loess(e ~ year, span = smooth_span), data.frame(year=year)), simplify=FALSE)
+    lowerEnvelope <- sapply(lowerEnvelope, function(e) predict(LOESS(e ~ year, span = smooth_span), data.frame(year=year)), simplify=FALSE)
+    upperEnvelope <- sapply(upperEnvelope, function(e) predict(LOESS(e ~ year, span = smooth_span), data.frame(year=year)), simplify=FALSE)
   }
 
   ## Plot the envelope.
@@ -1062,7 +1064,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     col_i_funArgs <- list(
       n = length(series)
     )
-    col_i_funArgs <- modifyList(col_i_funArgs, col_i_fun...)
+    col_i_funArgs <- utils::modifyList(col_i_funArgs, col_i_fun..., keep.null = TRUE)
     instrumentalColors <- suppressWarnings(scales::alpha(do.call(col_i_fun, col_i_funArgs), alpha_i))
     length(instrumentalColors) <- length(series)
     names(instrumentalColors) <- series
@@ -1079,7 +1081,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
       col = instrumentalColors,
       lwd = 2
     )
-    plot_iArgs <- modifyList(plot_iArgs, plot_i...)
+    plot_iArgs <- utils::modifyList(plot_iArgs, plot_i..., keep.null = TRUE)
 
     cis <- i[, grepl("_uncertainty$", colnames(i)), drop=FALSE]
     if (conf_int_i) { # Plot confidence bands for temp series that have them.
@@ -1139,14 +1141,14 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     cex = 0.8,
     ncol = numColumns
   )
-  legendArgs <- modifyList(legendArgs, legend...)
+  legendArgs <- utils::modifyList(legendArgs, legend..., keep.null = TRUE)
   do.call("legend", legendArgs)
 
   if (!is.null(end_callback))
-    eval(end_callback)
+    poly_eval(end_callback)
 
   if (sign)
-    eval(sign_callback)
+    poly_eval(sign_callback)
 
   if (save_png)
     dev.off()

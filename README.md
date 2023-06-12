@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20230315.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20230612.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -46,10 +46,10 @@ new_airs <- interpolate_baseline(airs_series, baseline = baseline)
 inst0 <- get_climate_data(download = FALSE, baseline = FALSE)
 inst0[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
-  "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
-  "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
-  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global", "RATPAC-A Surface GLOBE",
-  airs_series)
+  "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
+  "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
+  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Sea Surface Global",
+  "RATPAC-A Surface GLOBE", airs_series)
 inst <- inst0 %>%
   dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
   recenter_anomalies(baseline = baseline, keep = series, skip = "AIRS v7 Global")
@@ -65,9 +65,9 @@ plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("Cowtan & Way Krig. Global", "HadCRUT5 Global")
+series <- c("BEST Global (Air Ice Temp.)", "HadCRUT5 Global")
 plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int = TRUE,
-  col = c("red", "blue"), alpha = 0.2, ci_alpha = 0.1, save_png = FALSE)
+  col = c("red", "blue"), alpha = 0.4, ci_alpha = 0.1, save_png = FALSE)
 ```
 
 ![Cowtan & Way hybrid global average temperature series w/ 95% confidence intervals.](inst/images/cw14.ci-hadcrut4.ci_1850.1-recent_yearly_baseline1981-2010.png)
@@ -95,11 +95,12 @@ plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5", subdir = "tas + tos")
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
-  "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global")
-plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5", start = 1880, end = 2025.99,
-  yearly = TRUE, ma = 12, baseline = 1970:2000, scenario_text = "Scenario TAS + TOS Realizations",
-  center_fun = "mean", smooth_envelope = FALSE, envelope_type = "range", envelope_text = "range",
-  ylim = c(-1.0, 1.5), conf_int_i = FALSE, save_png = FALSE)
+  "BEST Global (Air Ice Temp.)", "JMA Global")
+plot_models_and_climate_data(inst, cmip5, series = series, scenario = NULL, start = 1950, end = 2050.99,
+  yearly = TRUE, ma = 12, baseline = 1986:2005, scenario_text = "Scenario TAS + TOS Realizations",
+  center_fun = "mean", smooth_envelope = FALSE, envelope_type = "range", envelope_coverage = 0.90,
+  envelope_text = "range", ylim = c(-0.75, 2.75), conf_int_i = FALSE,
+  col_m_mean = grDevices::gray(0.8), alpha_envelope = 0.1, save_png = FALSE)
 ```
 
 ![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp85-realizations.range+land-sst_1880.1-2020.1_yearly_baseline1970-2000.png)
@@ -111,9 +112,9 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = "RCP 8.5",
 ########################################
 
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
-  "Cowtan & Way Krig. Global", "BEST Global (Air Ice Temp.)", "JMA Global",
-  "RSS TLT 4.0 -70.0/82.5", "UAH TLT 6.0 Global", "JRA-55 Surface Air Global",
-  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global")
+  "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
+  "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
+  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Sea Surface Global")
 start <- 1970; end <- NULL
 g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
@@ -131,7 +132,7 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
-series <- c("HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global", "Cowtan & Way Krig. Global")
+series <- c("HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global", "JMA Global")
 plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green"), lwd = 1,
   segmented = TRUE,
   save_png = FALSE)
@@ -186,7 +187,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20230315.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20230612.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -258,6 +259,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. AIRS v7 Zonal 90S-64S
 1. Antarctica Land Ice Mass Variation
 1. Antarctica Land Ice Mass Variation_uncertainty
+1. BEST Antarctica
+1. BEST Antarctica_uncertainty
 1. BEST Global (Air Ice Temp.)
 1. BEST Global (Water Ice Temp.)
 1. BEST Global (Air Ice Temp.)_uncertainty
@@ -266,6 +269,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. BEST Global Land_uncertainty
 1. BEST Greenland
 1. BEST Greenland_uncertainty
+1. BE Land+SST (Air Ice Temp.) (0N-90N, 180W-180E)
+1. BE Land+SST (Air Ice Temp.) (90S-0N, 180W-180E)
 1. BEST NH Land
 1. BEST NH Land_uncertainty
 1. BEST SH Land
@@ -1146,6 +1151,31 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Rutgers N. America (No Greenland) Snow Cover
 1. Rutgers N. America Snow Cover
 1. Rutgers NH Snow Cover
+1. STAR v5.0 TLS Global Mean
+1. STAR v5.0 TLS NH
+1. STAR v5.0 TLS SH
+1. STAR v5.0 TLS Global Land
+1. STAR v5.0 TLS Global Ocean
+1. STAR v5.0 TMT Global Mean
+1. STAR v5.0 TMT NH
+1. STAR v5.0 TMT SH
+1. STAR v5.0 TMT Global Land
+1. STAR v5.0 TMT Global Ocean
+1. STAR v5.0 TUT Global Mean
+1. STAR v5.0 TUT NH
+1. STAR v5.0 TUT SH
+1. STAR v5.0 TUT Global Land
+1. STAR v5.0 TUT Global Ocean
+1. STAR v5.0 TLT Global Mean
+1. STAR v5.0 TLT NH
+1. STAR v5.0 TLT SH
+1. STAR v5.0 TLT Global Land
+1. STAR v5.0 TLT Global Ocean
+1. STAR v5.0 TTT Global Mean
+1. STAR v5.0 TTT NH
+1. STAR v5.0 TTT SH
+1. STAR v5.0 TTT Global Land
+1. STAR v5.0 TTT Global Ocean
 1. TSI Reconstructed
 1. UAH TLS 5.6 Global
 1. UAH TLS 5.6 Global Land

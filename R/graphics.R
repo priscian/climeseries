@@ -35,7 +35,7 @@ vline <- function(mark_years, abline...=list(), text...=list())
     col = scales::alpha("black", 0.4),
     lty = "dashed"
   )
-  ablineArgs <- modifyList(ablineArgs, abline...)
+  ablineArgs <- utils::modifyList(ablineArgs, abline..., keep.null = TRUE)
 
   do.call("abline", ablineArgs)
 
@@ -47,7 +47,7 @@ vline <- function(mark_years, abline...=list(), text...=list())
     srt = 270,
     adj = c(NA, -0.25)
   )
-  textArgs <- modifyList(textArgs, text...)
+  textArgs <- utils::modifyList(textArgs, text..., keep.null = TRUE)
 
   do.call("text", textArgs)
 

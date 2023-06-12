@@ -60,7 +60,9 @@ crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.1.0/
 hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/analysis/diagnostics/"
 hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/non-infilled/diagnostics/"
 cowtanWayBase <- "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/"
-bestBase <- "http://berkeleyearth.lbl.gov/auto/"
+#bestBase <- "http://berkeleyearth.lbl.gov/auto/"
+bestBase <- "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/"
+bestBase2 <- "https://berkeleyearth.lbl.gov:4443/auto/"
 rssBase <- "http://data.remss.com/msu/monthly_time_series/"
 #rssBase <- "ftp://priscian%40gmail.com:priscian%40gmail.com@ftp.remss.com/msu/monthly_time_series/"
 rssChannel <- "RSS_Monthly_MSU_AMSU_Channel_@@CHANNEL@@_Anomalies_"
@@ -80,8 +82,10 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 ## https://confluence.ecmwf.int/display/CKB/How+to+download+ERA-Interim+data+from+the+ECMWF+data+archive
 eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/ftp-data/temperature/"
 noaaOhcBase <- "https://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
-nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ice_mass/RL06.1/v03/mascon_CRI/"
-nasaOceanMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ocean_mass/RL06.1/v03/mascon_CRI/"
+#nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ice_mass/RL06.1/v03/mascon_CRI/"
+nasaLandIceMassBase <- "https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/"
+#nasaOceanMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ocean_mass/RL06.1/v03/mascon_CRI/"
+nasaOceanMassBase <- "https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/"
 #graceFoBase <- "http://gravis.gfz-potsdam.de/csvdata/"
 graceFoBase <- "http://gravis.gfz-potsdam.de/zipcsvdata/"
 
@@ -100,6 +104,9 @@ make_reanalysis_urls <- function()
     `NCEP/CSFR` = sub("@@SERIES@@", "NCEP%2FCFSR", writBase),
     `MERRA-2` = sub("@@SERIES@@", "MERRA-2", writBase),
     `20th C. Reanalysis V3` = sub("@@SERIES@@", "20th+Century+Reanalysis+V3", writBase)
+    #`ERA-20C` = sub("@@SERIES@@", "ERA20C", writBase),
+    #`COBE-SST 2` = = sub("@@SERIES@@", "COBE-SST+2", writBase),
+    #`JMA` = sub("@@SERIES@@", "JMA+Temperature", writBase)
   )
 
   reanalysisSeriesSuffixes <- c(
@@ -175,6 +182,8 @@ reanalysis_urls <- make_reanalysis_urls()
 #' @export
 #data_urls <- c(reanalysis_urls, list( # To test or add the reanalysis series first
 data_urls <- c(list(
+  ## N.B. Need to read directory to get latest file name!
+  #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20230411.zip", type = "solar"), # 1996– (daily)
   ## AIRS
   `AIRS Zonal` = gistempBaseV4 %_% "T_AIRS/ZonAnn.Ts+dSST.csv",
   `AIRS Global` = gistempBaseV4 %_% "T_AIRS/GLB.Ts+dSST.csv",
@@ -198,9 +207,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
   `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "antarctica_mass_200204_202211.txt", type = "land ice"),
-  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "greenland_mass_200204_202211.txt", type = "land ice"),
-  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "ocean_mass_200204_202211.txt", type = "ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/antarctica_mass_200204_202303.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/greenland_mass_200204_202303.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/ocean_mass_200204_202303.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -282,15 +291,19 @@ data_urls <- c(list(
   ## BEST
   `BEST Global` = bestBase %_% "Global/Land_and_Ocean_complete.txt",
   `BEST Global Land` = bestBase %_% "Global/Complete_TAVG_complete.txt",
-  `BEST SH Land` = bestBase %_% "Regional/TAVG/Text/southern-hemisphere-TAVG-Trend.txt",
-  `BEST NH Land` = bestBase %_% "Regional/TAVG/Text/northern-hemisphere-TAVG-Trend.txt",
-  `BEST US` = bestBase %_% "Regional/TAVG/Text/contiguous-united-states-TAVG-Trend.txt",
-  #`BEST Antarctica` = bestBase %_% "Regional/TAVG/Text/antarctica-TAVG-Trend.txt", # Currently has all missing values for monthly anomalies.
-  `BEST Greenland` = bestBase %_% "Regional/TAVG/Text/greenland-TAVG-Trend.txt",
+  `BEST SH Land` = bestBase2 %_% "Regional/TAVG/Text/southern-hemisphere-TAVG-Trend.txt",
+  `BEST NH Land` = bestBase2 %_% "Regional/TAVG/Text/northern-hemisphere-TAVG-Trend.txt",
+  `BEST US` = bestBase2 %_% "Regional/TAVG/Text/contiguous-united-states-TAVG-Trend.txt",
+  `BEST Antarctica` = bestBase2 %_% "Regional/TAVG/Text/antarctica-TAVG-Trend.txt",
+  `BEST Greenland` = bestBase2 %_% "Regional/TAVG/Text/greenland-TAVG-Trend.txt",
+  ## Berkeley Earth land+SST Gridded (NH, SH)
+  ## N.B. Before full update, run 'create_zonal_data(x = NULL, what = "be", use_local = FALSE) -> dev_null'
+  `BEST Gridded` = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Land_and_Ocean_LatLong1.nc",
   # http://berkeleyearth.org/data/
   `JMA Global` = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/list/csv/mon_wld.csv",
   #`JMA Global (gridded)` = "http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/map/grid/gst_mon_1891_last.gz",
   ## NOAA STAR? https://www.star.nesdis.noaa.gov/smcd/emb/mscat/products.php
+  `STAR v5.0` = "ftp://ftp.star.nesdis.noaa.gov/pub/smcd/emb/mscat/data/MSU_AMSU_v5.0/Monthly_Atmospheric_Layer_Mean_Temperature/Global_Mean_Anomaly_Time_Series/",
   ## RSS
   `RSS TLS 3.3` = rssBase %_% rssTls %_% "Land_and_Ocean_v03_3.txt",
   `RSS TLS 3.3 Land` = rssBase %_% rssTls %_% "Land_v03_3.txt",
@@ -352,7 +365,7 @@ data_urls <- c(list(
   `NSIDC Sea Ice` = list(path = "ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type = "sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path = "http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type = "sea ice"),
   #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"), # 1976–2016 (daily)
-  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20230101.zip", type = "solar"), # 1996– (daily)
+  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20230411.zip", type = "solar"), # 1996– (daily)
   `TSI Reconstructed` = list(path = "https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type = "solar"), # 1610–2018 (yearly)
   # `TSIS/TIM TSI` = list(path = "https://lasp.colorado.edu/data/tsis/tsi_data/tsis_tsi_L3_c24h_latest.txt", type = "solar") # Replaces SORCE; 2018– (daily)
   ## Also see: https://www.pmodwrc.ch/en/research-development/solar-physics/tsi-composite/

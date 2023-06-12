@@ -4,7 +4,13 @@
 \alias{make_time_series_from_anomalies}
 \title{Make Time Series Objects from Climate Data}
 \usage{
-make_time_series_from_anomalies(x, frequency = 12L, offset = 0.5, ...)
+make_time_series_from_anomalies(
+  x,
+  frequency = 12L,
+  offset = 0.5,
+  add_missing_dates = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{A data set (down)loaded by function \code{\link{get_climate_data}}.}
