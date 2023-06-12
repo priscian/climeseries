@@ -79,9 +79,9 @@ plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int 
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5")
-plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start = 1950, end = 2100.99, ma = 12,
-  baseline = 1981:2010, center_fun = "mean", smooth_envelope = TRUE, col_m_mean = "red", ylim = c(-1, 5),
-  save_png = FALSE)
+plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start = 1950, end = 2100.99,
+  ma = 12, baseline = 1981:2010, center_fun = "mean", smooth_envelope = TRUE, col_m_mean = "red",
+  ylim = c(-1, 5), save_png = FALSE)
 ```
 
 ![CMIP5 scenario realizations.](inst/images/cmip5-realizations_1950.1-2100.1_ma12_baseline1981-2010.png)
@@ -134,8 +134,7 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 series <- c("HadCRUT5 Global", "NCEI Global", "GISTEMP v4 Global", "JMA Global")
 plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", "green"), lwd = 1,
-  segmented = TRUE,
-  save_png = FALSE)
+  segmented = TRUE, save_png = FALSE)
 ```
 
 ![Estimate optimal number and location of significant changepoints in piecewise regression of climate series.](inst/images/hadcrut4+ncei+gistemp+cw14_1850.1-recent_yearly_baseline1981-2010_seg.png)
@@ -172,9 +171,10 @@ g <- remove_periodic_cycle(subset(inst, inst$year >= 1993), series)
 series_adj <- series %_% " (anomalies)"
 ylab <- "Global Mean Sea Level (mm)"
 main <- "GMSL from TOPEX/Poseidon, Jason-1, & Jason-2 Satellite Altimetry"
-plot_climate_data(g, series_adj, ylab = ylab, main = main, col = "blue", segmented = TRUE, mark_segments = "lines",
-  segmented... = list(yearly = FALSE, breakpoints... = list(h = 120, breaks = NULL)),
-  plot.segmented... = list(col = "red"), save_png = FALSE)
+plot_climate_data(g, series_adj, ylab = ylab, main = main, col = "blue", segmented = TRUE,
+  mark_segments = "lines", segmented... = list(yearly = FALSE,
+  breakpoints... = list(h = 120, breaks = NULL)), plot.segmented... = list(col = "red"),
+  save_png = FALSE)
 ```
 
 ![Has recent sea-level rise accelerated?](inst/images/noaa-gmsl-anomalies_1993.1-recent_ma0_seg.png)
