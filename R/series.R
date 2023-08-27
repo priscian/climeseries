@@ -135,7 +135,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0L
 
       tryCatch({
-        fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]]
+        fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]] %>%
+          stringr::str_subset("_Merged") # Do I need this?
         dd <- sapply(fileNames,
           function(a)
           {
@@ -279,7 +280,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       dtimes <- as.Date(times, origin = "1850-01-01")
       ## This data set should have the same length as the "time" dimension of 'a':
       d <- dataframe(year = year(dtimes), yr_part = year(dtimes) + (2 * month(dtimes) - 1)/24, month = month(dtimes), temp = a)
-      d[[series %_% "_uncertainty"]] <- u - l
+      ## See "95% confidence intervals" here: https://crudata.uea.ac.uk/~timo/diag/tempdiag.htm
+      ## Divide by 2 to match those Met Office plots (but is this correct for HadCRUT5?):
+      d[[series %_% "_uncertainty"]] <- (u - l)/2 # Was: 'u - l'
 
       return (d)
     })(path),
@@ -300,6 +303,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       d <- data.frame(year = x$year, yr_part = x$year + (2 * x$month - 1)/24, month = x$month, temp = x$anomaly, check.names = FALSE, stringsAsFactors = FALSE)
 
       #d[[series %_% "_uncertainty"]] <- x[[10]] - x[[9]]
+      ## Make sure 95% CIs here match those in plots at https://crudata.uea.ac.uk/cru/data/temperature/
       d[[series %_% "_uncertainty"]] <- 2 * 1.96 * x$total_uncertainty
 
       return (d)
@@ -373,7 +377,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0L
 
       tryCatch({
-        x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="%")
+        httr::set_config(httr::config(ssl_verifypeer = 0L)) # This is necessary for the BE data on port 4443
+        flit <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
+        x <- read.table(text = flit, header=FALSE, skip=skip, check.names=FALSE, comment.char="%")
         dev_null <- sapply(names(x), function(y) is.na(x[[y]]) <<- is.nan(x[[y]]))
       }, error=Error, warning=Error)
 
@@ -1125,10 +1131,39 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       m <- copy(x)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
       m <- data.table::as.data.table(dplyr::full_join(flit, m, by=c("year", "month")))
-      ## Uncertainties are 1 × sigma (Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1), so 1.96 × sigma is a 95% CI.
+      ## Uncertainties are 1 × σ (Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1, Fig. 5), & 1.96 × sigma is 95% CI.
       m[, `_uncertainty` := 2 * 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
       d <- as.data.frame(m)
+
+      return (d)
+    })(path),
+
+    `AVISO Global Mean Sea Level (nonseasonal)` =,
+    `AVISO Global Mean Sea Level` = (function(p) {
+      x <- NULL
+
+      skip <- 0L
+
+      tryCatch({
+        x <- read.table(p, header = FALSE, as.is = TRUE, skip = skip, check.names = FALSE)
+      }, error = Error, warning = Error)
+
+      colnames(x) <- c("yr_part", series)
+
+      r <- range(trunc(x$yr_part))
+      flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
+      flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+      flit <- data.table::data.table(flit)
+      data.table::setkey(flit, yr_part)
+
+      m <- copy(x)
+      m <- flit[m, roll = "nearest"]; m[, yr_part := NULL]
+      ## Remove year/month duplicates by averaging:
+      m <- m[, lapply(.SD, mean, na.rm = TRUE), by = .(year, month), .SDcols = c(series)]
+      m <- data.table::as.data.table(dplyr::full_join(flit, m, by = c("year", "month")))
+      d <- as.data.frame(m) %>%
+        dplyr::mutate(!!series := 1000 * .data[[series]]) # Convert to mm (like other GMSL series here)
 
       return (d)
     })(path),
@@ -1162,7 +1197,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       m <- flit[m, roll="nearest"]; m[, yr_part := NULL]
       m <- m[, lapply(.SD, mean, na.rm = TRUE), by = .(year, month), .SDcols=c(series, "_uncertainty")] # Remove year/month duplicates by averaging.
       m <- dplyr::full_join(flit, m, by = c("year", "month"))
-      m <- data.table::as.data.table(m) # This need optimization for the future "climeseries" update.
+      m <- data.table::as.data.table(m) # This needs optimization for the future "climeseries" update.
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
       m[, `_uncertainty` := 2 * 1.96 * `_uncertainty`]
       setnames(m, "_uncertainty", series %_% "_uncertainty")
@@ -2114,7 +2149,7 @@ get_climate_series_names <- function(x, conf_int = FALSE, invert = TRUE, keep = 
 recenter_anomalies <- function(
   x,
   baseline = defaultBaseline,
-  digits = 4L,
+  digits =  Inf, # Was '4L'
   by_month = TRUE,
   return_baselines_only = FALSE,
   ...
@@ -2142,7 +2177,9 @@ recenter_anomalies <- function(
       bma <- tapply(flit[, i, drop = TRUE], flit[, "month", drop = TRUE], mean, na.rm = TRUE)
       base <- rep(NA_real_, nrow(x))
       ## N.B. This next step is both a time & memory sink, the latter being more problematic; optimize it!
-      dev_null <- sapply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x[, "month", drop = TRUE] == s] <<- v }); dev_null <- NULL
+      dev_null <- sapply(names(bma),
+        function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x[, "month", drop = TRUE] == s] <<- v })
+      dev_null <- NULL
     }
     else { # By year.
       bma <- tapply(flit[, i, drop = TRUE], flit[, "year", drop = TRUE], mean, na.rm = TRUE)
@@ -2159,6 +2196,84 @@ recenter_anomalies <- function(
     return (base)
   else
     return (x)
+}
+
+
+## N.B. This one is slower!
+#' @export
+recenter_anomalies_test <- function(
+  x,
+  baseline = defaultBaseline,
+  digits = Inf, # Was '4L'
+  by_month = TRUE,
+  return_baselines_only = FALSE,
+  ...
+)
+{
+  if (is.null(baseline))
+    return (x)
+  else if (is.logical(baseline)) {
+    if (baseline) baseline <- defaultBaseline
+    else return (x)
+  }
+
+  baselineAttribute <- attr(x, "baseline")
+  if (!is.null(baselineAttribute)) {
+    if (length(baselineAttribute) == length(baseline) && all(baselineAttribute == baseline))
+      return (x)
+  }
+
+  base <- NULL
+  if (by_month) {
+    l <- keystone::psapply(get_climate_series_names(x, ...),
+      function(series)
+      {
+        r <- x %>% dplyr::select(year, month, !!series) %>% dplyr::group_by(month) %>%
+          dplyr::group_modify(
+            function(f, g)
+            {
+              b <- f %>% dplyr::filter(year %in% baseline) %>% dplyr::pull(series)
+              bavg <- b %>% mean(na.rm = TRUE)
+              base <<- c(base, bavg)
+              if (keystone::is_invalid(bavg))
+                bavg <- 0
+
+              r <- f %>% dplyr::mutate(!!series := round(.data[[series]] - bavg, digits)) %>%
+                dplyr::select(-month)
+
+              r
+            }, .keep = TRUE) %>%
+          dplyr::arrange(year, month) %>% dplyr::pull(series)
+
+        r
+      }, simplify = FALSE, .parallel = FALSE)
+  } else {
+    l <- keystone::psapply(get_climate_series_names(x, ...),
+      function(series)
+      {
+        f <- x %>% dplyr::select(year, !!series)
+        b <- f %>% dplyr::filter(year %in% baseline) %>% dplyr::pull(series)
+        bavg <- b %>% mean(na.rm = TRUE)
+        base <<- bavg
+        if (keystone::is_invalid(bavg))
+          bavg <- 0
+
+        r <- f %>% dplyr::mutate(!!series := round(.data[[series]] - bavg, digits)) %>%
+          dplyr::pull(series)
+
+        r
+      }, simplify = FALSE, .parallel = FALSE)
+  }
+
+  d <- x %>%
+    dplyr::select(get_climate_series_names(x, invert = FALSE, ...)) %>% tibble::as_tibble() %>%
+    dplyr::bind_cols(tibble::as_tibble(l))
+  attr(d, "baseline") <- baseline
+
+  if (return_baselines_only)
+    return (base)
+  else
+    return (d)
 }
 
 

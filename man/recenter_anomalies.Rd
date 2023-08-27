@@ -7,7 +7,7 @@
 recenter_anomalies(
   x,
   baseline = defaultBaseline,
-  digits = 4L,
+  digits = Inf,
   by_month = TRUE,
   return_baselines_only = FALSE,
   ...

@@ -51,7 +51,8 @@ defaultBaseline <- 1981:2010
 gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
 gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/"
-nceiGlobalMonthly <- sprintf("/all/1/1850-%s.csv", current_year); nceiUsMonthly <- "/all/1/1895-2100.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000"
+nceiGlobalMonthly <- sprintf("/all/1/1850-%s.csv", current_year)
+nceiUsMonthly <- sprintf("/all/1/1895-%s.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000", current_year)
 crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
@@ -207,9 +208,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
   `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/antarctica_mass_200204_202303.txt", type = "land ice"),
-  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/greenland_mass_200204_202303.txt", type = "land ice"),
-  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/ocean_mass_200204_202303.txt", type = "ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/antarctica_mass_200204_202305.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/greenland_mass_200204_202305.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/ocean_mass_200204_202305.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -381,6 +382,12 @@ data_urls <- c(list(
   `CSIRO Global Mean Sea Level` = list(path = "ftp://ftp.csiro.au/legresy/gmsl_files/CSIRO_Alt.csv", type = "sea level"), # Not updated monthly!
   `NOAA Global Mean Sea Level` = list(path = "https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_txj1j2_90.csv", type = "sea level"),
   `CSIRO Reconstructed Global Mean Sea Level` = list(path = "http://www.cmar.csiro.au/sealevel/downloads/church_white_gmsl_2011_up.zip", type = "sea level"),
+  ## https://data.aviso.altimetry.fr/aviso-gateway/data/indicators/msl/
+  #`AVISO Global Mean Sea Level` = list(path = "ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt", type = "sea level"),
+  `AVISO Global Mean Sea Level` = list(path = "https://data.aviso.altimetry.fr/aviso-gateway/data/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_NoAdjust_Filter2m_NRT.txt", type = "sea level"),
+  `AVISO Global Mean Sea Level (nonseasonal)` = list(path = "https://data.aviso.altimetry.fr/aviso-gateway/data/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m_NRT.txt", type = "sea level"),
+  ## Global average CO2 series:
+  # https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_gl.txt
   # ftp://podaac.jpl.nasa.gov/allData/merged_alt/L2/TP_J1_OSTM/global_mean_sea_level/GMSL_TPJAOS_V4_199209_201704.txt
   # ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt
   # https://www.star.nesdis.noaa.gov/sod/lsa/SeaLevelRise/slr/slr_sla_gbl_keep_all_66.csv

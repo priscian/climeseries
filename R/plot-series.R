@@ -101,6 +101,9 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     attr(y, "baseline") <- attr(x, "baseline")
   baseline <- attr(y, "baseline")
 
+  ## Save longer data set for possible autocorrelation correction
+  y_full_baselined <- rlang::duplicate(y, shallow = FALSE)
+
   ## Get date range of 'y' before it's converted to a yearly time series.
   if (!isAlreadyYearly) {
     flit <- window_ts(y, start, end, extend = TRUE)
@@ -330,10 +333,12 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (add) {
     plotSeries <- get_climate_series_names(w, conf_int = FALSE)
     for (i in seq_along(plotSeries))
-      lines(wz[, plotSeries[i]], type = type, col = col[i], lwd = lwd, bty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
+      lines(wz[, plotSeries[i]], type = type, col = col[i], lwd = lwd, bty = "n",
+        xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
   }
   else
-    plot(wz[, get_climate_series_names(w, conf_int = FALSE)], screens = 1L, plot.type = plot_type, type = type, col = col, lwd = lwd, bty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
+    plot(wz[, get_climate_series_names(w, conf_int = FALSE)], screens = 1L, plot.type = plot_type, type = type,
+      col = col, lwd = lwd, bty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
 
   #legend(x = "topleft", legend = series %_% ifelse(loess, " (+ LOESS)", ""), col = col, lwd = lwd, bty = "n", cex = 0.8)
   legendArgs <- list(
@@ -414,10 +419,16 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       trendArgs$m[[i]]$sdata <- trendArgs$data %>%
         dplyr::select(c(intersect(common_columns, colnames(trendArgs$data)), names(trendArgs$m)[i])) %>%
         dplyr::filter(yr_part >= trendArgs$m[[i]]$range[1] & yr_part <= trendArgs$m[[i]]$range[2])
-      trendArgs$m[[i]]$lm <- lm(eval(substitute(b ~ yr_part, list(b = as.symbol(names(trendArgs$m)[i])))), data = trendArgs$m[[i]]$sdata, x = TRUE)
+      trendArgs$m[[i]]$lm <- lm(eval(substitute(b ~ yr_part, list(b = as.symbol(names(trendArgs$m)[i])))),
+        data = trendArgs$m[[i]]$sdata, x = TRUE, y = TRUE)
       trendArgs$m[[i]]$change <- coef(trendArgs$m[[i]]$lm)[2] * diff(range(trendArgs$m[[i]]$lm$model[, 2]))
       trendArgs$m[[i]]$rate <- coef(trendArgs$m[[i]]$lm)[2] * trendArgs$trend_multiplier
       trendArgs$m[[i]]$rateText <- eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate))
+      trendArgs$m[[i]]$autocorrelation <- correct_monthly_autocorrelation(
+        xdata = y_full_baselined[, "yr_part"],
+        ydata = y_full_baselined[, names(trendArgs$m)[i]],
+        mod = trendArgs$m[[i]]$lm
+      )
     }
     if (trendArgs$sort_by_name)
       trendArgs$m <- trendArgs$m[sort(names(trendArgs$m))]
@@ -440,7 +451,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     }
 
     if (!is.null(trendArgs$legend_inset))
-      legend("bottomright", inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col), lwd = sapply(trendArgs$m, function(a) a$lwd), bty = "n", cex = 0.8)
+      legend("bottomright", inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col),
+        lwd = sapply(trendArgs$m, function(a) a$lwd), bty = "n", cex = 0.8)
 
     r$trend <<- trendArgs$m
   })

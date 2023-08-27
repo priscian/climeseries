@@ -21,7 +21,7 @@ An object of class \code{integer} of length 1.
 
 An object of class \code{integer} of length 1.
 
-An object of class \code{list} of length 298.
+An object of class \code{list} of length 302.
 
 An object of class \code{character} of length 4.
 }

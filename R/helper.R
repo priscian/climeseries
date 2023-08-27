@@ -316,7 +316,8 @@ remove_periodic_cycle <- function(
   keep_series = TRUE,
   keep_interpolated = FALSE,
   keep_loess = FALSE,
-  is_unc = FALSE, unc_suffix="_uncertainty", fit_unc = FALSE,
+  suffix = " (anomalies)",
+  is_unc = FALSE, unc_suffix = "_uncertainty", fit_unc = FALSE,
   ...
 )
 {
@@ -335,7 +336,7 @@ remove_periodic_cycle <- function(
   if (unwrap)
     d <- subset(d, na_unwrap(d[, series %_% ifelse(!is_unc, "", unc_suffix)]))
   if (is_unc && !fit_unc) {
-    d[[series %_% " (anomalies)" %_% unc_suffix]] <- d[[series %_% unc_suffix]]
+    d[[series %_% suffix %_% unc_suffix]] <- d[[series %_% unc_suffix]]
 
     return (d)
   }
@@ -373,9 +374,9 @@ remove_periodic_cycle <- function(
   uncycled <- d[[series %_% ifelse(!is_unc, "", unc_suffix)]] - predict(rfit)
 
   if (is.logical(center))
-    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center = center, scale = FALSE)[, 1]
+    d[[series %_% suffix %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center = center, scale = FALSE)[, 1]
   else
-    d[[series %_% " (anomalies)" %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm = TRUE)
+    d[[series %_% suffix %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm = TRUE)
 
   if (!keep_series)
     d[[series %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
@@ -2018,7 +2019,7 @@ create_timeseries_from_gridded <- function(
 create_zonal_data <- function(
   x, # series from call to 'get_climate_data()'
   sub_lat = c(-90, 90), sub_long = c(-180, 180),
-  what = c("hadcrut", "crutem", "cw", "be"),
+  what = c("hadcrut", "hadsst", "crutem", "cw", "be"),
   data_dir = getOption("climeseries_data_dir"),
   metadata = list( # Names should be same as 'what' options
     ## HadCRUT4 url: https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc
@@ -2026,6 +2027,11 @@ create_zonal_data <- function(
       url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc",
       tempvar = "tas_mean",
       series = "HadCRUT5"
+    ),
+    hadsst = list(
+      url = "https://www.metoffice.gov.uk/hadobs/hadsst4/data/netcdf/HadSST.4.0.1.0_median.nc",
+      tempvar = "tos",
+      series = "HadSST4"
     ),
     crutem = list(
       url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.1.0.anomalies.nc",
@@ -2075,6 +2081,7 @@ create_zonal_data <- function(
       filePath
     },
     hadcrut =,
+    hadsst =,
     crutem =,
     be = {
       if (!use_local || !file.exists(filePath))
@@ -2203,3 +2210,94 @@ read_cru_hemi <- function(filename)
   #
   return(hemi)
 }
+
+
+## Based on Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
+## V. http://www.ysbl.york.ac.uk/~cowtan/applets/trend/trend.js
+##   & http://www.ysbl.york.ac.uk/~cowtan/applets/trend/trendapp.js
+#' @export
+correct_monthly_autocorrelation <- function(
+  xdata,
+  ydata,
+  mod,
+  autocorrel_period = c(1980, 2010),
+  slope_coef = "yr_part"
+)
+{
+  ## Covariance with lag
+  autocovariance <- function(data, j)
+  {
+    n <- length(data); sx <- 0.0; cx <- 0.0
+    for (i in seq(n))
+      sx <- sx + data[i]
+    sx <- sx / n
+    for (i in seq(n - j))
+      cx <- cx + (data[i] - sx) * (data[i + j] - sx)
+
+    return (cx / n)
+  }
+
+  ## Degrees of freedom correction
+  data_per_degree_of_freedom <- function(xdata, ydata, autocorrel_period)
+  {
+    xy <- dataframe(xdata = xdata, ydata = ydata)
+    xyac <- xy %>%
+      dplyr::filter(xdata >= min(autocorrel_period) & xdata <= max(autocorrel_period))
+    mod_ac <- lm(ydata ~ xdata, data = xyac)
+    ## Redefine 'xdata' & 'ydata'
+    xdata <- xyac$xdata; ydata <- xyac$ydata
+    for (i in seq(length(xdata)))
+      ydata[i] <- ydata[i] - coefficients(mod_ac)["xdata"] * xdata[i]
+    cov_ <- autocovariance(ydata, 0)
+    rho1 <- autocovariance(ydata, 1) / cov_
+    rho2 <- autocovariance( ydata, 2 ) / cov_
+
+    return (1.0 + (2.0 * rho1) / (1.0 - rho2/rho1))
+  }
+
+  ## Correct t-stat & p-value
+  correct_stats <- function(mod, nu, slope_coef)
+  {
+    Qr <- stats:::qr.lm(mod)
+    p <- mod$rank
+    p1 <- 1L:p
+    R <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
+    r <- mod$residuals
+    rss <- sum(r^2)
+    rdf <- mod$df.residual
+    resvar <- rss/rdf
+    se <- sqrt(diag(R) * resvar)
+    est <- mod$coefficients[Qr$pivot[p1]]
+    tval <- est/se
+    sigma_w <- se[names(est) == slope_coef]
+    sigma_c <- sigma_w * sqrt(nu)
+    tval_corrected <- est[slope_coef]/(sigma_c)
+    `Pr(>|t|)` <- 2 * pt(abs(tval), rdf, lower.tail = FALSE)
+    `Pr(>|t|) corrected` <- 2 * pt(abs(tval_corrected), rdf, lower.tail = FALSE)
+
+    list(
+      sigma_w = sigma_w,
+      tval = tval[slope_coef], pval = `Pr(>|t|)`[slope_coef],
+      sigma_c = sigma_c,
+      tval_corrected = tval_corrected, pval_corrected = `Pr(>|t|) corrected`,
+      nu = nu
+    )
+  }
+
+  nu <- data_per_degree_of_freedom(xdata, ydata, autocorrel_period)
+  cs <- correct_stats(mod, nu, slope_coef)
+
+  c(
+    cs,
+    decadal_slope = (10 * coefficients(mod)[slope_coef]) %>% as.vector,
+    decadal_2sigma = 2 * 10 * cs$sigma_c,
+    use.names = TRUE
+  )
+}
+
+## usage:
+# d <- get_climate_data(download = FALSE, baseline = TRUE)
+# series <- "GISTEMP v4 Global"
+# r <- plot_climate_data(d, series, 1970, 2020.99, trend = TRUE, save_png = FALSE)
+# lmod <- r$trend[[series]]$lm
+# correct_monthly_autocorrelation(lmod$x[, "yr_part"], lmod$y, lmod)

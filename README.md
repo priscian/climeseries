@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20230612.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20230827.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -48,13 +48,13 @@ inst0[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
   "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
-  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Sea Surface Global",
+  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Surface Air Global",
   "RATPAC-A Surface GLOBE", airs_series)
 inst <- inst0 %>%
   dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
   recenter_anomalies(baseline = baseline, keep = series, skip = "AIRS v7 Global")
 ## N.B. Don't rebaseline here!
-plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 1, ylim = c(-1.0, 1.0), save_png = FALSE)
+plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 2, ylim = c(-1.0, 1.0), save_png = FALSE)
 ```
 
 ![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-recent_yearly_baseline1981-2010.png)
@@ -114,7 +114,7 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = NULL, star
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
   "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
-  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Sea Surface Global")
+  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Surface Air Global")
 start <- 1970; end <- NULL
 g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
@@ -187,7 +187,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20230612.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20230827.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -259,6 +259,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. AIRS v7 Zonal 90S-64S
 1. Antarctica Land Ice Mass Variation
 1. Antarctica Land Ice Mass Variation_uncertainty
+1. AVISO Global Mean Sea Level
+1. AVISO Global Mean Sea Level (nonseasonal)
 1. BEST Antarctica
 1. BEST Antarctica_uncertainty
 1. BEST Global (Air Ice Temp.)
@@ -1156,6 +1158,11 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. STAR v5.0 TLS SH
 1. STAR v5.0 TLS Global Land
 1. STAR v5.0 TLS Global Ocean
+1. STAR v5.0 TLT Global Mean
+1. STAR v5.0 TLT NH
+1. STAR v5.0 TLT SH
+1. STAR v5.0 TLT Global Land
+1. STAR v5.0 TLT Global Ocean
 1. STAR v5.0 TMT Global Mean
 1. STAR v5.0 TMT NH
 1. STAR v5.0 TMT SH
@@ -1166,11 +1173,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. STAR v5.0 TUT SH
 1. STAR v5.0 TUT Global Land
 1. STAR v5.0 TUT Global Ocean
-1. STAR v5.0 TLT Global Mean
-1. STAR v5.0 TLT NH
-1. STAR v5.0 TLT SH
-1. STAR v5.0 TLT Global Land
-1. STAR v5.0 TLT Global Ocean
 1. STAR v5.0 TTT Global Mean
 1. STAR v5.0 TTT NH
 1. STAR v5.0 TTT SH

@@ -727,25 +727,31 @@ LOESS <- function(
 )
 {
   ## See equivalent code in 'stats::loess()' to create data frame from 'formula':
-  mf <- match.call(expand.dots = FALSE)
-  mf$span <- mf$plot <- mf$optimize_span... <- mf$... <- NULL
-  mf[[1L]] <- quote(stats::model.frame)
-  mf <- eval(mf, parent.frame())
+  # mf <- match.call(expand.dots = FALSE)
+  # mf$span <- mf$plot <- mf$optimize_span... <- mf$... <- NULL
+  # mf[[1L]] <- quote(stats::model.frame)
+  # mf <- eval(mf, parent.frame())
 
   opt.span <- optimize_span %>% `environment<-`(environment()) # Otherwise 'stats::optimize()' fails
   form <- formula
   # form <- formula %>% `environment<-`(environment()) # Allows use of e.g. 'stats::model.frame()'
 
+  if (missing(data))
+    data <- NULL
+
   if (is.null(span)) {
     optimize_spanArgs <- list(
-      model = stats::loess(formula = form, data = mf, ...)
+      model = stats::loess(formula = form, data = data, ...)
     )
     optimize_spanArgs <- utils::modifyList(optimize_spanArgs, optimize_span..., keep.null = TRUE)
 
     span <- do.call(opt.span, optimize_spanArgs)
   }
 
-  mod <- stats::loess(formula = form, data = mf, span = span, ...)
+  ## 'mf' replaces calculations above:
+  if (plot)
+    mf <- stats::loess(formula = form, data = data, span = span, method = "model.frame", ...)
+  mod <- stats::loess(formula = form, data = data, span = span, ...)
 
   if (plot) { ## Adapted from 'fANCOVA::loess.as()'
     x <- mod$x

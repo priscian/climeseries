@@ -347,6 +347,42 @@ get_series_from_ghcn_gridded <- function(
 
 
 #' @export
+make_coverage_filter <- function(
+  ghcn,
+  coverage_years = NULL,
+  min_nonmissing_months = 12, # 12 for no missings
+  min_nonmissing_years_prop = 0.9 # 1.0 for no missings
+)
+{
+  ## Default:
+  meets_filter_criteria <-
+    structure(rep(TRUE, length(get_climate_series_names(ghcn))),
+      .Names = get_climate_series_names(ghcn))
+
+  if (!is.null(coverage_years)) {
+    min_nonmissing_years <- round(length(coverage_years) * min_nonmissing_years_prop)
+
+    flit <- ghcn %>%
+      dplyr::filter(year %in% coverage_years)
+
+    meets_filter_criteria <- Reduce(rbind, by(flit[, get_climate_series_names(flit)], flit$year,
+      function(i)
+      {
+        (!(is.na(i))) %>% colSums(na.rm = TRUE)
+      })) %>% (function(x) { rownames(x) <- NULL; x }) %>%
+      (function(x)
+      {
+        if (!is.matrix(x)) x <- t(x)
+        (x >= min_nonmissing_months) %>%
+          colSums(na.rm = TRUE) >= min_nonmissing_years
+      })
+  }
+
+  meets_filter_criteria
+}
+
+
+#' @export
 make_ghcn_temperature_series <- function(
   ghcn, # GHCN station data in climeseries format
   station_metadata,
@@ -360,13 +396,19 @@ make_ghcn_temperature_series <- function(
   min_nonmissing_years = round(length(baseline) * 0.5), # Over baseline period
   make_planetary_grid... = list(),
   use_lat_zonal_weights = FALSE,
-  uncertainty = TRUE, boot_seed = 666, boot... = list(),
+  uncertainty = TRUE,
+  boot... = list(), boot_seed = 666, # Set 'boot_seed = NULL' to turn off bootstrap uncertainty calcs
   round_to_nearest = NULL, # NULL or ±a, where 'a' describes dist'n U(-a, +a),
   runif_seed = 666, use_runif = TRUE, # Use 'stats::runif()' instead of rounding when SD close to error range
+  rnorm_seed = 666, rnorm_sd = NULL, # if not NULL, add 'stats::rnorm(sd = rnorm_sd)' to station temps
   spreadsheet_path = NULL, # Set equal to a file path to make an Excel spreadsheet from the data
   use_weighted_median = FALSE
 )
 {
+  tictoc::tic("'make_ghcn_temperature_series()'")
+
+  tictoc::tic("Prelims")
+
   ver <- attr(station_metadata, "version")
   temp_type <- attr(station_metadata, "temperature")
   quality <- attr(station_metadata, "quality")
@@ -412,21 +454,35 @@ make_ghcn_temperature_series <- function(
 
   ## N.B. Probably best to add uniform random noise here.
   if (!is.null(round_to_nearest)) {
+    set.seed(runif_seed)
     g <- g %>%
-      dplyr::mutate_at(dplyr::vars(get_climate_series_names(.)),
+      #dplyr::mutate_at(dplyr::vars(get_climate_series_names(.)), # 'dplyr::mutate_at()' lifecycle superseded
+      dplyr::mutate(across(all_of(get_climate_series_names(.)),
         function(tt) {
           if (use_runif) {
-            set.seed(runif_seed)
-
             tt + stats::runif(length(tt), -abs(round_to_nearest), abs(round_to_nearest))
           } else {
             2 * round_to_nearest * round(tt/(2 * round_to_nearest))
           }
-        })
+        }))
+  }
+
+  if (!is.null(rnorm_sd)) {
+    set.seed(rnorm_seed)
+    g <- g %>%
+      #dplyr::mutate_at(dplyr::vars(get_climate_series_names(.)), # 'dplyr::mutate_at()' lifecycle superseded
+      dplyr::mutate(across(all_of(get_climate_series_names(.)),
+        function(tt) {
+          tt + stats::rnorm(length(tt), mean = 0, sd = rnorm_sd)
+        }))
   }
 
   if (!is.null(baseline))
     g <- recenter_anomalies(g, baseline = baseline)
+
+  tictoc::toc() # Prelims
+
+  tictoc::tic("Fill planetary grid w/ station data")
 
   ### Create planetary grid of (grid_size[1])° × (grid_size[2])° squares and bin temp values in the correct square.
 
@@ -491,6 +547,10 @@ make_ghcn_temperature_series <- function(
     })
   plyr::l_ply(seq_along(r), function(i) if (!is.null(r[[i]])) r[[i]] <<- structure(dataframe(r[[i]]), .Names = dimnames(p)[[1]][i]))
 
+  tictoc::toc() # Fill planetary grid w/ station data
+
+  tictoc::tic("Calculate weighted-mean time series")
+
   rr <- purrr::reduce(r %>% purrr::compact(), cbind) %>% data.matrix
 
   ### Now handle both latitude weights & (potentially) zonal-latitude weights.
@@ -523,11 +583,18 @@ make_ghcn_temperature_series <- function(
 
   gg <- g[, c("year", "month")] %>% dplyr::mutate(!!series_name := rrr)
 
+  tictoc::toc() # Calculate weighted-mean time series
+
   station_weights <- weighted_station_data <- unweighted_station_data <- NULL
+
+  tictoc::tic("Calculate uncertainty (CLT & bootstrap) at each time point")
+
   if (uncertainty) local({
     d <- sapply(t(p0), function(a) { if (is.data.frame(a[[1]])) return(a[[1]]); NULL }, simplify = FALSE) %>% purrr::compact() %>% purrr::reduce(dplyr::bind_cols) %>% data.matrix
 
     wc <- apply(p0, 1, function(a) sapply(a, function(b) { if (is.data.frame(b[[1]])) return (rep(1, NCOL(b[[1]]))/NCOL(b[[1]])); NULL }, simplify = FALSE)) %>% unlist %>% as.vector
+
+    tictoc::tic("flit1")
 
     flit1 <- apply(p0, 1, function(a) { sapply(a, function(b) { if (is.data.frame(b[[1]])) { apply(b[[1]], 1, function(bb) { r <- bb; r[!is.na(r)] <- 1; r/sum(r, na.rm = TRUE) }) } }, simplify = FALSE) %>% purrr::compact() }) %>% purrr::compact(); names(flit1) <- colnames(rr)
     flit1a <- rapply(flit1, function(a) { if (!is.matrix(a)) return (as.matrix(a)); t(a) }, how = "replace")
@@ -538,10 +605,18 @@ make_ghcn_temperature_series <- function(
     flit1c <- rapply(flit1a, function(a) { a[!is.na(a)] <- 1; a }, how = "replace")
     ## flit1c: List w/ elms for all non-empty cells by lat; each leaf elm contains matrix of all time points × all stations for that cell, 1 for non-missing.
 
+    tictoc::toc() # flit1
+
+    tictoc::tic("Weights based on the no. of stations in a cell")
+
     ####################
     ##### Weights based on the no. of stations in a cell:
     ####################
     wc1 <- purrr::reduce(flit1b, cbind) %>% data.matrix; colnames(wc1) <- NULL
+    # wc1 <- flit1b[[1]]
+    # if (length(flit1b) > 1)
+    #   plyr::l_ply(flit1b[2:length(flit1b)], function(a) wctest <<- cbind(wctest, a))
+    # colnames(wc1) <- NULL
     # apply(wc1, 2, min, na.rm = TRUE) == wc %>% as.vector
 
     ## Assume that latitude weights are same for all longitudes.
@@ -560,6 +635,10 @@ make_ghcn_temperature_series <- function(
     ## flit2a: List w/ elms for all non-empty latitudes; each elm contains matrix of all time points × all stations for that lat, 1 for non-missing.
     # sapply(flit2a, NCOL) %>% sum # Total no. of stations
     i <- 0; flit2b <- sapply(flit2a, function(a) { i <<- i + 1; r <- apply(a, 1, function(b) { (wl[i] * b)/sum(b, na.rm = TRUE) }); if (is.null(dim(r))) return (as.matrix(r)); t(r) }, simplify = FALSE)
+
+    tictoc::toc() # Weights based on the no. of stations in a cell
+
+    tictoc::tic("Weights based on differing no. of non-empty cells for each latitude")
 
     ####################
     ##### Weights based on differing no. of non-empty cells for each latitude:
@@ -581,6 +660,10 @@ make_ghcn_temperature_series <- function(
     flit3a <- sapply(seq_along(lat_cell_counts1), function(i) { r <- lat_cell_counts1[[i]]/sum_lat_cell_counts1; is.na(r) <- is.nan(r); rr <- matrix(rep(r, lat_station_counts[i]), ncol = lat_station_counts[i], byrow = FALSE)/lat_station_counts1[[i]]; is.na(rr) <- is.nan(rr); rr }, simplify = FALSE)
     lat_observations_weights1 <- Reduce(cbind, flit3a) %>% data.matrix; colnames(lat_observations_weights1) <- NULL
 
+    tictoc::toc() # Weights based on differing no. of non-empty cells for each latitude
+
+    tictoc::tic("Weights based on differing no. of non-empty cells & stations for each latitude")
+
     ####################
     ##### Weights based on differing no. of non-empty cells & stations for each latitude:
     ####################
@@ -591,6 +674,10 @@ make_ghcn_temperature_series <- function(
       { i <- 0; dd <- apply(d, 1, function(a) { i <<- i + 1; stats::weighted.mean(a, w = w[i, ], na.rm = TRUE) }); is.na(dd) <- is.nan(dd) }
     else
       { i <- 0; dd <- apply(d, 1, function(a) { i <<- i + 1; matrixStats::weightedMedian(a, w = w[i, ], na.rm = TRUE) }); is.na(dd) <- is.nan(dd) }
+
+    tictoc::toc() # Weights based on differing no. of non-empty cells & stations for each latitude
+
+    tictoc::tic("Check staged-averaged series against weighted-average series")
 
     ## Test to make sure the series resulting from 'd' looks correct.
     ddd <- cbind(attr(p0, "time_coverage"), GHCN_orig = rrr, GHCN = dd)
@@ -607,42 +694,85 @@ make_ghcn_temperature_series <- function(
     ## all.equal(dd, rowMeans(h, na.rm = TRUE)) # TRUE, only off by very small tolerance
     station_weights <<- w; unweighted_station_data <<- as.data.frame(ggg); weighted_station_data <<- as.data.frame(h)
 
-    ## V. https://stats.idre.ucla.edu/r/faq/how-can-i-generate-bootstrap-statistics-in-r/
-    bf <- function(x, i)
-    {
-      r <- mean(x[i], na.rm = TRUE)
-      is.na(r) <- is.nan(r)
+    #browser()
+    ### Leave some more checks of the data here for debugging:
 
-      r
+    if (FALSE) {
+      ## Unweighted station anomalies
+      usa <- dplyr::bind_cols(dplyr::select(g, year, month),
+        unweighted_station_data[, colnames(unweighted_station_data), drop = FALSE]) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month") %>%
+        as.data.frame
+      usa$unweighted_avg <- apply(usa[, -(1:3)], 1, mean, na.rm = TRUE)
+      ## Check series visually:
+      plot_climate_data(usa, series = "unweighted_avg", 1880, yearly = TRUE, conf_int = TRUE, lwd = 2, save_png = FALSE)
+
+      ## Weighted station anomalies (from the staged & weighted analyses above)
+      plot_climate_data(e, series = c("GHCN_orig", "GHCN"), 1880, yearly = TRUE, baseline = baseline,
+        conf_int = FALSE, lwd = 1, ylim = NULL, save_png = FALSE) # Definitely correct; see calcs for 'GHCN = dd' above
+
+      ## Weighted station anomalies (from 'weighted_station_data')
+      wsa <- dplyr::bind_cols(dplyr::select(g, year, month),
+        weighted_station_data[, colnames(station_weights), drop = FALSE]) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month") %>%
+        as.data.frame
+      wsa$weighted_avg <- apply(wsa[, -(1:3)], 1, mean, na.rm = TRUE)
+      ## Check series visually:
+      plot_climate_data(wsa, series = "weighted_avg", 1880, yearly = TRUE, conf_int = TRUE, lwd = 2, save_png = FALSE)
+
+      ### N.B. Okay, these all check out, & should be directly comparable to the spreadsheet data sets.
     }
 
-    bootArgs <- list(
-      statistic = bf,
-      R = 100
-    )
-    bootArgs <- utils::modifyList(bootArgs, boot..., keep.null = TRUE)
+    tictoc::toc() # Check staged-averaged series against weighted-average series
 
-    set.seed(boot_seed)
-    b <- apply(h, 1, function(a) { bootArgs$data <- a; do.call(boot::boot, bootArgs) })
+    tictoc::tic("CLT- & bootstrap uncertainties")
 
-    GHCN_uncertainty <- sapply(b,
-      function(a)
+    if (!is.null(boot_seed)) {
+      ## V. https://stats.idre.ucla.edu/r/faq/how-can-i-generate-bootstrap-statistics-in-r/
+      bf <- function(x, i)
       {
-        tryCatch({
-          #diff(boot::boot.ci(a, type = "norm")$normal[1, ][2:3])
-          diff(boot::boot.ci(a, type = "basic")$basic[1, ][4:5])
-        }, error = function(e) NA)
-      }) %>% as.vector
+        r <- mean(x[i], na.rm = TRUE)
+        is.na(r) <- is.nan(r)
+
+        r
+      }
+
+      bootArgs <- list(
+        statistic = bf,
+        R = 100
+      )
+      bootArgs <- utils::modifyList(bootArgs, boot..., keep.null = TRUE)
+
+      set.seed(boot_seed)
+      b <- apply(h, 1, function(a) { bootArgs$data <- a; do.call(boot::boot, bootArgs) })
+
+      GHCN_uncertainty <- sapply(b,
+        function(a)
+        {
+          tryCatch({
+            #diff(boot::boot.ci(a, type = "norm")$normal[1, ][2:3])
+            diff(boot::boot.ci(a, type = "basic")$basic[1, ][4:5])
+          }, error = function(e) NA)
+        }) %>% as.vector
+
+      gg[[series_name %_% "_uncertainty_boot"]] <<- GHCN_uncertainty
+    }
 
     ## CIs based on the CLT:
-    GHCN_uncertainty_clt <- sapply(b, function(a) sd(a$data, na.rm = TRUE)/sqrt(sum(!is.na(a$data)))) * 2 * 1.96
+    #GHCN_uncertainty_clt <- sapply(b, function(a) sd(a$data, na.rm = TRUE)/sqrt(sum(!is.na(a$data)))) * 2 * 1.96
+    GHCN_uncertainty_clt <- apply(h, 1, function(a) { sd(a, na.rm = TRUE)/sqrt(sum(!is.na(a))) }) * 2 * 1.96
+
+    tictoc::toc() # CLT- & bootstrap uncertainties
 
     gg[[series_name %_% "_uncertainty"]] <<- GHCN_uncertainty_clt
-    gg[[series_name %_% "_uncertainty_boot"]] <<- GHCN_uncertainty
   })
+
+  tictoc::toc() # Calculate uncertainty (CLT & bootstrap) at each time point
 
   attr(gg, "planetary_grid") <- p0
   attr(gg, "filters") <- filters
+
+  tictoc::tic("Build spreadsheets")
 
   if (!is.null(spreadsheet_path)) {
     if (!dir.exists(dirname(spreadsheet_path)))
@@ -654,21 +784,21 @@ make_ghcn_temperature_series <- function(
     str_baseline <- stringr::str_flatten(range(baseline), collapse = "-")
 
     l <- list(
-      `station-data` = ghcn %>% dplyr::select(c("month", "year", "yr_part", get_climate_series_names(.))),
+      `station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.))),
       `station-metadata` = station_metadata
     )
-    l[["stations_regional_base" %_% str_baseline]] <- g %>% dplyr::select(c("month", "year", "yr_part", get_climate_series_names(.)))
+    l[["stations_regional_base" %_% str_baseline]] <- g %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.)))
     l[["cell-counts" %_% stringr::str_flatten(sprintf("%.1f", attr(p0, "grid_size")), collapse = "x")]] <-
       structure(sapply(p0, function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p0), .Dimnames = dimnames(p0))
     if (!is.null(unweighted_station_data)) {
       l[["unweight-stations_base" %_% str_baseline]] <-
-        dplyr::bind_cols(dplyr::select(g, c("month", "year", "yr_part")), unweighted_station_data[, colnames(unweighted_station_data), drop = FALSE])
+        dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")), unweighted_station_data[, colnames(unweighted_station_data), drop = FALSE])
     }
     if (!is.null(station_weights))
       l$`all-weights` <- station_weights
     if (!is.null(weighted_station_data)) {
       l[["weighted-stations_base" %_% str_baseline]] <-
-        dplyr::bind_cols(dplyr::select(g, c("month", "year", "yr_part")), weighted_station_data[, colnames(station_weights), drop = FALSE])
+        dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")), weighted_station_data[, colnames(station_weights), drop = FALSE])
     }
     l[["timeseries_base" %_% str_baseline]] <- gg %>% tibble::add_column(yr_part = .$year + (2 * .$month - 1)/24, .after = "month")
 
@@ -686,6 +816,10 @@ make_ghcn_temperature_series <- function(
 
     cat(". Done.", fill = TRUE); utils::flush.console()
   }
+
+  tictoc::toc() # Build spreadsheets
+
+  tictoc::toc() # 'make_ghcn_temperature_series()'
 
   gg
 }
