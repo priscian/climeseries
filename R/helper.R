@@ -2221,12 +2221,16 @@ correct_monthly_autocorrelation <- function(
   ydata,
   mod,
   autocorrel_period = c(1980, 2010),
-  slope_coef = "yr_part"
+  slope_coef = "yr_part",
+  remove_missings = TRUE
 )
 {
   ## Covariance with lag
-  autocovariance <- function(data, j)
+  autocovariance <- function(data, j, remove_missings)
   {
+    if (remove_missings)
+      data <- data[!is.na(data)]
+
     n <- length(data); sx <- 0.0; cx <- 0.0
     for (i in seq(n))
       sx <- sx + data[i]
@@ -2248,9 +2252,9 @@ correct_monthly_autocorrelation <- function(
     xdata <- xyac$xdata; ydata <- xyac$ydata
     for (i in seq(length(xdata)))
       ydata[i] <- ydata[i] - coefficients(mod_ac)["xdata"] * xdata[i]
-    cov_ <- autocovariance(ydata, 0)
-    rho1 <- autocovariance(ydata, 1) / cov_
-    rho2 <- autocovariance( ydata, 2 ) / cov_
+    cov_ <- autocovariance(ydata, 0, remove_missings = remove_missings)
+    rho1 <- autocovariance(ydata, 1, remove_missings = remove_missings) / cov_
+    rho2 <- autocovariance(ydata, 2, remove_missings = remove_missings) / cov_
 
     return (1.0 + (2.0 * rho1) / (1.0 - rho2/rho1))
   }

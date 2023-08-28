@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.9, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.9, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), print_trend_ci = TRUE, trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -393,10 +393,13 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       lwd = trend_lwd,
       legend_inset = trend_legend_inset,
       trend_multiplier = 10,
-      rate_expression = sprintf("expression(Delta ~ \"= %%+1.2f %s/dec.\")", unit),
+      rate_expression = sprintf("expression(Delta ~ \"= %%+%s ± %%%s %s/dec.\")", trend_format, trend_format, unit),
       keep_default_trends = TRUE,
       sort_by_name = FALSE
     )
+    if (!print_trend_ci) {
+      trendArgs$rate_expression <- sprintf("expression(Delta ~ \"= %%+%s %s/dec.\")", trend_format, unit)
+    }
     if (!is_invalid(trend...$keep_default_trends))
       trendArgs$keep_default_trends <- trend...$keep_default_trends
     if (trendArgs$keep_default_trends) {
@@ -423,12 +426,16 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         data = trendArgs$m[[i]]$sdata, x = TRUE, y = TRUE)
       trendArgs$m[[i]]$change <- coef(trendArgs$m[[i]]$lm)[2] * diff(range(trendArgs$m[[i]]$lm$model[, 2]))
       trendArgs$m[[i]]$rate <- coef(trendArgs$m[[i]]$lm)[2] * trendArgs$trend_multiplier
-      trendArgs$m[[i]]$rateText <- eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate))
       trendArgs$m[[i]]$autocorrelation <- correct_monthly_autocorrelation(
         xdata = y_full_baselined[, "yr_part"],
         ydata = y_full_baselined[, names(trendArgs$m)[i]],
         mod = trendArgs$m[[i]]$lm
       )
+      if (!print_trend_ci)
+        trendArgs$m[[i]]$rateText <- eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate))
+      else
+        trendArgs$m[[i]]$rateText <-
+          eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate, trendArgs$m[[i]]$autocorrelation$decadal_2sigma))
     }
     if (trendArgs$sort_by_name)
       trendArgs$m <- trendArgs$m[sort(names(trendArgs$m))]

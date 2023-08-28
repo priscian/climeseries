@@ -336,9 +336,9 @@ get_series_from_ghcn_gridded <- function(
     #ghcn <- dplyr::bind_cols(y, as.data.frame(ghcn))
 
     save(list = c("station_metadata", "station_data", "station_data_list", "ghcn"), file = rdata_filepath)
-  } else {
-    load(rdata_filepath, envir = load_env)
   }
+
+  load(rdata_filepath, envir = load_env)
 
   tictoc::toc()
 
