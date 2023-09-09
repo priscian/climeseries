@@ -12,9 +12,11 @@ make_planetary_grid <- function(
   use_lat_zonal_weights = TRUE,
   lat_zonal_weights =
     list(
-      list(range = c(90, 23.6), weight = 0.3),
-      list(range = c(23.6, -23.6), weight = 0.4),
-      list(range = c(-23.6, -90), weight = 0.3)
+      # list(range = c(90, 23.6), weight = 0.3),
+      # list(range = c(23.6, -23.6), weight = 0.4),
+      # list(range = c(-23.6, -90), weight = 0.3)
+      list(range = c(90, 0.1), weight = 0.68),
+      list(range = c(-0.1, -90), weight = 0.32)
     )
 )
 {
@@ -146,7 +148,8 @@ get_series_from_ghcn_gridded <- function(
   files = list(
     v2 = list(
       #base_url = "https://web.archive.org/web/19970808013347if_/http://www.ncdc.noaa.gov:80/pub/data/ghcn/v2/", # 14 May 1997
-      base_url = "https://web.archive.org/web/20030124203721if_/http://www1.ncdc.noaa.gov:80/pub/data/ghcn/v2", # 10 Jan 2003
+      #base_url = "https://web.archive.org/web/20030124203721if_/http://www1.ncdc.noaa.gov:80/pub/data/ghcn/v2", # 10 Jan 2003
+      base_url = "https://web.archive.org/web/20080618162036/http://www1.ncdc.noaa.gov/pub/data/ghcn/v2", # 18 Jun 2008
       archive = "v2.%s%s.Z",
       countries = "v2.country.codes",
       readme = "readme.temperature.Z",
@@ -263,33 +266,56 @@ get_series_from_ghcn_gridded <- function(
 
   rdata_filepath <- paste(dataDir, tools::file_path_sans_ext(sprintf(fileStrings$archive, temp, quality), compression = TRUE) %_% ".RData", sep = "/")
 
-  #browser()
   if (download) {
     ## Station metadata
-    stationFormat <- c(11, -1, 8, -1, 9, -1, 6, -1, 30, -1, 4, 1, 5, 2, 2, 2, 2, 1, 2, 16, 1)
-    station_metadata <- read.fwf(inv, widths = stationFormat, comment.char = "", stringsAsFactors = FALSE)
-    stationCols <- read.table(text = '
-      ID
-      LATITUDE
-      LONGITUDE
-      STNELEV
-      NAME
-      GRELEV
-      POPCLS
-      POPSIZ
-      TOPO
-      STVEG
-      STLOC
-      OCNDIS
-      AIRSTN
-      TOWNDIS
-      GRVEG
-      POPCSS
-    ', header = FALSE, stringsAsFactors = FALSE)[[1]] %>% tolower()
-    colnames(station_metadata) <- stationCols
-
+    if (v == 2) {
+      stationCols <- read.table(text = '
+        ID
+        NAME
+        LATITUDE
+        LONGITUDE
+        STNELEV
+        GRELEV
+        POPCLS
+        POPSIZ
+        TOPO
+        STVEG
+        STLOC
+        OCNDIS
+        AIRSTN
+        TOWNDIS
+        GRVEG
+        POPCSS
+      ', header = FALSE, stringsAsFactors = FALSE)[[1]] %>% tolower()
+      stationFormat <- c(11 + 1, 30 + 1, 6 + 1, 7 + 1, 4 + 1, 4, 1, 5, 2, 2, 2, 2, 1, 2, 16, 1)
+      station_metadata <- readr::read_fwf(inv, col_positions = readr::fwf_widths(stationFormat), skip = 0L) %>%
+        `colnames<-`(stationCols) %>% as.data.frame
+    } else {
+      stationCols <- read.table(text = '
+        ID
+        LATITUDE
+        LONGITUDE
+        STNELEV
+        NAME
+        GRELEV
+        POPCLS
+        POPSIZ
+        TOPO
+        STVEG
+        STLOC
+        OCNDIS
+        AIRSTN
+        TOWNDIS
+        GRVEG
+        POPCSS
+      ', header = FALSE, stringsAsFactors = FALSE)[[1]] %>% tolower()
+      stationFormat <- c(11, -1, 8, -1, 9, -1, 6, -1, 30, -1, 4, 1, 5, 2, 2, 2, 2, 1, 2, 16, 1)
+      station_metadata <- read.fwf(inv, widths = stationFormat, comment.char = "", stringsAsFactors = FALSE)
+      colnames(station_metadata) <- stationCols
+    }
     if (v == 4)
       station_metadata <- station_metadata %>% dplyr::select(1:5)
+
     attr(station_metadata, "version") <- v
     attr(station_metadata, "temperature") <- temp
     attr(station_metadata, "quality") <- quality
@@ -297,9 +323,21 @@ get_series_from_ghcn_gridded <- function(
 
     ### Station data
 
-    dataFormat <- c(11, 4, 4, rep(c(5, 1, 1, 1), 12))
-    station_data <- read.fwf(dat, widths = dataFormat, comment.char = "", na.strings = na_strings, stringsAsFactors = FALSE, n = -1)
-    dataNames <- c("id", "year", "element", apply(expand.grid(c("value", "dmflag", "qcflag", "dsflag"), 1:12), 1, function(i) paste(trimws(i), collapse = "")))
+    if (v == 2) {
+      dataFormat <- c(11, 1, 4, rep(c(5), 12))
+      station_data <- readr::read_fwf(dat, col_positions = readr::fwf_widths(dataFormat), skip = 0L, na = na_strings) %>%
+        as.data.frame
+      dataNames <- c("id", "duplicate", "year", apply(expand.grid(c("value"), 1:12), 1,
+        function(i) paste(trimws(i), collapse = "")))
+      pivot_re <- "^(value)"
+    } else {
+      dataFormat <- c(11, 4, 4, rep(c(5, 1, 1, 1), 12))
+      station_data <-
+        read.fwf(dat, widths = dataFormat, comment.char = "", na.strings = na_strings, stringsAsFactors = FALSE, n = -1)
+      dataNames <- c("id", "year", "element", apply(expand.grid(c("value", "dmflag", "qcflag", "dsflag"), 1:12), 1,
+        function(i) paste(trimws(i), collapse = "")))
+      pivot_re <- "^(value|dmflag|qcflag|dsflag)"
+    }
     colnames(station_data) <- dataNames
 
     station_data_list <- station_data %>%
@@ -308,7 +346,7 @@ get_series_from_ghcn_gridded <- function(
         function(x, y)
         {
           xx <- x %>% tidyr::pivot_longer(
-            cols = dplyr::matches("^(value|dmflag|qcflag|dsflag)"),
+            cols = dplyr::matches(pivot_re),
             names_to = c(".value", "month"),
             names_pattern = "(.*?)(\\d+)"
           )
@@ -327,6 +365,36 @@ get_series_from_ghcn_gridded <- function(
     ghcn <- sapply(station_data_list,
       function(i)
       {
+        ## For V2, follow merging algorithm described in §3.1 of https://dx.doi.org/10.1029/2011JD016187
+        if (v == 2) {
+          ## Multiple replacement in R:
+          ## https://stackoverflow.com/questions/16228160/multiple-replacement-in-r/16228315#16228315
+          ii <- i
+          dup_order <- by(ii$duplicate, ii$duplicate, length) %>% { structure(order(.), .Names = names(.)) }
+          ii$duplicate <- ii$duplicate %>% { c(dup_order, .)[match(., c(names(dup_order), .))] } %>% as.vector
+          pivotHasListWarning <- tryCatch({
+            ii %<>% tidyr::pivot_wider(names_from = duplicate, values_from = value, names_prefix = "value_", names_sort = TRUE)
+
+            FALSE
+          }, warning = function(e) { stringr::str_detect(e$message, "output will contain list-cols") })
+          if (pivotHasListWarning) { # I.e. series has duplicate dates not correctly labeled
+            i <- data.table::data.table(ii)[, lapply(.SD, mean, na.rm = TRUE),
+              by = .(year, month), .SDcols = c("value")] %>%
+              tibble::as_tibble()
+            is.na(i$value) <- is.nan(i$value)
+          } else {
+            tt <- rep(NA_real_, NROW(ii))
+            plyr::l_ply(names(ii) %>% stringr::str_subset("^value_"),
+              function(a)
+              {
+                mask <- keystone::na_unwrap(ii[[a]])
+                tt[mask] <<- ii[[a]][mask]
+              })
+
+            i <- ii %>% dplyr::select(year, month) %>% dplyr::mutate(value = tt)
+          }
+        }
+
         merge(flit, i[, c("year", "month", "value")], by = c("year", "month"), all = TRUE)[[3]] / divide_by
       }, simplify = TRUE)
     colnames(ghcn) <- station_names
@@ -388,7 +456,7 @@ make_ghcn_temperature_series <- function(
   station_metadata,
   series_name,
   other_filters = rep(TRUE, length(get_climate_series_names(ghcn))), # Other filters for station selection
-  grid_size = c(30.0, 30.0),
+  grid_size = c(5.0, 5.0),
   baseline = 1951:1980,
   lat_range = c(90, -90), long_range = c(-180, 180), # Default global coverage
   interpolate = FALSE,
@@ -424,7 +492,7 @@ make_ghcn_temperature_series <- function(
       ver,
       paste(latRangeText, collapse = "–"),
       paste(longRangeText, collapse = "–"),
-      ifelse(quality %in% c("a", "f", "e"), "Adj.", "Raw"),
+      ifelse(quality %in% c("a", "f", "e", "_adj"), "Adj.", "Raw"),
       paste(sapply(grid_size, sprintf, fmt = "%.1f°"), collapse = " × "),
       ifelse(use_lat_zonal_weights, " zoned", "")
     )
@@ -545,7 +613,8 @@ make_ghcn_temperature_series <- function(
 
       ll
     })
-  plyr::l_ply(seq_along(r), function(i) if (!is.null(r[[i]])) r[[i]] <<- structure(dataframe(r[[i]]), .Names = dimnames(p)[[1]][i]))
+  plyr::l_ply(seq_along(r), function(i) if (!is.null(r[[i]])) r[[i]] <<-
+    structure(dataframe(r[[i]]), .Names = dimnames(p)[[1]][i]))
 
   tictoc::toc() # Fill planetary grid w/ station data
 
@@ -562,10 +631,10 @@ make_ghcn_temperature_series <- function(
     zone_weights <- attr(p, "zone_weights")
 
     ## Is this right?
-    flit <- zone_weights[!sapply(r, is.null)]
-    lt1 <- table(flit)
-    lt2 <- unique(flit)
-    plyr::l_ply(seq_along(lt1), function(i) { flit[flit == lt2[i]] <<- lt2[i]/lt1[i] })
+    # flit <- zone_weights[!sapply(r, is.null)]
+    # lt1 <- table(flit)
+    # lt2 <- unique(flit)
+    # plyr::l_ply(seq_along(lt1), function(i) { flit[flit == lt2[i]] <<- lt2[i]/lt1[i] })
 
     ## This is probably better:
     rles <- zone_weights[!sapply(r, is.null)] %>% seqle(incr = 0)
@@ -771,6 +840,7 @@ make_ghcn_temperature_series <- function(
 
   attr(gg, "planetary_grid") <- p0
   attr(gg, "filters") <- filters
+  attr(gg, "filtered_metadata") <- station_metadata %>% dplyr::filter(id %in% (filters %>% { names(.)[.] }))
 
   tictoc::tic("Build spreadsheets")
 
