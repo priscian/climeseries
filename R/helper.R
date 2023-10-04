@@ -1522,8 +1522,8 @@ get_yearly_difference <- function(
   h <- g[c(which(g$year == start), which(g$year == end)), series %_% ifelse(loess, " (LOESS fit)", ""), drop = FALSE] %>%
     `rownames<-`(c(start, end))
 
-  plot_climate_data(g, c(series, names(h)) %>% unique, start, end, yearly = FALSE, baseline = plot_baseline, lwd = 2, conf_int = FALSE, trend = FALSE,
-    make_standardized_plot_filename... = list(suffix = ""), save_png = save_png)
+  plot_climate_data(g, series %>% unique, start, end, yearly = FALSE, baseline = plot_baseline, lwd = 2, conf_int = FALSE, trend = FALSE,
+    make_standardized_plot_filename... = list(suffix = ""), loess = loess, save_png = save_png)
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
   cat("Difference in ", unit ," from ", start, "\u2013", end, sep = "", fill = TRUE)
@@ -2305,3 +2305,49 @@ correct_monthly_autocorrelation <- function(
 # r <- plot_climate_data(d, series, 1970, 2020.99, trend = TRUE, save_png = FALSE)
 # lmod <- r$trend[[series]]$lm
 # correct_monthly_autocorrelation(lmod$x[, "yr_part"], lmod$y, lmod)
+
+
+## Simulated temperature series generator
+#' @export
+simulate_temp_series <- function(
+  mean_temperature = 15.0, # Mean temperature/climatology in °C
+  amplitude = 10.0, # Amplitude of seasonal variation (°C)
+  trend_rate = 0.2, # Long-term warming trend (°C/decade)
+  start_year = 1970,
+  total_years = current_year - start_year,
+  months_per_year = 12,
+  noise_sd = 0.3, # Try to match global land+SSTs
+  var_name = "simulated temperature",
+  seed = 666 # If NULL, not reproducible
+)
+{
+  total_months <- (total_years + 1) * months_per_year
+
+  ## Generate time values
+  yr_part <- sapply(start_year:(start_year + total_years), `+`,
+    e1 = (1:months_per_year - 0.5) / months_per_year) %>% as.vector
+  times <- seq(total_months)
+
+  ## Generate seasonal pattern
+  seasonal_pattern <- amplitude * sin(2 * pi * times / months_per_year)
+
+  ## Generate long-term trend
+  trend <- (trend_rate / 10 * times) / months_per_year
+
+  ## Generate random noise
+  if (!is.null(seed))
+    set.seed(seed)
+  noise <- stats::rnorm(n = total_months, mean = 0, sd = noise_sd)
+
+  ## Combine components to simulate temperature data
+  simulated_temperature <- mean_temperature + seasonal_pattern + trend + noise
+
+  d <- dataframe(month = 1:months_per_year, yr_part = yr_part) %>%
+    dplyr::mutate(year = trunc(yr_part), .before = "month") %>%
+    dplyr::mutate(!!var_name := simulated_temperature)
+
+  d
+}
+
+## usage:
+# r <- plot_climate_data(simulate_temp_series(), "simulated temperature", yearly = TRUE, baseline = TRUE, trend = TRUE)

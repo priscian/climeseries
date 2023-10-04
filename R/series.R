@@ -135,8 +135,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0L
 
       tryCatch({
-        fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]] %>%
-          stringr::str_subset("_Merged") # Do I need this?
+        fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]]# %>% stringr::str_subset("_Merged")
         dd <- sapply(fileNames,
           function(a)
           {

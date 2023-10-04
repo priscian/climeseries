@@ -131,8 +131,8 @@ find_planetary_grid_square <- function(p, lat, long)
   gridCol <- which.min(abs(long - gridLongValues))
 
   gridSize <- attr(p, "grid_size")
-  if (abs(gridLatValues[gridRow] - lat) > gridSize[1] / 2) gridRow <- NA
-  if (abs(gridLongValues[gridCol] - long) > gridSize[2] / 2) gridCol <- NA
+  if (abs(gridLatValues[gridRow] - lat) > gridSize[1] / 2) { gridRow <- NA }
+  if (abs(gridLongValues[gridCol] - long) > gridSize[2] / 2) { gridCol <- NA }
 
   c(row = gridRow, col = gridCol)
 }
@@ -482,6 +482,13 @@ make_ghcn_temperature_series <- function(
 
   tictoc::tic("Prelims")
 
+  ## Apply external filters
+  g <- ghcn[, c(common_columns, get_climate_series_names(ghcn)[other_filters]), drop = FALSE]
+
+  ## If metadata represents a subset of 'g' stations, then make stations & metadata conform to each other
+  g <- g %>% dplyr::select(c(get_climate_series_names(., invert = FALSE), any_of(station_metadata$id)))
+  station_metadata %<>% dplyr::filter(id %in% get_climate_series_names(g))
+
   ver <- attr(station_metadata, "version")
   temp_type <- attr(station_metadata, "temperature")
   quality <- attr(station_metadata, "quality")
@@ -504,9 +511,9 @@ make_ghcn_temperature_series <- function(
   }
 
   ## Which stations have adequate coverage over the baseline period?
-  has_baseline_coverage <- rep(TRUE, length(get_climate_series_names(ghcn)))
+  has_baseline_coverage <- rep(TRUE, length(get_climate_series_names(g)))
   if (!is.null(baseline)) {
-    flit <- ghcn %>%
+    flit <- g %>%
       dplyr::filter(year %in% baseline)
 
     has_baseline_coverage <- Reduce(rbind, by(flit[, get_climate_series_names(flit)], flit$year,
@@ -522,8 +529,8 @@ make_ghcn_temperature_series <- function(
   }
 
   ## Use only stations that meet the baseline-coverage + other filters criteria.
-  filters <- has_baseline_coverage & other_filters
-  g <- ghcn[, c(common_columns, get_climate_series_names(ghcn)[filters]), drop = FALSE]
+  filters <- has_baseline_coverage# & other_filters
+  g <- g[, c(common_columns, get_climate_series_names(g)[filters]), drop = FALSE]
 
   ## N.B. Probably best to add uniform random noise here.
   if (!is.null(round_to_nearest)) {
@@ -576,6 +583,7 @@ make_ghcn_temperature_series <- function(
     {
       id <- names(y)[z]
       coords <- station_metadata[station_metadata$id == id, , drop = FALSE]
+      #if (is_invalid(coords)) browser()
       elms <- y[, z, drop = FALSE]
       lat <- coords[["latitude"]]; long <- coords[["longitude"]]
       rc <- find_planetary_grid_square(p, lat, long)
@@ -794,7 +802,6 @@ make_ghcn_temperature_series <- function(
     ## all.equal(dd, rowMeans(h, na.rm = TRUE)) # TRUE, only off by very small tolerance
     station_weights <<- w; unweighted_station_data <<- as.data.frame(ggg); weighted_station_data <<- as.data.frame(h)
 
-    #browser()
     ### Leave some more checks of the data here for debugging:
 
     if (FALSE) {
@@ -871,44 +878,49 @@ make_ghcn_temperature_series <- function(
 
   attr(gg, "planetary_grid") <- p0
   attr(gg, "filters") <- filters
-  attr(gg, "filtered_metadata") <- station_metadata %>% dplyr::filter(id %in% (filters %>% { names(.)[.] }))
+  #attr(gg, "filtered_metadata") <- station_metadata %>% dplyr::filter(id %in% (filters %>% { names(.)[.] }))
+  attr(gg, "filtered_metadata") <- station_metadata %>% dplyr::filter(id %in% colnames(weighted_station_data))
 
-  tictoc::tic("Build spreadsheets")
+  str_baseline <- stringr::str_flatten(range(baseline), collapse = "-")
+
+  l <- list(
+    #`station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.))),
+    `station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", any_of(attr(gg, "filtered_metadata")$id))),
+    `station-metadata` = attr(gg, "filtered_metadata")
+  )
+  l[["stations_regional_base" %_% str_baseline]] <- g %>%
+    dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.)))
+  l[["cell-counts" %_% stringr::str_flatten(sprintf("%.1f", attr(p0, "grid_size")), collapse = "x")]] <-
+    structure(sapply(p0,
+      function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p0), .Dimnames = dimnames(p0))
+  if (!is.null(unweighted_station_data)) {
+    l[["unweight-stations_base" %_% str_baseline]] <-
+      dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")),
+        unweighted_station_data[, colnames(unweighted_station_data), drop = FALSE])
+  }
+  if (!is.null(station_weights))
+    l$`all-weights` <- station_weights
+  if (!is.null(weighted_station_data)) {
+    l[["weighted-stations_base" %_% str_baseline]] <-
+      dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")),
+        weighted_station_data[, colnames(station_weights), drop = FALSE])
+  }
+  l[["timeseries_base" %_% str_baseline]] <- gg %>%
+    tibble::add_column(yr_part = .$year + (2 * .$month - 1)/24, .after = "month")
+
+  rowNames <- rep(FALSE, length(l)); rowNames[4] <- TRUE # Make sure cell-counts grid has row names
+
+  ## Put this list in the global environment in case I need it for anything.
+  assign(series_name, l, envir = .GlobalEnv)
 
   if (!is.null(spreadsheet_path)) {
+    tictoc::tic("Build spreadsheets")
+
     if (!dir.exists(dirname(spreadsheet_path)))
       dir.create(dirname(spreadsheet_path), recursive = TRUE)
 
     ## N.B. This takes a while!
     cat(sprintf("Creating spreadsheet %s...", basename(spreadsheet_path))); utils::flush.console()
-
-    str_baseline <- stringr::str_flatten(range(baseline), collapse = "-")
-
-    l <- list(
-      `station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.))),
-      `station-metadata` = station_metadata
-    )
-    l[["stations_regional_base" %_% str_baseline]] <- g %>%
-      dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.)))
-    l[["cell-counts" %_% stringr::str_flatten(sprintf("%.1f", attr(p0, "grid_size")), collapse = "x")]] <-
-      structure(sapply(p0,
-        function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p0), .Dimnames = dimnames(p0))
-    if (!is.null(unweighted_station_data)) {
-      l[["unweight-stations_base" %_% str_baseline]] <-
-        dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")),
-          unweighted_station_data[, colnames(unweighted_station_data), drop = FALSE])
-    }
-    if (!is.null(station_weights))
-      l$`all-weights` <- station_weights
-    if (!is.null(weighted_station_data)) {
-      l[["weighted-stations_base" %_% str_baseline]] <-
-        dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")),
-          weighted_station_data[, colnames(station_weights), drop = FALSE])
-    }
-    l[["timeseries_base" %_% str_baseline]] <- gg %>%
-      tibble::add_column(yr_part = .$year + (2 * .$month - 1)/24, .after = "month")
-
-    rowNames <- rep(FALSE, length(l)); rowNames[4] <- TRUE # Make sure cell-counts grid has row names
 
     pathTemplate <- paste0(tools::file_path_sans_ext(spreadsheet_path), "_%s.", tools::file_ext(spreadsheet_path))
     ## This is no good; too many columns for Excel:
@@ -918,13 +930,10 @@ make_ghcn_temperature_series <- function(
     rio::export(tail(l, -2), sprintf(pathTemplate, "analyzed"), rowNames = tail(rowNames, -2),
       colNames = TRUE, overwrite = TRUE)
 
-    ## Put this list in the global environment in case I need it for anything.
-    assign(series_name, l, envir = .GlobalEnv)
-
     cat(". Done.", fill = TRUE); utils::flush.console()
-  }
 
-  tictoc::toc() # Build spreadsheets
+    tictoc::toc() # Build spreadsheets
+  }
 
   tictoc::toc() # 'make_ghcn_temperature_series()'
 
@@ -1091,3 +1100,65 @@ grid_info <- function(
 # grid_info(adj, ghcn_v3_avg_a, "temps", elm = c(10, 21)) # Can also be 1-D, i.e. 21.
 # grid_info(adj, ghcn_v3_avg_a, "metadata", elm = c(10, 21)) # Can also be 1-D.
 # grid_info(adj, ghcn_v3_avg_a, "coords", elm = c(10, 21)) # Can also be 1-D.
+
+
+#' @export
+plot_stations_map <- function(
+  metadata,
+  region_name = "global",
+  title_text = "GHCN-m station distribution",
+  save_png = FALSE, save_png_dir, png... = list(),
+  ...
+)
+{
+  ## Station distribution
+  world <- ggplot2::map_data("world")
+  station_map <- ggplot2::ggplot() +
+    ggplot2::geom_map(
+      data = world, map = world,
+      ggplot2::aes(long, lat, map_id = region),
+      color = "white", fill = "lightgray", size = 0.1
+    ) +
+    ggplot2::geom_point(
+      data = metadata,
+      ggplot2::aes(longitude, latitude, color = "red"),
+      alpha = 0.7
+    ) +
+    ggplot2::ggtitle(title_text) +
+    #ggplot2::ggtitle(sprintf("GHCN-m station distribution %s–%s", min(coverage_years), max(coverage_years))) +
+    ggplot2::theme(legend.position = "none")
+
+  if (missing(save_png_dir)) {
+    if (!is.null(getOption("climeseries_image_dir")))
+      imageDir <- getOption("climeseries_image_dir")
+    else
+      imageDir <- "."
+  }
+  else
+    imageDir <- save_png_dir
+
+  filename <- sprintf("%s-stations_%s.png", region_name, make_current_timestamp(use_seconds = TRUE))
+
+  if (save_png) {
+    pngArgs <- list(
+      filename = paste(imageDir, filename, sep = "/"),
+      width = 12.5,
+      height = 7.3,
+      units = "in",
+      res = 600
+    )
+    pngArgs <- utils::modifyList(pngArgs, png..., keep.null = TRUE)
+    do.call("png", pngArgs)
+  }
+
+  if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
+    dev.new(width = 12.5, height = 7.3) # New default device of 1200 × 700 px at 96 DPI.
+  station_map %>% print
+
+  if (save_png)
+    dev.off()
+
+  cat("Standardized file name:", stringr::str_replace_all(filename, "%%", "%"), fill = TRUE); flush.console()
+
+  return (invisible(station_map))
+}

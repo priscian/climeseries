@@ -36,6 +36,8 @@ plot_climate_data(
   trend = FALSE,
   trend_lwd = lwd,
   trend_legend_inset = c(0.2, 0.2),
+  print_trend_ci = TRUE,
+  trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"),
   trend... = list(),
   extra_trends = list(),
   loess = FALSE,
