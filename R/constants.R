@@ -208,9 +208,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
   `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/antarctica_mass_200204_202305.txt", type = "land ice"),
-  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/greenland_mass_200204_202305.txt", type = "land ice"),
-  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/ocean_mass_200204_202305.txt", type = "ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/antarctica_mass_200204_202306.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/greenland_mass_200204_202306.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.1_V3/ocean_mass_200204_202306.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -366,7 +366,7 @@ data_urls <- c(list(
   `NSIDC Sea Ice` = list(path = "ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type = "sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path = "http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type = "sea ice"),
   #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"), # 1976–2016 (daily)
-  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20230411.zip", type = "solar"), # 1996– (daily)
+  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20230728.zip", type = "solar"), # 1996– (daily)
   `TSI Reconstructed` = list(path = "https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type = "solar"), # 1610–2018 (yearly)
   # `TSIS/TIM TSI` = list(path = "https://lasp.colorado.edu/data/tsis/tsi_data/tsis_tsi_L3_c24h_latest.txt", type = "solar") # Replaces SORCE; 2018– (daily)
   ## Also see: https://www.pmodwrc.ch/en/research-development/solar-physics/tsi-composite/

@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20230827.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20231006.zip?raw=true).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -141,43 +141,46 @@ plot_climate_data(inst, series, yearly = TRUE, col = c("red", "purple", "blue", 
 
 ```r
 ########################################
-## Has past sea-level rise accelerated?
+## Has sea-level rise accelerated?
 ## V. Church & White 2011, dx.doi.org/10.1007/s10712-011-9119-1.
-########################################
-
-inst <- get_climate_data(download = FALSE, baseline = FALSE)
-series <- c("CSIRO Reconstructed Global Mean Sea Level")
-g <- remove_periodic_cycle(inst, series, fit_unc = FALSE)
-series_adj <- series %_% " (anomalies)"
-ylab <- "Global Mean Sea Level (mm)"
-main <- "Reconstructed GMSL"
-plot_climate_data(g, series_adj, yearly = TRUE, ylab = ylab, main = main, col = "blue", conf_int = TRUE,
-  segmented = TRUE, mark_segments = "lines", vline... = list(text... = list(y = 125)),
-  segmented... = list(yearly = FALSE, breakpoints... = list(h = 36, breaks = NULL)),
-  plot.segmented... = list(col = "red"), save_png = FALSE)
-```
-
-![Has past sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-anomalies_1880.1-recent_yearly_seg.png)
-
-```r
-########################################
-## Has recent sea-level rise accelerated?
 ## V. https://tamino.wordpress.com/2017/10/24/what-is-sea-level-up-to-lately
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = FALSE)
-series <- c("NOAA Global Mean Sea Level")
-g <- remove_periodic_cycle(subset(inst, inst$year >= 1993), series)
-series_adj <- series %_% " (anomalies)"
-ylab <- "Global Mean Sea Level (mm)"
-main <- "GMSL from TOPEX/Poseidon, Jason-1, & Jason-2 Satellite Altimetry"
-plot_climate_data(g, series_adj, ylab = ylab, main = main, col = "blue", segmented = TRUE,
-  mark_segments = "lines", segmented... = list(yearly = FALSE,
-  breakpoints... = list(h = 120, breaks = NULL)), plot.segmented... = list(col = "red"),
-  save_png = FALSE)
+slr_series <- c("CSIRO Reconstructed Global Mean Sea Level", "AVISO Global Mean Sea Level")
+slr <- purrr::reduce(
+  list(
+    inst,
+    remove_periodic_cycle(inst, slr_series[1], center = FALSE, keep_series = FALSE, suffix = " (non-seasonal)"),
+    remove_periodic_cycle(inst, slr_series[2], center = FALSE, keep_series = FALSE, suffix = " (non-seasonal)")
+  ), dplyr::full_join) %>%
+  dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month") %>% dplyr::arrange(year, month)
+slr_baseline <- 1993:2013
+slr <- create_aggregate_variable(slr, c("CSIRO Reconstructed Global Mean Sea Level (non-seasonal)",
+  "AVISO Global Mean Sea Level (non-seasonal)"), "Global Mean Sea Level Aggregate", type = "head", baseline = slr_baseline)
+
+sm <- fit_segmented_model(oss(slr, "Global Mean Sea Level Aggregate"), "Global Mean Sea Level Aggregate",
+  yearly = TRUE, breakpoints... = list(h = 36, breaks = NULL))
+
+slr_cols <- c("#1F78B4", "#33A02C")
+slr_ylab <- sprintf("Global Mean Sea Level (mm) w.r.t %s–%s", min(slr_baseline), max(slr_baseline))
+slr_main <- "Composite GMSL (Reconstruction + Satellite Altimetry)"
+slr_end_callback <- expression({
+  plot(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm, col = scales::alpha("red", 0.4), add = TRUE, rug = FALSE)
+  psi <- sprintf(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm$psi[, 2], fmt = "%1.1f")
+  vline(psi)
+  ptbl <- segmented::slope(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm)$year %>% apply(2, sprintf, fmt = "%1.2f")
+  colnames(ptbl)[1] <- "Rate (mm/y)"
+  yr <- sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm$model$year
+  rownames(ptbl) <- c(min(yr), sort(rep(psi %>% as.numeric %>% round, 2)), max(yr)) %>%
+    keystone::chunk(2) %>% sapply(paste, collapse = "–")
+  ptbl %>% plotrix::addtable2plot(x = 1940, y = -200, table = ., cex = 0.8, bg = "lightgray", display.rownames = TRUE)
+})
+plot_climate_data(slr, series = paste(slr_series, "(non-seasonal)"), yearly = TRUE, baseline = slr_baseline, conf_int = TRUE,
+  col = slr_cols, lwd = 2, main = slr_main, ylab = slr_ylab, ylim = NULL, end_callback = slr_end_callback, save_png = FALSE)
 ```
 
-![Has recent sea-level rise accelerated?](inst/images/noaa-gmsl-anomalies_1993.1-recent_ma0_seg.png)
+![Has sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-aviso_1880.1-recent_yearly_seg.png)
 
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
@@ -187,7 +190,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20230827.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20231006.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:

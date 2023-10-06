@@ -146,7 +146,10 @@ get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="ht
   gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
 
   tryCatch({
-    r <- httr::content(httr::GET(uri), "text", encoding="ISO-8859-1")
+    #r <- httr::content(httr::GET(uri, httr::timeout(300)), "text", encoding="ISO-8859-1") # Gives timeout errors ≪ 300 s
+    curl <- RCurl::getCurlHandle()
+    RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation = TRUE, curl = curl)
+    r <- RCurl::getURLContent(uri, curl = curl)
     tab <- gsub("^(?!\\s*\\d{4}\\s+).*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
     x <- read.table(text=tab, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
   }, error=Error, warning=Error)
@@ -190,7 +193,10 @@ get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http
   gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
 
   #tryCatch({
-    r <- httr::content(httr::GET(uri), "text", encoding="ISO-8859-1")
+    #r <- httr::content(httr::GET(uri, httr::timeout(300)), "text", encoding="ISO-8859-1") # Gives timeout errors ≪ 300 s
+    curl <- RCurl::getCurlHandle()
+    RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation = TRUE, curl = curl)
+    r <- RCurl::getURLContent(uri, curl = curl)
     r <- gsub("*****", " ****", r, fixed=TRUE)
     r <- gsub("****", " ***", r, fixed=TRUE)
     r <- gsub("^\\D+.*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
@@ -272,6 +278,7 @@ get_satellite_slr <- function(lat, lon) # +lat N of the equator, -lon W of the p
 
 tidegaugeSlrBaseUrl <- "http://www.psmsl.org/data/obtaining/rlr.monthly.data/@@STATION_ID@@.rlrdata"
 ## List of IDs: http://www.psmsl.org/data/obtaining/
+## Other long records not in the PSMSL data set: https://psmsl.org/data/longrecords/
 
 #' @export
 get_tidegauge_slr <- function(station_id)
@@ -378,8 +385,11 @@ remove_periodic_cycle <- function(
   else
     d[[series %_% suffix %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm = TRUE)
 
-  if (!keep_series)
+  if (!keep_series) {
     d[[series %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
+    if (!is.null(uncertaintyDf))
+      uncertaintyDf[[series %_% unc_suffix]] <- NULL
+  }
 
   if (!keep_interpolated)
     d[[series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
@@ -406,15 +416,32 @@ remove_periodic_cycle <- function(
 
 
 #' @export
-create_aggregate_variable <- function(x, var_names, aggregate_name="aggregate_var", method = "fmm", interpolate=TRUE, add=TRUE, ...)
+create_aggregate_variable <- function(
+  x,
+  var_names,
+  aggregate_name = "aggregate_var",
+  method = "fmm",
+  interpolate = TRUE,
+  baseline = NULL,
+  add = TRUE,
+  ...
+)
 {
-  d <- x[, var_names]
+  d <- x[, c(get_climate_series_names(x, invert = FALSE), var_names), drop = FALSE]
+
+  ## Put variables on common baseline before combining them
+  if (!is.null(baseline))
+    d <- recenter_anomalies(d, baseline = baseline)
+
+  ## Remove non-monthly-series columns
+  d <- d[, get_climate_series_names(d)]
+
   if (interpolate)
     d <- interpNA(d, method = method, unwrap = TRUE)
 
-  r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm=TRUE); r })
+  r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm = TRUE); r })
   if (interpolate)
-    r <- drop(interpNA(r, method="linear", unwrap=TRUE, ...))
+    r <- drop(interpNA(r, method = "linear", unwrap = TRUE, ...))
 
   if (!add) return (r)
 
@@ -1224,7 +1251,7 @@ create_osiris_daily_saod_data <- function(
 )
 {
   if (extract) {
-    fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_2-", full.names = TRUE)
+    fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3-", full.names = TRUE)
     fileDates <- tools::file_path_sans_ext(basename(fileNames)) %>% stringr::str_extract("\\d{6}$")
     x <- sapply(fileNames,
       function(i)
@@ -1261,10 +1288,10 @@ create_osiris_daily_saod_data <- function(
 
     names(x) <- fileDates
 
-    save(x, file = paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_2.RData", sep = "/"))
+    save(x, file = paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
   }
   else
-    load(paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_2.RData", sep = "/"))
+    load(paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
 
   ### Process the extinction data to calculate monthly SAOD.
 
@@ -1852,7 +1879,7 @@ add_loess_variables <- function(inst, series, ...)
 fit_segmented_model <- function(
   x,
   series,
-  col = suppressWarnings(brewer.pal(length(series),"Paired")),
+  col = suppressWarnings(RColorBrewer::brewer.pal(length(series),"Paired")),
   start = NULL, end = NULL,
   yearly = TRUE,
   breakpoints... = list(),

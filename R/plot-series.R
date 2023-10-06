@@ -103,6 +103,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
   ## Save longer data set for possible autocorrelation correction
   y_full_baselined <- rlang::duplicate(y, shallow = FALSE)
+  if ("yr_part" %nin% colnames(y_full_baselined))
+    y_full_baselined <- zoo:::cbind.zoo(y_full_baselined, yr_part = y_full_baselined[, "year"]) %>% as.ts
 
   ## Get date range of 'y' before it's converted to a yearly time series.
   if (!isAlreadyYearly) {
@@ -416,6 +418,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         trendArgs$m[[i]]$range <- trendArgs$range
       if (is_invalid(trendArgs$m[[i]]$col))
         trendArgs$m[[i]]$col <- col[names(trendArgs$m)[i]]
+      if (!is_invalid(trendArgs$m[[i]]$alpha))
+        trendArgs$m[[i]]$col <- scales::alpha(col[names(trendArgs$m)[i]], trendArgs$m[[i]]$alpha)
       if (is_invalid(trendArgs$m[[i]]$lwd))
         trendArgs$m[[i]]$lwd <- rep(trendArgs$lwd, length.out = length(trendArgs$m))[i]
 
