@@ -54,7 +54,8 @@ inst <- inst0 %>%
   dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
   recenter_anomalies(baseline = baseline, keep = series, skip = "AIRS v7 Global")
 ## N.B. Don't rebaseline here!
-plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 2, ylim = c(-1.0, 1.0), save_png = FALSE)
+plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 2, ylim = c(-1.0, 1.0),
+  save_png = FALSE)
 ```
 
 ![Some major monthly global average temperature time series.](inst/images/monthly-temp-series_1880.1-recent_yearly_baseline1981-2010.png)
@@ -127,7 +128,7 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 
 ```r
 ########################################
-## Estimate optimal number and location of significant changepoints in piecewise regression of climate series.
+## Estimate optimal no. & location of significant changepoints in piecewise regression of climate series.
 ## Cf. Figure 1 of Cahill et al. 2015, dx.doi.org/10.1088/1748-9326/10/8/084002
 ########################################
 
@@ -151,13 +152,16 @@ slr_series <- c("CSIRO Reconstructed Global Mean Sea Level", "AVISO Global Mean 
 slr <- purrr::reduce(
   list(
     inst,
-    remove_periodic_cycle(inst, slr_series[1], center = FALSE, keep_series = FALSE, suffix = " (non-seasonal)"),
-    remove_periodic_cycle(inst, slr_series[2], center = FALSE, keep_series = FALSE, suffix = " (non-seasonal)")
+    remove_periodic_cycle(inst, slr_series[1], center = FALSE, keep_series = FALSE,
+      suffix = " (non-seasonal)"),
+    remove_periodic_cycle(inst, slr_series[2], center = FALSE, keep_series = FALSE,
+      suffix = " (non-seasonal)")
   ), dplyr::full_join) %>%
   dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month") %>% dplyr::arrange(year, month)
 slr_baseline <- 1993:2013
 slr <- create_aggregate_variable(slr, c("CSIRO Reconstructed Global Mean Sea Level (non-seasonal)",
-  "AVISO Global Mean Sea Level (non-seasonal)"), "Global Mean Sea Level Aggregate", type = "head", baseline = slr_baseline)
+  "AVISO Global Mean Sea Level (non-seasonal)"), "Global Mean Sea Level Aggregate",
+  type = "head", baseline = slr_baseline)
 
 sm <- fit_segmented_model(oss(slr, "Global Mean Sea Level Aggregate"), "Global Mean Sea Level Aggregate",
   yearly = TRUE, breakpoints... = list(h = 36, breaks = NULL))
@@ -166,18 +170,22 @@ slr_cols <- c("#1F78B4", "#33A02C")
 slr_ylab <- sprintf("Global Mean Sea Level (mm) w.r.t %s–%s", min(slr_baseline), max(slr_baseline))
 slr_main <- "Composite GMSL (Reconstruction + Satellite Altimetry)"
 slr_end_callback <- expression({
-  plot(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm, col = scales::alpha("red", 0.4), add = TRUE, rug = FALSE)
+  plot(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm, col = scales::alpha("red", 0.4),
+    add = TRUE, rug = FALSE)
   psi <- sprintf(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm$psi[, 2], fmt = "%1.1f")
   vline(psi)
-  ptbl <- segmented::slope(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm)$year %>% apply(2, sprintf, fmt = "%1.2f")
+  ptbl <- segmented::slope(sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm)$year %>%
+    apply(2, sprintf, fmt = "%1.2f")
   colnames(ptbl)[1] <- "Rate (mm/y)"
   yr <- sm$piecewise[["Global Mean Sea Level Aggregate"]]$sm$model$year
   rownames(ptbl) <- c(min(yr), sort(rep(psi %>% as.numeric %>% round, 2)), max(yr)) %>%
     keystone::chunk(2) %>% sapply(paste, collapse = "–")
-  ptbl %>% plotrix::addtable2plot(x = 1940, y = -200, table = ., cex = 0.8, bg = "lightgray", display.rownames = TRUE)
+  ptbl %>% plotrix::addtable2plot(x = 1940, y = -200, table = ., cex = 0.8, bg = "lightgray",
+    display.rownames = TRUE)
 })
-plot_climate_data(slr, series = paste(slr_series, "(non-seasonal)"), yearly = TRUE, baseline = slr_baseline, conf_int = TRUE,
-  col = slr_cols, lwd = 2, main = slr_main, ylab = slr_ylab, ylim = NULL, end_callback = slr_end_callback, save_png = FALSE)
+plot_climate_data(slr, series = paste(slr_series, "(non-seasonal)"), yearly = TRUE,
+  baseline = slr_baseline, conf_int = TRUE, col = slr_cols, lwd = 2, main = slr_main, ylab = slr_ylab,
+  ylim = NULL, end_callback = slr_end_callback, save_png = FALSE)
 ```
 
 ![Has sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-aviso_1880.1-recent_yearly_seg.png)
