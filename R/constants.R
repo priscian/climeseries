@@ -51,15 +51,15 @@ defaultBaseline <- 1981:2010
 gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
 gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/"
-nceiGlobalMonthly <- sprintf("/all/1/1850-%s.csv", current_year)
-nceiUsMonthly <- sprintf("/all/1/1895-%s.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000", current_year)
+nceiGlobalMonthly <- sprintf("/all/1/1850-%s/data.csv", current_year - 1) # N.B. Change this back in Feb 2024!!
+nceiUsMonthly <- sprintf("/all/1/1895-%s.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000", current_year - 1) # N.B. Change this back in Feb 2024!!
 crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/csv/"
-crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.1.0/diagnostics/"
-hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/analysis/diagnostics/"
-hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/current/non-infilled/diagnostics/"
+crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.2.0/diagnostics/"
+hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.0.2.0/analysis/diagnostics/"
+hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.0.2.0/non-infilled/diagnostics/"
 cowtanWayBase <- "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/"
 #bestBase <- "http://berkeleyearth.lbl.gov/auto/"
 bestBase <- "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/"
@@ -96,7 +96,7 @@ make_reanalysis_urls <- function()
 {
   ## What's available: https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.pl
   ## 3 Jan 2022: Needed to add '&level=1000mb&level2=1000mb' to meet server requirements to retrieve data (should be irrelevant for 2-m air, though):
-  writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year)
+  writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year - 1) # N.B. Change this back in Feb 2024!!
   reanalyses <- list(
     `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
     `ERA5` = sub("@@SERIES@@", "ERA5", writBase),
@@ -105,6 +105,7 @@ make_reanalysis_urls <- function()
     `NCEP/CSFR` = sub("@@SERIES@@", "NCEP%2FCFSR", writBase),
     `MERRA-2` = sub("@@SERIES@@", "MERRA-2", writBase),
     `20th C. Reanalysis V3` = sub("@@SERIES@@", "20th+Century+Reanalysis+V3", writBase)
+    #`20th C. Reanalysis V3` = sub("@@SERIES@@", "20th+Century+Reanalysis+V2c", writBase) # Temporary
     #`ERA-20C` = sub("@@SERIES@@", "ERA20C", writBase),
     #`COBE-SST 2` = = sub("@@SERIES@@", "COBE-SST+2", writBase),
     #`JMA` = sub("@@SERIES@@", "JMA+Temperature", writBase)
@@ -277,15 +278,15 @@ data_urls <- c(list(
   `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Hadley v5
-  `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.1.0.summary_series.global.monthly.nc",
-  `CRUTEM5 NH` = crutem5Base %_% "CRUTEM.5.0.1.0.summary_series.northern_hemisphere.monthly.nc",
-  `CRUTEM5 SH` = crutem5Base %_% "CRUTEM.5.0.1.0.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 Global` = hadcrut5Base %_% "HadCRUT.5.0.1.0.analysis.summary_series.global.monthly.nc",
-  `HadCRUT5 SH` = hadcrut5Base %_% "HadCRUT.5.0.1.0.analysis.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 NH` = hadcrut5Base %_% "HadCRUT.5.0.1.0.analysis.summary_series.northern_hemisphere.monthly.nc",
-  `HadCRUT5 Global (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.1.0.summary_series.global.monthly.nc",
-  `HadCRUT5 SH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.1.0.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 NH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.1.0.summary_series.northern_hemisphere.monthly.nc",
+  `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.global.monthly.nc",
+  `CRUTEM5 NH` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.northern_hemisphere.monthly.nc",
+  `CRUTEM5 SH` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 Global` = hadcrut5Base %_% "HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.nc",
+  `HadCRUT5 SH` = hadcrut5Base %_% "HadCRUT.5.0.2.0.analysis.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH` = hadcrut5Base %_% "HadCRUT.5.0.2.0.analysis.summary_series.northern_hemisphere.monthly.nc",
+  `HadCRUT5 Global (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.2.0.summary_series.global.monthly.nc",
+  `HadCRUT5 SH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.2.0.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.2.0.summary_series.northern_hemisphere.monthly.nc",
   ## Cowtan & Way
   `Cowtan & Way Krig. Global` = cowtanWayBase %_% "had4_krig_v2_0_0.txt",
   `Cowtan & Way Krig. Global Land` = cowtanWayBase %_% "cru4_krig_v2_0_0.txt",

@@ -483,6 +483,8 @@ make_ghcn_temperature_series <- function(
   tictoc::tic("Prelims")
 
   ## Apply external filters
+  if (length(get_climate_series_names(ghcn)) != length(other_filters))
+    stop("Length of 'other_filters' not the same as no. of stations")
   g <- ghcn[, c(common_columns, get_climate_series_names(ghcn)[other_filters]), drop = FALSE]
 
   ## If metadata represents a subset of 'g' stations, then make stations & metadata conform to each other
@@ -884,9 +886,10 @@ make_ghcn_temperature_series <- function(
   str_baseline <- stringr::str_flatten(range(baseline), collapse = "-")
 
   l <- list(
-    #`station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.))),
     `station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", any_of(attr(gg, "filtered_metadata")$id))),
-    `station-metadata` = attr(gg, "filtered_metadata")
+    `station-metadata` = attr(gg, "filtered_metadata"),
+    `all-station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.))),
+    `all-station-metadata` = station_metadata
   )
   l[["stations_regional_base" %_% str_baseline]] <- g %>%
     dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.)))
@@ -964,10 +967,10 @@ get_station_counts <- function(
   env = globalenv(), # Environment of 'x' & its metadata
   baseline = 1951:1980,
   region_name = "Regional",
-  spaghetti_sep = 1.0,
   make_plot = TRUE,
   start_year = NULL, end_year = NULL, # Can take fractions of a year
   unwrap = TRUE,
+  suffix = "",
   save_png = FALSE,
 
   plot_climate_data... = list()
@@ -978,30 +981,11 @@ get_station_counts <- function(
   station_names_re <- stringr::str_flatten(rex::escape(station_names), "|")
   m <- env$station_metadata %>%
     dplyr::filter(stringr::str_detect(id, stringr::regex(station_names_re, ignore_case = TRUE), negate = FALSE))
+  #m <- attr(x, "filtered_metadata")
   g0 <- env$ghcn[, c(get_climate_series_names(env$ghcn, invert = FALSE), m$id)]
 
-  ## This is probably the best one can do in a spaghetti plot:
-  g00 <- recenter_anomalies(g0, baseline)
-  series00 <- get_climate_series_names(g00)
-  m00 <- structure(m$id %>% as.character, .Names = trimws(m$name)) # id-to-name map
-
-  duplicateNames <- names(m00) %>% intersect(.[duplicated(.)])
-  for(i in duplicateNames) {
-    dupIndex <- which(names(m00) == i)
-    ## Replace w/ sequential numbers:
-    # names(m00)[dupIndex] <- sapply(seq_along(dupIndex), function(j) sprintf("%s_%04d", names(m00)[dupIndex[j]], j))
-    ## Replace w/ station ID:
-    names(m00)[dupIndex] <- paste(names(m00)[dupIndex], m00[dupIndex], sep = "_")
-  }
-
-  g00 <- dplyr::rename(g00, !!!m00)
-  dev_null <- mapply(get_climate_series_names(g00), seq(0, by = spaghetti_sep, length.out = length(series00)),
-    FUN = function(a, b) { g00[[a]] <<- g00[[a]] + b; NULL })
-  # plot_climate_data(g00, series = get_climate_series_names(g00), yearly = TRUE, baseline = NULL, conf_int = FALSE,
-  #   lwd = 1, ylim = NULL, make_standardized_plot_filename... = list(suffix = ""), save_png = FALSE)
-
-  N <- g00 %>% dplyr::select(c(get_climate_series_names(g00, invert = TRUE))) %>% is.na %>% `!` %>% rowSums
-  ss <- g00 %>% dplyr::select(c(get_climate_series_names(g00, invert = FALSE))) %>% dplyr::mutate(`station count` = N)
+  N <- g0 %>% dplyr::select(c(get_climate_series_names(g0, invert = TRUE))) %>% is.na %>% `!` %>% rowSums
+  ss <- g0 %>% dplyr::select(c(get_climate_series_names(g0, invert = FALSE))) %>% dplyr::mutate(`station count` = N)
   if (unwrap)
     ss %<>% dplyr::filter(na_unwrap(dplyr::pull(naniar::replace_with_na_at(., .vars = "station count",
       .condition ~ .x == 0), `station count`)))
@@ -1015,23 +999,18 @@ get_station_counts <- function(
       main = sprintf("GHCN %s Station Counts", region_name),
       ylab = "Number of stations",
       legend... = list(lty = 0, pch = 1),
-      make_standardized_plot_filename... = list(suffix = sprintf("_%s", tolower(region_name))),
+      make_standardized_plot_filename... =
+        list(suffix = sprintf("_%s_%s%s", tolower(region_name), make_current_timestamp(use_seconds = TRUE), suffix)),
       save_png = save_png
     )
     plot_climate_dataArgs <- utils::modifyList(plot_climate_dataArgs, plot_climate_data..., keep.null = TRUE)
 
     do.call(plot_climate_data, plot_climate_dataArgs)
-    # plot_climate_data(ss, series = "station count", start_year, end_year, type = "p", col = "blue", pch = 1,
-    #   main = sprintf("GHCN v4 %s Station Counts", region_name), ylab = "Number of stations",
-    #   legend... = list(lty = 0, pch = 1),
-    #   make_standardized_plot_filename... = list(suffix = sprintf("_%s", tolower(region_name))), save_png = save_png)
   }
 
   list(
     metadata = m,
     station_series = g0,
-    station_id_name_map = m00,
-    station_spaghetti_series = g00,
     station_counts_series = ss
   )
 }

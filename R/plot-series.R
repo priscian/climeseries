@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=0.9, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), print_trend_ci = TRUE, trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=1.0, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), print_trend_ci = TRUE, trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -365,7 +365,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       loessArgs = list(
         formula = eval(substitute(s ~ yr_part, list(s = as.name(s)))),
         data = y,
-        span = NULL
+        span = NULL,
+        na.action = na.exclude
       )
       loessArgs <- utils::modifyList(loessArgs, loess..., keep.null = TRUE)
 
@@ -380,8 +381,38 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       lines.loessArgs <- utils::modifyList(lines.loessArgs, lines.loess..., keep.null = TRUE)
       if (is_invalid(lines.loessArgs$col))
         lines.loessArgs$col = col[s]
+      loess_ci <- FALSE
+      if (!is.null(lines.loessArgs$ci)) {
+        loess_ci <- lines.loessArgs$ci
+        lines.loessArgs$ci <- NULL
+      }
 
       do.call(graphics::lines, lines.loessArgs)
+
+      ## V. https://stackoverflow.com/questions/22717930/how-to-get-the-confidence-intervals-for-lowess-fit-using-r/22718450#22718450
+      if (loess_ci) {
+        pl <- predict(l, se = TRUE) # 'se = TRUE' ignores 'na.action = na.exclude' for some reason
+        pl$fit <- structure(predict(l), .Names = seq(NROW(y)))
+        ## Put NAs back into the series à la 'na.exclude()':
+        se.fit <- pl$se.fit; pl$se.fit <- pl$fit; pl$se.fit[names(se.fit)] <- se.fit
+        value <- pl$fit
+        ci <- stats::qt(0.975, pl$df) * pl$se
+        upper <- value + ci; lower <- value - ci
+        ciCol <- scales::alpha(lines.loessArgs$col, ci_alpha)
+        cidf <- data.frame(yr_part = y[, "yr_part"], lower = lower, upper = upper); cidf <- cidf[complete.cases(cidf), ]
+        polygonArgs <- list(
+          x = c(cidf$yr_part, rev(cidf$yr_part)),
+          y = c(cidf$upper, rev(cidf$lower)),
+          ## N.B. If a CI doesn't show up, either set 'density = 50' (slow to save) or expand 'ylim'.
+          density = NULL, # 50 lines/in produces nice CIs, too -- but leave NULL as the default
+          col = ciCol,
+          border = NA
+        )
+        ## N.B. I should either give the 'polygon' call its own custom args or remove the next line:
+        polygonArgs <- utils::modifyList(polygonArgs, polygon..., keep.null = TRUE)
+
+        do.call(graphics::polygon, polygonArgs)
+      }
     }
   })
 

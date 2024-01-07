@@ -358,7 +358,8 @@ remove_periodic_cycle <- function(
 
   ## Get residuals from LOESS fit.
   loessArgs = list(
-    formula = eval(substitute(s ~ yr_part, list(s = as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix))))),
+    formula = eval(substitute(s ~ yr_part,
+      list(s = as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix))))),
     data = d,
     span = 0.2,
     na.action = na.exclude
@@ -381,9 +382,11 @@ remove_periodic_cycle <- function(
   uncycled <- d[[series %_% ifelse(!is_unc, "", unc_suffix)]] - predict(rfit)
 
   if (is.logical(center))
-    d[[series %_% suffix %_% ifelse(!is_unc, "", unc_suffix)]] <- scale(uncycled, center = center, scale = FALSE)[, 1]
+    d[[series %_% suffix %_% ifelse(!is_unc, "", unc_suffix)]] <-
+      scale(uncycled, center = center, scale = FALSE)[, 1]
   else
-    d[[series %_% suffix %_% ifelse(!is_unc, "", unc_suffix)]] <- uncycled - mean(uncycled[d$year %in% center], na.rm = TRUE)
+    d[[series %_% suffix %_% ifelse(!is_unc, "", unc_suffix)]] <-
+      uncycled - mean(uncycled[d$year %in% center], na.rm = TRUE)
 
   if (!keep_series) {
     d[[series %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
@@ -395,7 +398,8 @@ remove_periodic_cycle <- function(
     d[[series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)]] <- NULL
 
   if (!is.null(uncertaintyDf))
-    d <- merge(d, uncertaintyDf[c("yr_part", get_climate_series_names(uncertaintyDf, conf_int=TRUE))], all.x = TRUE, by = "yr_part", sort = TRUE)
+    d <- merge(d, uncertaintyDf[c("yr_part", get_climate_series_names(uncertaintyDf,
+      conf_int = TRUE))], all.x = TRUE, by = "yr_part", sort = TRUE)
 
   d %>% as.data.frame
 }
@@ -2249,7 +2253,8 @@ correct_monthly_autocorrelation <- function(
   mod,
   autocorrel_period = c(1980, 2010),
   slope_coef = "yr_part",
-  remove_missings = TRUE
+  remove_missings = TRUE,
+  santer = FALSE
 )
 {
   ## Covariance with lag
@@ -2283,7 +2288,34 @@ correct_monthly_autocorrelation <- function(
     rho1 <- autocovariance(ydata, 1, remove_missings = remove_missings) / cov_
     rho2 <- autocovariance(ydata, 2, remove_missings = remove_missings) / cov_
 
+    ## This sometimes returns negative values; investigate why that's so sometime.
     return (1.0 + (2.0 * rho1) / (1.0 - rho2/rho1))
+  }
+
+  ## Santer &al 2000 correction dx.doi.org/10.1029/1999JD901105
+  santer_correct <- function(xdata, ydata, mod, slope_coef)
+  {
+    temp_corr_matrix <- structure(cbind(
+      ydata,
+      keystone::shift(ydata, -1L, roll = FALSE)
+    ), .Dimnames = list(as.character(xdata), c("x_t", "x_t-1"))) %>% as.data.frame
+    temp_corr_matrix_resid <- structure(cbind(
+      stats::residuals(mod),
+      keystone::shift(stats::residuals(mod), 1L, roll = FALSE)
+    ), .Dimnames = list(as.character(xdata), c("x_t", "x_t-1"))) %>% as.data.frame
+    r <- stats::cor(temp_corr_matrix_resid$x_t, temp_corr_matrix_resid$`x_t-1`, use = "complete.obs")
+    N <- stats::df.residual(mod)
+    N_eff <- N * ((1 - r)/(1 + r))
+    #`s_e^2` <- (1/(N_eff - 2)) * sum(stats::residuals(mod)^2, na.rm = TRUE)
+    `s_e^2` <- function(N) (1/N) * sum(stats::residuals(mod)^2, na.rm = TRUE)
+    #`s_b^2` <- `s_e^2`(N_eff - 2)/sum((xdata - mean(xdata, na.rm = TRUE))^2, na.rm = TRUE)
+    `s_b^2` <- function(N) `s_e^2`(N)/sum((xdata - mean(xdata, na.rm = TRUE))^2, na.rm = TRUE)
+    t_b <- stats::coef(mod)[slope_coef]/sqrt(`s_b^2`(N_eff - 2)) %>% as.vector
+    #t_b0 <- stats::coef(mod)[slope_coef]/sqrt(`s_b^2`(N)) %>% as.vector
+    ## Multiplicative constant for 'correct_stats()' to work is (t_b0/`t_b0_N-2`)^2
+
+    ## This is a 'nu' value that makes 'tval_corrected' in 'correct_stats()' equal to 't_b' here:
+    structure((`s_b^2`(N - 2)/`s_b^2`(N)) * (N - 2)/(N_eff - 2), N_eff = N_eff - 2)
   }
 
   ## Correct t-stat & p-value
@@ -2301,10 +2333,12 @@ correct_monthly_autocorrelation <- function(
     est <- mod$coefficients[Qr$pivot[p1]]
     tval <- est/se
     sigma_w <- se[names(est) == slope_coef]
+    N_eff <- attr(nu, "N_eff"); nu <- nu %>% as.vector
     sigma_c <- sigma_w * sqrt(nu)
     tval_corrected <- est[slope_coef]/(sigma_c)
-    `Pr(>|t|)` <- 2 * pt(abs(tval), rdf, lower.tail = FALSE)
-    `Pr(>|t|) corrected` <- 2 * pt(abs(tval_corrected), rdf, lower.tail = FALSE)
+    `Pr(>|t|)` <- 2 * stats::pt(abs(tval), rdf, lower.tail = FALSE) # Two-tailed
+    `Pr(>|t|) corrected` <-
+      2 * stats::pt(abs(tval_corrected), ifelse(is.null(N_eff), rdf, N_eff), lower.tail = FALSE) # Two-tailed
 
     list(
       sigma_w = sigma_w,
@@ -2315,7 +2349,20 @@ correct_monthly_autocorrelation <- function(
     )
   }
 
-  nu <- data_per_degree_of_freedom(xdata, ydata, autocorrel_period)
+  if (!santer)
+    nu <- data_per_degree_of_freedom(xdata, ydata, autocorrel_period)
+  else
+    nu <- santer_correct(xdata, ydata, mod, slope_coef)
+
+  if (!santer && (is_invalid(nu) || nu <= 0.0)) {
+    nu <- santer_correct(xdata, ydata, mod, slope_coef)
+    warning("'nu' value is invalid; Santer &al 2000 correction made for autocorrelation")
+  }
+  if (is_invalid(nu) || nu <= 0.0) {
+    nu <- 1
+    warning("'nu' value is invalid; no correction made for autocorrelation")
+  }
+
   cs <- correct_stats(mod, nu, slope_coef)
 
   c(

@@ -7,10 +7,13 @@ Description: These are various functions for collecting, processing, and
     plotting monthly climatological data.
 Depends: R (>= 3.5.0), magrittr, tribe
 Suggests: knitr, pander, testthat, colorRamps, forecast, ggfortify
-Imports: data.table, plyr, R.utils, matrixStats, dtplyr, ggplot2, directlabels,
-  grDevices, lubridate, RCurl, httr, jsonlite, RColorBrewer, colorRamps,
-  reshape2, scales, stringr, XML, splines, zoo, rhdf5, ncdf4, strucchange,
-  segmented, plotrix
+Imports: data.table, plyr, R.utils, matrixStats, dtplyr, rlang,
+  ggplot2, directlabels, grDevices, plotrix, RColorBrewer, colorRamps,
+  maps,
+  reshape2, scales, stringr, lubridate, mgsub, XML, RCurl, httr, jsonlite,
+  splines, nlme, segmented, lmtest, strucchange,
+  rhdf5, ncdf4,
+  zoo, xts, tseries, forecast, CADFtest, egcm, feasts
 VignetteBuilder: knitr
 License: Artistic-2.0
 LazyData: true
