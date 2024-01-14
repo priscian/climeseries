@@ -44,11 +44,14 @@ Note that `get_climate_data()` saves the current climatological data set, in the
 airs_series <- "AIRS v7 Global"; baseline <- 1981:2010
 new_airs <- interpolate_baseline(airs_series, baseline = baseline)
 inst0 <- get_climate_data(download = FALSE, baseline = FALSE)
+inst0 <- create_aggregate_variable(inst0, c("20th C. Reanalysis V3 Surface Air Global",
+  "NCEP/DOE R2 Surface Air Global"),
+  "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global", type = "head")
 inst0[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
   "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
-  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Surface Air Global",
+  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global",
   "RATPAC-A Surface GLOBE", airs_series)
 inst <- inst0 %>%
   dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
@@ -112,12 +115,16 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = NULL, star
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
 ########################################
 
+inst <- get_climate_data(download = FALSE, baseline = FALSE)
+inst <- create_aggregate_variable(inst, c("20th C. Reanalysis V3 Surface Air Global",
+  "NCEP/DOE R2 Surface Air Global"),
+  "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global", type = "head")
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
   "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
-  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3 Surface Air Global")
+  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global")
 start <- 1970; end <- NULL
-g <- remove_exogenous_influences(series = series, start = start, end = end, max_lag = 12)
+g <- remove_exogenous_influences(inst, series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
 main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
 plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 19, baseline = TRUE,
