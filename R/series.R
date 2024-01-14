@@ -801,7 +801,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `CO2 Mauna Loa` = (function(p) {
       x <- NULL
 
-      skip <- 60L
+      skip <- 64L
 
       tryCatch({
         x <- read.csv(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="\"")
@@ -909,6 +909,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `PMOD TSI` = (function(p) {
       x <- NULL
 
+      #f <- tempfile(fileext = ".zip")
       f <- tempfile(fileext = ".zip")
       tryCatch({
         utils::download.file(url = p, destfile = f, mode = "wb", quiet = TRUE)
