@@ -2,13 +2,15 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20240113.zip?raw=true).
+Okay! It's [here](inst/extdata/latest/climate-series_20240113.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
+
+If you're looking for the [list of paleoclimate studies](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a) that use a variety of temperature proxies and methodologies in affirmation of [Michael Mann's hockey stick result](https://dx.doi.org/10.1038/33859), you can find that [here](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a).
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
 ```r
 install.packages("remotes") # If necessary.
-Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true") # See:
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true") # Probably unnecessary now. See:
 ## https://github.com/r-lib/remotes#environment-variables
 remotes::install_github("priscian/climeseries")
 library(climeseries)
@@ -26,6 +28,9 @@ Now you're ready to go:
 ```r
 ## Download a current climatological data set from the Internet.
 inst <- get_climate_data(download = TRUE)
+## N.B. I don't recommend the full download, which requires managing changing URLs &
+##   download permissions; instead, use the latest data sets downloaded with the package,
+##   or request an update from me. I'll make the download mechanism more flexible soon....
 
 ## Try loading this most recent data set from the default directory.
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
