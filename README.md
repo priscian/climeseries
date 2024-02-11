@@ -167,7 +167,8 @@ slr <- purrr::reduce(
     remove_periodic_cycle(inst, slr_series[2], center = FALSE, keep_series = FALSE,
       suffix = " (non-seasonal)")
   ), dplyr::full_join) %>%
-  dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month") %>% dplyr::arrange(year, month)
+  dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month") %>%
+  dplyr::arrange(year, month)
 slr_baseline <- 1993:2013
 slr <- create_aggregate_variable(slr, c("CSIRO Reconstructed Global Mean Sea Level (non-seasonal)",
   "AVISO Global Mean Sea Level (non-seasonal)"), "Global Mean Sea Level Aggregate",
@@ -194,8 +195,8 @@ slr_end_callback <- expression({
     display.rownames = TRUE)
 })
 plot_climate_data(slr, series = paste(slr_series, "(non-seasonal)"), yearly = TRUE,
-  baseline = slr_baseline, conf_int = TRUE, col = slr_cols, lwd = 2, main = slr_main, ylab = slr_ylab,
-  ylim = NULL, end_callback = slr_end_callback, save_png = FALSE)
+  baseline = slr_baseline, conf_int = TRUE, col = slr_cols, lwd = 2, main = slr_main,
+  ylab = slr_ylab, ylim = NULL, end_callback = slr_end_callback, save_png = FALSE)
 ```
 
 ![Has sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-aviso_1880.1-recent_yearly_seg.png)
