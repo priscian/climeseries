@@ -8,7 +8,8 @@ Okay! It's [here](inst/extdata/latest/climate-series_20240113.zip?raw=true).
 The *climeseries* R package is fairly easy to set up. In an R session:
 ```r
 install.packages("remotes") # If necessary.
-Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true") # https://github.com/r-lib/remotes#environment-variables
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS = "true") # See:
+## https://github.com/r-lib/remotes#environment-variables
 remotes::install_github("priscian/climeseries")
 library(climeseries)
 
@@ -83,9 +84,9 @@ plot_climate_data(inst, series = series, 1850, yearly = TRUE, lwd = 2, conf_int 
 
 inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5")
-plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start = 1950, end = 2100.99,
-  ma = 12, baseline = 1981:2010, center_fun = "mean", smooth_envelope = TRUE, col_m_mean = "red",
-  ylim = c(-1, 5), save_png = FALSE)
+plot_models_and_climate_data(inst, cmip5, series = NULL, scenario = NULL, start = 1950,
+  end = 2100.99, ma = 12, baseline = 1981:2010, center_fun = "mean", smooth_envelope = TRUE,
+  col_m_mean = "red", ylim = c(-1, 5), save_png = FALSE)
 ```
 
 ![CMIP5 scenario realizations.](inst/images/cmip5-realizations_1950.1-2100.1_ma12_baseline1981-2010.png)
@@ -100,11 +101,12 @@ inst <- get_climate_data(download = FALSE, baseline = TRUE)
 cmip5 <- get_models_data(ensemble = "cmip5", subdir = "tas + tos")
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global")
-plot_models_and_climate_data(inst, cmip5, series = series, scenario = NULL, start = 1950, end = 2050.99,
-  yearly = TRUE, ma = 12, baseline = 1986:2005, scenario_text = "Scenario TAS + TOS Realizations",
-  center_fun = "mean", smooth_envelope = FALSE, envelope_type = "range", envelope_coverage = 0.90,
-  envelope_text = "range", ylim = c(-0.75, 2.75), conf_int_i = FALSE,
-  col_m_mean = grDevices::gray(0.8), alpha_envelope = 0.1, save_png = FALSE)
+plot_models_and_climate_data(inst, cmip5, series = series, scenario = NULL, start = 1950,
+  end = 2050.99, yearly = TRUE, ma = 12, baseline = 1986:2005, scenario_text =
+  "Scenario TAS + TOS Realizations", center_fun = "mean", smooth_envelope = FALSE,
+  envelope_type = "range", envelope_coverage = 0.90, envelope_text = "range",
+  ylim = c(-0.75, 2.75), conf_int_i = FALSE, col_m_mean = grDevices::gray(0.8),
+  alpha_envelope = 0.1, save_png = FALSE)
 ```
 
 ![CMIP5 RCP 8.5 TAS + TOS scenario realizations compared to the major land+SST series.](inst/images/cmip5-tas+tos-rcp85-realizations.range+land-sst_1880.1-2020.1_yearly_baseline1970-2000.png)
@@ -135,7 +137,8 @@ plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 1
 
 ```r
 ########################################
-## Estimate optimal no. & location of significant changepoints in piecewise regression of climate series.
+## Estimate optimal no. & location of significant changepoints in piecewise regression of
+##   climate series.
 ## Cf. Figure 1 of Cahill et al. 2015, dx.doi.org/10.1088/1748-9326/10/8/084002
 ########################################
 
@@ -170,8 +173,8 @@ slr <- create_aggregate_variable(slr, c("CSIRO Reconstructed Global Mean Sea Lev
   "AVISO Global Mean Sea Level (non-seasonal)"), "Global Mean Sea Level Aggregate",
   type = "head", baseline = slr_baseline)
 
-sm <- fit_segmented_model(oss(slr, "Global Mean Sea Level Aggregate"), "Global Mean Sea Level Aggregate",
-  yearly = TRUE, breakpoints... = list(h = 36, breaks = NULL))
+sm <- fit_segmented_model(oss(slr, "Global Mean Sea Level Aggregate"),
+  "Global Mean Sea Level Aggregate", yearly = TRUE, breakpoints... = list(h = 36, breaks = NULL))
 
 slr_cols <- c("#1F78B4", "#33A02C")
 slr_ylab <- sprintf("Global Mean Sea Level (mm) w.r.t %s–%s", min(slr_baseline), max(slr_baseline))

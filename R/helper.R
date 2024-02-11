@@ -2250,7 +2250,7 @@ read_cru_hemi <- function(filename)
 correct_monthly_autocorrelation <- function(
   xdata,
   ydata,
-  mod,
+  model,
   autocorrel_period = c(1980, 2010),
   slope_coef = "yr_part",
   remove_missings = TRUE,
@@ -2293,25 +2293,29 @@ correct_monthly_autocorrelation <- function(
   }
 
   ## Santer &al 2000 correction dx.doi.org/10.1029/1999JD901105
-  santer_correct <- function(xdata, ydata, mod, slope_coef)
+  santer_correct <- function(xdata, ydata, model, slope_coef)
   {
+    if (missing(xdata)) {
+      xdata = model$x[, slope_coef]
+      ydata = model$y
+    }
     temp_corr_matrix <- structure(cbind(
       ydata,
       keystone::shift(ydata, -1L, roll = FALSE)
     ), .Dimnames = list(as.character(xdata), c("x_t", "x_t-1"))) %>% as.data.frame
     temp_corr_matrix_resid <- structure(cbind(
-      stats::residuals(mod),
-      keystone::shift(stats::residuals(mod), 1L, roll = FALSE)
+      stats::residuals(model),
+      keystone::shift(stats::residuals(model), 1L, roll = FALSE)
     ), .Dimnames = list(as.character(xdata), c("x_t", "x_t-1"))) %>% as.data.frame
     r <- stats::cor(temp_corr_matrix_resid$x_t, temp_corr_matrix_resid$`x_t-1`, use = "complete.obs")
-    N <- stats::df.residual(mod)
+    N <- stats::df.residual(model)
     N_eff <- N * ((1 - r)/(1 + r))
-    #`s_e^2` <- (1/(N_eff - 2)) * sum(stats::residuals(mod)^2, na.rm = TRUE)
-    `s_e^2` <- function(N) (1/N) * sum(stats::residuals(mod)^2, na.rm = TRUE)
+    #`s_e^2` <- (1/(N_eff - 2)) * sum(stats::residuals(model)^2, na.rm = TRUE)
+    `s_e^2` <- function(N) (1/N) * sum(stats::residuals(model)^2, na.rm = TRUE)
     #`s_b^2` <- `s_e^2`(N_eff - 2)/sum((xdata - mean(xdata, na.rm = TRUE))^2, na.rm = TRUE)
     `s_b^2` <- function(N) `s_e^2`(N)/sum((xdata - mean(xdata, na.rm = TRUE))^2, na.rm = TRUE)
-    t_b <- stats::coef(mod)[slope_coef]/sqrt(`s_b^2`(N_eff - 2)) %>% as.vector
-    #t_b0 <- stats::coef(mod)[slope_coef]/sqrt(`s_b^2`(N)) %>% as.vector
+    t_b <- stats::coef(model)[slope_coef]/sqrt(`s_b^2`(N_eff - 2)) %>% as.vector
+    #t_b0 <- stats::coef(model)[slope_coef]/sqrt(`s_b^2`(N)) %>% as.vector
     ## Multiplicative constant for 'correct_stats()' to work is (t_b0/`t_b0_N-2`)^2
 
     ## This is a 'nu' value that makes 'tval_corrected' in 'correct_stats()' equal to 't_b' here:
@@ -2319,18 +2323,18 @@ correct_monthly_autocorrelation <- function(
   }
 
   ## Correct t-stat & p-value
-  correct_stats <- function(mod, nu, slope_coef)
+  correct_stats <- function(model, nu, slope_coef)
   {
-    Qr <- stats:::qr.lm(mod)
-    p <- mod$rank
+    Qr <- stats:::qr.lm(model)
+    p <- model$rank
     p1 <- 1L:p
     R <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
-    r <- mod$residuals
+    r <- model$residuals
     rss <- sum(r^2)
-    rdf <- mod$df.residual
+    rdf <- model$df.residual
     resvar <- rss/rdf
     se <- sqrt(diag(R) * resvar)
-    est <- mod$coefficients[Qr$pivot[p1]]
+    est <- model$coefficients[Qr$pivot[p1]]
     tval <- est/se
     sigma_w <- se[names(est) == slope_coef]
     N_eff <- attr(nu, "N_eff"); nu <- nu %>% as.vector
@@ -2351,11 +2355,18 @@ correct_monthly_autocorrelation <- function(
 
   if (!santer)
     nu <- data_per_degree_of_freedom(xdata, ydata, autocorrel_period)
-  else
-    nu <- santer_correct(xdata, ydata, mod, slope_coef)
+  else {
+    if (is_invalid(model$x))
+      nu <- santer_correct(xdata, ydata, model, slope_coef)
+    else
+      nu <- santer_correct(model = model, slope_coef = slope_coef)
+  }
 
   if (!santer && (is_invalid(nu) || nu <= 0.0)) {
-    nu <- santer_correct(xdata, ydata, mod, slope_coef)
+    if (is_invalid(model$x))
+      nu <- santer_correct(xdata, ydata, model, slope_coef)
+    else
+      nu <- santer_correct(model = model, slope_coef = slope_coef)
     warning("'nu' value is invalid; Santer &al 2000 correction made for autocorrelation")
   }
   if (is_invalid(nu) || nu <= 0.0) {
@@ -2363,11 +2374,11 @@ correct_monthly_autocorrelation <- function(
     warning("'nu' value is invalid; no correction made for autocorrelation")
   }
 
-  cs <- correct_stats(mod, nu, slope_coef)
+  cs <- correct_stats(model, nu, slope_coef)
 
   c(
     cs,
-    decadal_slope = (10 * coefficients(mod)[slope_coef]) %>% as.vector,
+    decadal_slope = (10 * coefficients(model)[slope_coef]) %>% as.vector,
     decadal_2sigma = 2 * 10 * cs$sigma_c,
     use.names = TRUE
   )

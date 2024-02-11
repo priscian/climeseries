@@ -74,7 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=1.0, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, conf_int_series = NULL, ci_alpha=0.3, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), print_trend_ci = TRUE, trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=1.0, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, conf_int_series = NULL, ci_alpha=0.2, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), print_trend_ci = TRUE, trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
 {
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
@@ -382,8 +382,13 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         lwd = 2
       )
       lines.loessArgs <- utils::modifyList(lines.loessArgs, lines.loess..., keep.null = TRUE)
-      if (is_invalid(lines.loessArgs$col))
-        lines.loessArgs$col = col[s]
+      if (is_invalid(lines.loessArgs$col)) {
+        lines.loessArgs$col <- col[s]
+      }
+      else {
+        if (!is_invalid(names(lines.loessArgs$col)))
+          lines.loessArgs$col <- lines.loessArgs$col[s]
+      }
       loess_ci <- FALSE
       if (!is.null(lines.loessArgs$ci)) {
         loess_ci <- lines.loessArgs$ci
@@ -461,19 +466,22 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         dplyr::select(c(intersect(common_columns, colnames(trendArgs$data)), names(trendArgs$m)[i])) %>%
         dplyr::filter(yr_part >= trendArgs$m[[i]]$range[1] & yr_part <= trendArgs$m[[i]]$range[2])
       trendArgs$m[[i]]$lm <- lm(eval(substitute(b ~ yr_part, list(b = as.symbol(names(trendArgs$m)[i])))),
-        data = trendArgs$m[[i]]$sdata, x = TRUE, y = TRUE)
+        data = trendArgs$m[[i]]$sdata, x = TRUE, y = TRUE, na.action = na.exclude)
       trendArgs$m[[i]]$change <- coef(trendArgs$m[[i]]$lm)[2] * diff(range(trendArgs$m[[i]]$lm$model[, 2]))
       trendArgs$m[[i]]$rate <- coef(trendArgs$m[[i]]$lm)[2] * trendArgs$trend_multiplier
+      yfb <- rlang::duplicate(y_full_baselined, shallow = FALSE)
+      if (yearly) yfb %<>% make_yearly_data() %>% dplyr::mutate(yr_part = year)
       trendArgs$m[[i]]$autocorrelation <- correct_monthly_autocorrelation(
-        xdata = y_full_baselined[, "yr_part"],
-        ydata = y_full_baselined[, names(trendArgs$m)[i]],
-        mod = trendArgs$m[[i]]$lm
+        xdata = yfb[, "yr_part"],
+        ydata = yfb[, names(trendArgs$m)[i]],
+        model = trendArgs$m[[i]]$lm
       )
-      if (!print_trend_ci)
+      if (!print_trend_ci) {
         trendArgs$m[[i]]$rateText <- eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate))
-      else
+      } else {
         trendArgs$m[[i]]$rateText <-
           eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate, trendArgs$m[[i]]$autocorrelation$decadal_2sigma))
+      }
     }
     if (trendArgs$sort_by_name)
       trendArgs$m <- trendArgs$m[sort(names(trendArgs$m))]
@@ -556,7 +564,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
               x = sm$piecewise[[i]]$sm,
               col = col[i],
               pch = 4, # Like '×'
-              alpha = alpha
+              alpha = alpha,
+              v = FALSE
             )
             points.segmentedArgs <- utils::modifyList(points.segmentedArgs, points.segmented..., keep.null = TRUE)
             ## 'alpha' may not have any effect, so explicitly apply it to 'col':

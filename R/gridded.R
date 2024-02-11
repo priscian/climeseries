@@ -465,8 +465,8 @@ make_ghcn_temperature_series <- function(
   baseline = 1951:1980,
   lat_range = c(90, -90), long_range = c(-180, 180), # Default global coverage
   interpolate = FALSE,
-  min_nonmissing_months = 10, # Over baseline period
-  min_nonmissing_years = round(length(baseline) * 0.5), # Over baseline period
+  min_nonmissing_months = 6,#10, # Over baseline period
+  min_nonmissing_years = 1,#round(length(baseline) * 0.5), # Over baseline period
   make_planetary_grid... = list(),
   use_lat_zonal_weights = FALSE,
   uncertainty = TRUE,
