@@ -971,7 +971,7 @@ get_station_counts <- function(
   start_year = NULL, end_year = NULL, # Can take fractions of a year
   unwrap = TRUE,
   suffix = "",
-  save_png = FALSE,
+  save_png = FALSE, png... = list(),
 
   plot_climate_data... = list()
 )
@@ -1001,7 +1001,7 @@ get_station_counts <- function(
       legend... = list(lty = 0, pch = 1),
       make_standardized_plot_filename... =
         list(suffix = sprintf("_%s_%s%s", tolower(region_name), make_current_timestamp(use_seconds = TRUE), suffix)),
-      save_png = save_png
+      png... = png..., save_png = save_png
     )
     plot_climate_dataArgs <- utils::modifyList(plot_climate_dataArgs, plot_climate_data..., keep.null = TRUE)
 

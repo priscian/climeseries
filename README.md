@@ -2,9 +2,11 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20240113.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
+Okay! It's [here](inst/extdata/latest/climate-series_20240211.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
 
-If you're looking for the [list of paleoclimate studies](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a) that use a variety of temperature proxies and methodologies in affirmation of [Michael Mann's hockey stick result](https://dx.doi.org/10.1038/33859), you can find that [here](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a).
+*climeseries* includes more than 1000 individual monthly climate time series; the full set of series names is listed [below](#latest-column-names).
+
+(If you're instead looking for the [list of paleoclimate studies](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a) that use a variety of temperature proxies and methodologies in affirmation of [Michael Mann's hockey stick result](https://dx.doi.org/10.1038/33859), you can find that [here](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a).)
 
 ## Preliminaries
 The *climeseries* R package is fairly easy to set up. In an R session:
@@ -136,9 +138,24 @@ series_adj <- paste(series, "(adj.)")
 main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
 plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 19, baseline = TRUE,
   save_png = FALSE)
+
+## Plot several forcing variables
+inst <- get_climate_data(download = FALSE, baseline = FALSE) %>%
+  add_default_aggregate_variables()
+forcings <- c("MEI Aggregate Global", "SAOD Aggregate Global", "TSI Aggregate Global",
+  "CO2 Aggregate Global (interp.)")
+forcings_scaled <- paste(forcings, "scaled")
+forcings_start_year <- 1880
+plyr::l_ply(forcings, function(a) { inst[[paste(a, "scaled")]] <<-
+  inst[[a]] %>% `is.na<-`(e$year < forcings_start_year) %>% `-`(min(., na.rm = TRUE)) %>%
+    `/`(max(., na.rm = TRUE)) }) # Optimize white space
+plot_climate_data(inst, series = forcings_scaled[1:4], start = forcings_start_year,
+  ylab = "Normalized Ordinate", main = "Climate Forcings", ma = 12, yearly = FALSE, lwd = 2,
+  col = c("darkblue", "darkgrey", "darkorange", "darkred"), save_png = FALSE)
 ```
 
 ![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1970.1-recent_yearly_baseline1981-2010.png)
+![Climate forcing variables for ENSO, volcanic activity, solar, and CO2.](inst/images/exogenous-forcings+co2_normalized_1880.1-recent.png)
 
 ```r
 ########################################
@@ -206,6 +223,113 @@ plot_climate_data(slr, series = paste(slr_series, "(non-seasonal)"), yearly = TR
 
 ![Has sea-level rise accelerated?](inst/images/csiro-reconstructed-gmsl-aviso_1880.1-recent_yearly_seg.png)
 
+```r
+########################################
+## Calculate global average land temperature anomalies from GHCN-m station data, w/ 95% CI.
+## SOP:
+## • For each station/month, calc 1951–1980 baseline
+## • Compute temp anomalies by subtracting station/month baseline from absolute temps
+## • Split region into lat-long grid
+## • For each grid cell, get monthly avg of all anomalies
+## • Lat-weight each cell & calc monthly region avg
+########################################
+
+## If 'download' = TRUE, import & prep data from https://www.ncei.noaa.gov/pub/data/ghcn/v4/
+## (It will take a while, so be patient; later, you can use 'download = FALSE'.)
+download <- FALSE
+ghcn_v4_avg_f <- new.env()
+get_series_from_ghcn_gridded(ver = 4, temp = "avg", quality = "f", load_env = ghcn_v4_avg_f,
+  download = download)
+
+ghcn_v4_avg_u <- new.env()
+get_series_from_ghcn_gridded(ver = 4, temp = "avg", quality = "u", load_env = ghcn_v4_avg_u,
+  download = download)
+
+## Select only stations (e.g.) which are longer-term over the coverage period
+coverage_years <- NULL # Default: keep all stations
+meets_filter_criteria_u <- make_coverage_filter(ghcn_v4_avg_u$ghcn, coverage_years,
+  min_nonmissing_months = 12, min_nonmissing_years_prop = 0.9)
+meets_filter_criteria_u %>% table
+meets_filter_criteria_f <- make_coverage_filter(ghcn_v4_avg_f$ghcn, coverage_years,
+  min_nonmissing_months = 12, min_nonmissing_years_prop = 0.9)
+meets_filter_criteria_f %>% table
+
+## In the case of adj. v unadj., however, the temporal coverage is usu. different;
+##   so for comparison, let's use the unadj. stations for both series.
+gf <-
+  ghcn_v4_avg_f$ghcn %>% dplyr::select(any_of(c(get_climate_series_names(., invert = FALSE),
+  meets_filter_criteria_u[meets_filter_criteria_u] %>% names)))
+
+lat_range <- c(90, -90); long_range <- c(-180, 180) # Default global coverage
+#lat_range <- c(0, -90); long_range <- c(-180, 180) # Southern hemisphere
+#lat_range <- c(37, 71); long_range <- c(-22, 45) # Europe
+#lat_range <- c(90, 60); long_range <- c(-180, 180) # Arctic
+#lat_range <- c(50, 25); long_range <- c(-125, -70) # USA
+round_to_nearest <- NULL #1.0
+
+## Supply paths to XLSX files to store portable versions of data & results:
+spreadsheet_path_f <- spreadsheet_path_u <- NULL
+
+grid_size <- c(5, 5)
+use_lat_zonal_weights <- TRUE
+
+## Raw data
+uadj_ghcn_v4_avg_u <-
+  make_ghcn_temperature_series(ghcn_v4_avg_u$ghcn, ghcn_v4_avg_u$station_metadata,
+    other_filters = meets_filter_criteria_u, grid_size = grid_size, lat_range = lat_range,
+    long_range = long_range, make_planetary_grid... = list(use_lat_weights = TRUE),
+    use_lat_zonal_weights = use_lat_zonal_weights, uncertainty = TRUE, boot_seed = NULL,
+    round_to_nearest = round_to_nearest, spreadsheet_path = spreadsheet_path_u)
+
+## Homogenized/adjusted data
+adj_ghcn_v4_avg_f <-
+  make_ghcn_temperature_series(gf, ghcn_v4_avg_f$station_metadata, grid_size = grid_size,
+    lat_range = lat_range, long_range = long_range,
+    make_planetary_grid... = list(use_lat_weights = TRUE),
+    use_lat_zonal_weights = use_lat_zonal_weights, uncertainty = TRUE, boot_seed = NULL,
+    round_to_nearest = round_to_nearest, spreadsheet_path = spreadsheet_path_f)
+
+## Collect both data sets & equivalent official series for comparison
+inst <- get_climate_data(download = FALSE, baseline = FALSE) %>%
+  { purrr::reduce(list(., adj_ghcn_v4_avg_f, uadj_ghcn_v4_avg_u), dplyr::full_join,
+    by = c("month", "year")) } %>%
+  dplyr::mutate(yr_part = year + (month - 0.5)/12, met_year = NA)
+
+series <- c(names(adj_ghcn_v4_avg_f)[3], names(uadj_ghcn_v4_avg_u)[3],
+  "GISTEMP v4 Global Land")
+
+extra_trends <- sapply(series[1:2],
+  function(a) { list(range = c(1970, current_year - 0.01), lwd = 2) }, simplify = FALSE)
+## Plot both data sets & equivalent official series for comparison
+r <-
+  plot_climate_data(inst, series = series[1:3], 1850, yearly = TRUE, baseline = 1981:2010,
+    conf_int = TRUE, conf_int_series = NULL, ci_alpha = c(0.2, 0.2, 0.2), lwd = c(2, 2),
+    ylim = NULL, alpha = c(1, 1, 1), trend = TRUE, trend... = list(keep_default_trends = FALSE,
+    rate_expression =
+      sprintf("expression(Delta ~ \"= %%+1.2f ± %%1.2f %s/dec. %s\")", "°C", "1970–" %_%
+        (current_year - 1))),
+    extra_trends = extra_trends, trend_legend_inset = c(0.2, 0.01),
+    make_standardized_plot_filename... = list(suffix = "1970_adj-v-unadj-all"),
+    save_png = FALSE)
+
+## Station counts
+station_counts <- get_station_counts(x = uadj_ghcn_v4_avg_u, env = ghcn_v4_avg_u,
+  region_name = "v4 Global Complete", start_year = 1850, end_year = current_year - 0.01,
+  save_png = FALSE)
+## Max station count for a single month:
+station_counts$station_counts_series$`station count` %>% max(na.rm = TRUE) %>% print
+## Total no. of stations used in average temp series:
+station_counts$station_series %>% get_climate_series_names %>% length %>% print
+
+## Station distribution
+plot_stations_map(attr(uadj_ghcn_v4_avg_u, "filtered_metadata"), region_name = "global",
+  title_text = sprintf("GHCN-m v4 global station distribution"), save_png = FALSE)
+```
+
+![Global average land temperatures from GHCN-m station data.](inst/images/ghcnv4-global-avg_1850.1-recent_raw-&-adj_5x5-cells_trend1970.png)
+![No. of GHCN-m stations contributing to average at each time point.](inst/images/ghcnv4-station-counts_1850.1-recent_global.png)
+![Spatial distribution of all GHCN-m stations contributing to average.](inst/images/ghcnv4-station-distribution_1850.1-recent_global.png)
+
 ### More information
 *climeseries* is presented here as a working beta. For more information on what the package offers, check out
 ```r
@@ -214,7 +338,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20240113.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20240211.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
