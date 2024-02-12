@@ -236,7 +236,7 @@ plot_climate_data(slr, series = paste(slr_series, "(non-seasonal)"), yearly = TR
 
 ## If 'download' = TRUE, import & prep data from https://www.ncei.noaa.gov/pub/data/ghcn/v4/
 ## (It will take a while, so be patient; later, you can use 'download = FALSE'.)
-download <- FALSE
+download <- TRUE
 ghcn_v4_avg_f <- new.env()
 get_series_from_ghcn_gridded(ver = 4, temp = "avg", quality = "f", load_env = ghcn_v4_avg_f,
   download = download)
