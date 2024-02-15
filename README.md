@@ -147,7 +147,7 @@ forcings <- c("MEI Aggregate Global", "SAOD Aggregate Global", "TSI Aggregate Gl
 forcings_scaled <- paste(forcings, "scaled")
 forcings_start_year <- 1880
 plyr::l_ply(forcings, function(a) { inst[[paste(a, "scaled")]] <<-
-  inst[[a]] %>% `is.na<-`(e$year < forcings_start_year) %>% `-`(min(., na.rm = TRUE)) %>%
+  inst[[a]] %>% `is.na<-`(inst$year < forcings_start_year) %>% `-`(min(., na.rm = TRUE)) %>%
     `/`(max(., na.rm = TRUE)) }) # Optimize white space
 plot_climate_data(inst, series = forcings_scaled[1:4], start = forcings_start_year,
   ylab = "Normalized Ordinate", main = "Climate Forcings", ma = 12, yearly = FALSE, lwd = 2,
