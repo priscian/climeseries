@@ -122,6 +122,7 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = NULL, star
 ########################################
 ## Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.
 ## Cf. Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022
+## Update 2024: https://tamino.wordpress.com/2024/02/16/adjusted-global-temperature-data/
 ########################################
 
 inst <- get_climate_data(download = FALSE, baseline = FALSE)
@@ -132,7 +133,7 @@ series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
   "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
   "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global")
-start <- 1970; end <- NULL
+start <- 1950; end <- NULL
 g <- remove_exogenous_influences(inst, series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
 main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
