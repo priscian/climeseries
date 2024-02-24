@@ -45,7 +45,7 @@ if (current_month == 1) {
   current_year_lagged <- current_year - 1
   current_month_lagged <- 12
 }
-current_year_lagged <- 2023
+#current_year_lagged <- 2023
 
 dataDir <- "."
 filenameBase <- "climate-series_"
