@@ -101,7 +101,7 @@ make_reanalysis_urls <- function()
 {
   ## What's available: https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.pl
   ## 3 Jan 2022: Needed to add '&level=1000mb&level2=1000mb' to meet server requirements to retrieve data (should be irrelevant for 2-m air, though):
-  writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year) # N.B. Change this back in Feb 2024!!
+  writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year_lagged) # N.B. Change this back in Feb 2024!!
   reanalyses <- list(
     `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
     `ERA5` = sub("@@SERIES@@", "ERA5", writBase),
@@ -370,6 +370,7 @@ data_urls <- c(list(
   `CO2 Cape Grim` = list(path = "http://capegrim.csiro.au/GreenhouseGas/data/CapeGrim_CO2_data_download.csv", type = "CO2"),
   ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
   `NSIDC Sea Ice` = list(path = "ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type = "sea ice"),
+  `OSI Sea Ice` = list(path = "ftp://osisaf.met.no/prod_test/ice/index/v2p2", type = "sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path = "http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type = "sea ice"),
   #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"), # 1976–2016 (daily)
   `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20231211.txt", type = "solar"), # 1996– (daily)

@@ -354,6 +354,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     bty = "n",
     cex = 0.8
   )
+  ## Evaluate any expressions in "dots" list":
+  legend... <- sapply(legend..., poly_eval, envir = environment(), simplify = FALSE)
   legendArgs <- utils::modifyList(legendArgs, legend..., keep.null = TRUE)
   do.call("legend", legendArgs)
 
@@ -379,16 +381,18 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       lines.loessArgs <- list(
         x = drop(l$x),
         y = l$fit,
-        lwd = 2
+        lwd = 2,
+        alpha = NA
       )
       lines.loessArgs <- utils::modifyList(lines.loessArgs, lines.loess..., keep.null = TRUE)
       if (is_invalid(lines.loessArgs$col)) {
-        lines.loessArgs$col <- col[s]
+        lines.loessArgs$col <- scales::alpha(col[s], lines.loessArgs$alpha)
       }
       else {
         if (!is_invalid(names(lines.loessArgs$col)))
-          lines.loessArgs$col <- lines.loessArgs$col[s]
+          lines.loessArgs$col <- scales::alpha(lines.loessArgs$col[s], lines.loessArgs$alpha)
       }
+      lines.loessArgs$alpha <- NULL
       loess_ci <- FALSE
       if (!is.null(lines.loessArgs$ci)) {
         loess_ci <- lines.loessArgs$ci

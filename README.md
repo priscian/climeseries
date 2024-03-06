@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20240211.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
+Okay! It's [here](inst/extdata/latest/climate-series_20240306.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
 
 *climeseries* includes more than 1000 individual monthly climate time series; the full set of series names is listed [below](#latest-column-names).
 
@@ -339,7 +339,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20240211.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20240306.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -347,6 +347,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 ?get_climate_data
 ```
 
+> ## Get column names for including in the README file:
+> cat("1. " %_% names(e$raw), sep = "\n")
 1. year
 1. met_year
 1. yr_part
@@ -970,6 +972,44 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NSIDC Sea Ice Global Area
 1. Ocean Mass Variation
 1. Ocean Mass Variation_uncertainty
+1. EUMETSAT OSI Barents Sea Sea Ice Area
+1. EUMETSAT OSI Barents Sea Sea Ice Extent
+1. EUMETSAT OSI Beaufort Sea Sea Ice Area
+1. EUMETSAT OSI Beaufort Sea Sea Ice Extent
+1. EUMETSAT OSI Amundsen-Bellingshausen Sea Ice Area
+1. EUMETSAT OSI Amundsen-Bellingshausen Sea Ice Extent
+1. EUMETSAT OSI Chukchi Sea Sea Ice Area
+1. EUMETSAT OSI Chukchi Sea Sea Ice Extent
+1. EUMETSAT OSI Dronning Maud Land Sea Ice Area
+1. EUMETSAT OSI Dronning Maud Land Sea Ice Extent
+1. EUMETSAT OSI East Siberian Sea Sea Ice Area
+1. EUMETSAT OSI East Siberian Sea Sea Ice Extent
+1. EUMETSAT OSI Fram Strait Sea Ice Area
+1. EUMETSAT OSI Fram Strait Sea Ice Extent
+1. EUMETSAT OSI Global Sea Ice Area
+1. EUMETSAT OSI Global Sea Ice Extent
+1. EUMETSAT OSI Indian Ocean Sea Ice Area
+1. EUMETSAT OSI Indian Ocean Sea Ice Extent
+1. EUMETSAT OSI Kara Sea Sea Ice Area
+1. EUMETSAT OSI Kara Sea Sea Ice Extent
+1. EUMETSAT OSI Laptev Sea Sea Ice Area
+1. EUMETSAT OSI Laptev Sea Sea Ice Extent
+1. EUMETSAT OSI Northern Barents Sea Sea Ice Area
+1. EUMETSAT OSI Northern Barents Sea Sea Ice Extent
+1. EUMETSAT OSI Northern Hemisphere Sea Ice Area
+1. EUMETSAT OSI Northern Hemisphere Sea Ice Extent
+1. EUMETSAT OSI Ross Sea Sea Ice Area
+1. EUMETSAT OSI Ross Sea Sea Ice Extent
+1. EUMETSAT OSI Southern Hemisphere Sea Ice Area
+1. EUMETSAT OSI Southern Hemisphere Sea Ice Extent
+1. EUMETSAT OSI Svalbard Sea Ice Area
+1. EUMETSAT OSI Svalbard Sea Ice Extent
+1. EUMETSAT OSI Troll Station Sea Ice Area
+1. EUMETSAT OSI Troll Station Sea Ice Extent
+1. EUMETSAT OSI Weddell Sea Sea Ice Area
+1. EUMETSAT OSI Weddell Sea Sea Ice Extent
+1. EUMETSAT OSI Western Pacific Ocean Sea Ice Area
+1. EUMETSAT OSI Western Pacific Ocean Sea Ice Extent
 1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global
 1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) NH
 1. OSIRIS Stratospheric Aerosol Optical Depth (550 nm) SH

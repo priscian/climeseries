@@ -1549,12 +1549,12 @@ get_yearly_difference <- function(
   # if (loess) data <- add_loess_variables(data, series, ...) # Ends up being a poor fit for yearly data
   g <- make_yearly_data(data)
   if (loess)
-    g <- add_loess_variables(g, series, ...)
+    g <- add_loess_variables(g, series)
   h <- g[c(which(g$year == start), which(g$year == end)), series %_% ifelse(loess, " (LOESS fit)", ""), drop = FALSE] %>%
     `rownames<-`(c(start, end))
 
-  plot_climate_data(g, series %>% unique, start, end, yearly = FALSE, baseline = plot_baseline, lwd = 2, conf_int = FALSE, trend = FALSE,
-    make_standardized_plot_filename... = list(suffix = ""), loess = loess, save_png = save_png)
+  plot_climate_data(g, series %>% unique, start, end, yearly = FALSE, baseline = plot_baseline, lwd = 2, conf_int = FALSE,
+    make_standardized_plot_filename... = list(suffix = ""), loess = loess, save_png = save_png, ...)
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
   cat("Difference in ", unit ," from ", start, "\u2013", end, sep = "", fill = TRUE)
@@ -1570,7 +1570,7 @@ get_yearly_difference <- function(
 }
 
 ## usage:
-# series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global", "BEST Global (Air Ice Temp.)")
+# series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global", "BEST Global (Air Ice Temp.)", "JMA Global")
 # ytd <- get_yearly_difference(series, 1880)
 # ytd <- get_yearly_difference(series, 1880, loess = TRUE)
 # ytd <- get_yearly_difference(series, 1880, loess = TRUE, loess... = list(span = 0.4))

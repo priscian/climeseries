@@ -865,6 +865,43 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+    `OSI Sea Ice` = (function(p) {
+      areas <- strsplit(RCurl::getURL(p %_% "/", dirlistonly = TRUE), "\r*\n")[[1L]]
+      uris <- sapply(areas,
+        function(a)
+        {
+          paste(
+            paste(p, a, sep = "/"),
+            c(sprintf("osisaf_%s_sia_monthly.txt", a), sprintf("osisaf_%s_sie_monthly.txt", a)),
+            sep = "/")
+        }, simplify = FALSE, USE.NAMES = FALSE) %>% unlist
+
+      flit <- sapply(uris,
+        function(a)
+        {
+          flit <- readLines(a)
+          flitHeader <- stringr::str_subset(flit, "^#")
+          area <-
+            stringr::str_match(flitHeader, stringr::regex("^# Area:\\s+(.*)$", ignore_case = TRUE)) %>%
+              `[`(complete.cases(.))[2]
+          quantity <-
+            stringr::str_match(flitHeader, stringr::regex("^# Quantity:\\s+(.*)$", ignore_case = TRUE)) %>%
+              `[`(complete.cases(.))[2]
+          colName <- sprintf("EUMETSAT OSI %s %s", area, quantity)
+
+          x <- read.table(tc <- textConnection(flit), comment = "#", na.strings = "-999"); close(tc)
+
+          d <- dataframe(year = x$V2, month = x$V3, temp = x$V5/1e6) %>%
+            dplyr::rename(!!colName := temp)
+        }, simplify = FALSE)
+
+      d <- purrr::reduce(flit, dplyr::full_join, by = c("year", "month")) %>%
+        dplyr::arrange(year, month) %>%
+        dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = month)
+
+      return (d)
+    })(path),
+
     `NSIDC Sea Ice` = (function(p) {
       x <- NULL
 

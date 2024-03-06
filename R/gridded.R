@@ -1116,7 +1116,8 @@ plot_stations_map <- function(
   else
     imageDir <- save_png_dir
 
-  filename <- sprintf("%s-stations_%s.png", region_name, make_current_timestamp(use_seconds = TRUE))
+  filename <- sprintf("%s-stations_%s.png", region_name, make_current_timestamp(use_seconds = TRUE)) %>%
+    fs::path_sanitize(replacement = "#")
 
   if (save_png) {
     pngArgs <- list(
