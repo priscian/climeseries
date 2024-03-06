@@ -347,8 +347,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 ?get_climate_data
 ```
 
-> ## Get column names for including in the README file:
-> cat("1. " %_% names(e$raw), sep = "\n")
 1. year
 1. met_year
 1. yr_part
