@@ -134,8 +134,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `STAR v5.0` = (function(p) {
       skip <- 0L
 
+      httr::set_config(httr::config(ssl_verifypeer = 0L))
       tryCatch({
-        fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]]# %>% stringr::str_subset("_Merged")
+        #fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]]# %>% stringr::str_subset("_Merged")
+        fileNames <- httr::content(httr::GET(p), as = "text") %>%
+          stringr::str_extract_all("NESDIS-STAR.*?\\.txt", simplify = FALSE) %>% `[[`(1) %>% unique
         dd <- sapply(fileNames,
           function(a)
           {
@@ -168,9 +171,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0L
 
       tryCatch({
-        fileNames <- strsplit(RCurl::getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
+        #fileNames <- strsplit(RCurl::getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
+        fileNames <- httr::content(httr::GET(p), as = "text") %>%
+          stringr::str_extract_all("aravg.*?\\.asc", simplify = FALSE) %>% `[[`(1) %>% unique
         ## Keep only monthly data files.
-        re <- "^aravg\\.mon\\.(?<type>.+?)\\.(?<lat1>.+?)\\.(?<lat2>.+?)\\..*?\\.asc$"
+        re <- "^.*?aravg\\.mon\\.(?<type>.+?)\\.(?<lat1>.+?)\\.(?<lat2>.+?)\\..*?\\.asc$"
         fileNames <- grep(re, fileNames, value=TRUE, perl=TRUE)
         m <- regexpr(re, fileNames, perl=TRUE)
         namedMatches <- cbind(file=fileNames, parse_one(fileNames, m))
@@ -182,10 +187,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             seriesName <- paste("NCEI v4", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
             cat("    Processing file", y["file"], fill=TRUE); flush.console()
             x <- read.table(p %_% y["file"], header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
-            d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=2 * 1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
+            #d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, conf_int=2 * 1.96 * sqrt(x$V4), check.names=FALSE, stringsAsFactors=FALSE)
             ## N.B. See ftp://ftp.ncdc.noaa.gov/pub/data/noaaglobaltemp/operational/timeseries/readme.timeseries for "total error variance."
+            d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
             names(d)[names(d) == "temp"] <- seriesName
-            names(d)[names(d) == "conf_int"] <- seriesName %_% "_uncertainty"
+            #names(d)[names(d) == "conf_int"] <- seriesName %_% "_uncertainty"
 
             d
           }
@@ -831,14 +837,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `CO2 Cape Grim` = (function(p) {
       x <- NULL
 
+      op <- options()
+      ## -k means don't verify cert, -L means follow redirects (important for some servers):
+      options(download.file.method = "curl", download.file.extra = "-k -L")
       tryCatch({
-        flit <- readLines(p)
+        temp <- tempfile()
+        download.file(p, temp)
+        flit <- readLines(temp)
         #flit <- flit[trimws(flit) != ""]
         #flit <- flit[grep("^\\d{4}", flit, perl=TRUE)] # Not as robust as 'stringr::str_detect()'
         flit <- flit[stringr::str_trim(lapply(flit, iconv, to = "UTF-8") %>% unlist(use.names = FALSE)) != ""] %>% `[`(!is.na(.))
         flit <- flit[stringr::str_detect(flit, "^\\d{4}")]
         x <- read.csv(header = FALSE, skip = 0L, text = flit, fill = TRUE, check.names = FALSE, na.strings = "NaN")
-      }, error = Error, warning = Error)
+      }, error = Error, warning = Error, finally = options(op))
 
       d <- data.frame(year = x$V1, yr_part = x$V1 + (2 * x$V2 - 1)/24, month = x$V2, temp = x$V5,
         check.names = FALSE, stringsAsFactors = FALSE)

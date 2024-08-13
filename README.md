@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20240306.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
+Okay! It's [here](inst/extdata/latest/climate-series_20240731.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
 
 *climeseries* includes more than 1000 individual monthly climate time series; the full set of series names is listed [below](#latest-column-names).
 
@@ -136,7 +136,7 @@ series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
 start <- 1950; end <- NULL
 g <- remove_exogenous_influences(inst, series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
-main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
+main <- "Average Temperature Adjusted for ENSO, Volcanic, & Solar Influences"
 plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 19, baseline = TRUE,
   save_png = FALSE)
 
@@ -155,7 +155,7 @@ plot_climate_data(inst, series = forcings_scaled[1:4], start = forcings_start_ye
   col = c("darkblue", "darkgrey", "darkorange", "darkred"), save_png = FALSE)
 ```
 
-![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1970.1-recent_yearly_baseline1981-2010.png)
+![Remove influence of exogenous factors characterizing ENSO, volcanic activity, and solar.](inst/images/major-monthly-inst-series-adj_1950.1-recent_yearly_baseline1981-2010.png)
 ![Climate forcing variables for ENSO, volcanic activity, solar, and CO2.](inst/images/exogenous-forcings+co2_normalized_1880.1-recent.png)
 
 ```r
@@ -339,7 +339,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20240306.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20240731.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -891,27 +891,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEI v4 Ocean 90S-20S_uncertainty
 1. NCEI v4 Ocean 90S-60S_uncertainty
 1. NCEI v4 Ocean 90S-90N_uncertainty
-1. NCEP/CSFR Surface Air Global
-1. NCEP/CSFR Surface Air Global Land
-1. NCEP/CSFR Surface Air Global Ocean
-1. NCEP/CSFR Surface Air NH
-1. NCEP/CSFR Surface Air NH Land
-1. NCEP/CSFR Surface Air NH Ocean
-1. NCEP/CSFR Surface Air NH Polar
-1. NCEP/CSFR Surface Air NH Polar Land
-1. NCEP/CSFR Surface Air NH Polar Ocean
-1. NCEP/CSFR Surface Air SH
-1. NCEP/CSFR Surface Air SH Land
-1. NCEP/CSFR Surface Air SH Ocean
-1. NCEP/CSFR Surface Air SH Polar
-1. NCEP/CSFR Surface Air SH Polar Land
-1. NCEP/CSFR Surface Air SH Polar Ocean
-1. NCEP/CSFR Surface Air Tropics
-1. NCEP/CSFR Surface Air Tropics Land
-1. NCEP/CSFR Surface Air Tropics Ocean
-1. NCEP/CSFR Surface Air USA 48
-1. NCEP/CSFR Surface Air USA 48 Land
-1. NCEP/CSFR Surface Air USA 48 Ocean
+1. NCEP/CFSR Surface Air Global
+1. NCEP/CFSR Surface Air Global Land
+1. NCEP/CFSR Surface Air Global Ocean
+1. NCEP/CFSR Surface Air NH
+1. NCEP/CFSR Surface Air NH Land
+1. NCEP/CFSR Surface Air NH Ocean
+1. NCEP/CFSR Surface Air NH Polar
+1. NCEP/CFSR Surface Air NH Polar Land
+1. NCEP/CFSR Surface Air NH Polar Ocean
+1. NCEP/CFSR Surface Air SH
+1. NCEP/CFSR Surface Air SH Land
+1. NCEP/CFSR Surface Air SH Ocean
+1. NCEP/CFSR Surface Air SH Polar
+1. NCEP/CFSR Surface Air SH Polar Land
+1. NCEP/CFSR Surface Air SH Polar Ocean
+1. NCEP/CFSR Surface Air Tropics
+1. NCEP/CFSR Surface Air Tropics Land
+1. NCEP/CFSR Surface Air Tropics Ocean
+1. NCEP/CFSR Surface Air USA 48
+1. NCEP/CFSR Surface Air USA 48 Land
+1. NCEP/CFSR Surface Air USA 48 Ocean
 1. NCEP/DOE R2 Sea Surface Global
 1. NCEP/DOE R2 Sea Surface NH
 1. NCEP/DOE R2 Sea Surface SH

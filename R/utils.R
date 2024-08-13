@@ -260,6 +260,7 @@ interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=T
   {
     n <- length(x)
     idx <- (1:n)[!is.na(x)]
+    if (length(idx) <= 1) return (x)
     y <- fun(x=idx, y=x[idx], xout=1:n, method=method, f=f)$y
 
     ## If spline interpolation, allow terminal NAs to be interpolated.
@@ -561,7 +562,8 @@ is_invalid <- function(x, ...)
 
   if (is.list(x))
     return (all(sapply(x, is_invalid)))
-  else if (is.vector(x))
+  #else if (is.vector(x))
+  else if (is.atomic(x) || is.expression(x))
     return (all(is.na(x)))
   else
     return (FALSE)

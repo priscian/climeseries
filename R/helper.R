@@ -424,6 +424,7 @@ create_aggregate_variable <- function(
   x,
   var_names,
   aggregate_name = "aggregate_var",
+  get_climate_series_names... = list(),
   method = "fmm",
   interpolate = TRUE,
   baseline = NULL,
@@ -431,25 +432,38 @@ create_aggregate_variable <- function(
   ...
 )
 {
-  d <- x[, c(get_climate_series_names(x, invert = FALSE), var_names), drop = FALSE]
+  get_climate_series_namesArgs <- list(
+    x = x,
+    invert = FALSE
+  )
+  get_climate_series_namesArgs <-
+    utils::modifyList(get_climate_series_namesArgs,
+      get_climate_series_names..., keep.null = TRUE) %>%
+      `$<-`(name = "invert", value = FALSE)
+
+  colNamesAll <- do.call(get_climate_series_names, get_climate_series_namesArgs)
+
+  d <- x %>% dplyr::select(c(colNamesAll, var_names))
 
   ## Put variables on common baseline before combining them
   if (!is.null(baseline))
     d <- recenter_anomalies(d, baseline = baseline)
 
   ## Remove non-monthly-series columns
-  d <- d[, get_climate_series_names(d)]
+  colNamesSeries <- do.call(get_climate_series_names,
+    get_climate_series_namesArgs %>% `$<-`(name = "invert", value = TRUE))
+  d %<>% dplyr::select(any_of(colNamesSeries))
 
   if (interpolate)
-    d <- interpNA(d, method = method, unwrap = TRUE)
+    d %<>% interpNA(method = method, unwrap = TRUE)
 
   r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm = TRUE); r })
   if (interpolate)
-    r <- drop(interpNA(r, method = "linear", unwrap = TRUE, ...))
+    r %<>% { drop(interpNA(., method = "linear", unwrap = TRUE, ...)) }
 
   if (!add) return (r)
 
-  x[[aggregate_name]] <- r
+  x %<>% dplyr::mutate(!!aggregate_name := r)
 
   x
 }
@@ -2046,6 +2060,9 @@ create_timeseries_from_gridded <- function(
 }
 
 
+## Can I add these?
+## UAH gridded: https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00961
+## RSS gridded: https://www.remss.com/measurements/upper-air-temperature/
 #' @export
 create_zonal_data <- function(
   x, # series from call to 'get_climate_data()'
@@ -2077,8 +2094,26 @@ create_zonal_data <- function(
     be = list(
       url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Land_and_Ocean_LatLong1.nc",
       tempvar = "temperature",
-      series = "BE Land+SST (Air Ice Temp.)"
+      series = "Berkeley Earth Land+SST (Air Ice Temp.)"
+    ),
+    be_land = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Complete_TAVG_LatLong1.nc",
+      tempvar = "temperature",
+      series = "Berkeley Earth Land"
+    ),
+    be_land_tmax = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Complete_TMAX_LatLong1.nc",
+      tempvar = "temperature",
+      series = "Berkeley Earth Land TMAX"
+    ),
+    be_land_tmin = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Complete_TMIN_LatLong1.nc",
+      tempvar = "temperature",
+      series = "Berkeley Earth Land TMIN"
     )
+    ## TODO:
+    # https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/gridded/
+    # https://data.giss.nasa.gov/gistemp/
   ),
   series_suffix = NULL,
   use_local = FALSE
@@ -2279,6 +2314,8 @@ correct_monthly_autocorrelation <- function(
     xy <- dataframe(xdata = xdata, ydata = ydata)
     xyac <- xy %>%
       dplyr::filter(xdata >= min(autocorrel_period) & xdata <= max(autocorrel_period))
+    if (is_invalid(xyac$ydata))
+      xyac <- xy
     mod_ac <- lm(ydata ~ xdata, data = xyac)
     ## Redefine 'xdata' & 'ydata'
     xdata <- xyac$xdata; ydata <- xyac$ydata
@@ -2296,8 +2333,21 @@ correct_monthly_autocorrelation <- function(
   santer_correct <- function(xdata, ydata, model, slope_coef)
   {
     if (missing(xdata)) {
-      xdata = model$x[, slope_coef]
-      ydata = model$y
+      # xdata = model$x[, slope_coef]
+      # ydata = model$y
+
+      index_df <- residuals(model) %>% { dataframe(index = as.numeric(names(.))) }
+      flit <- model$x[, slope_coef]
+      if (is_invalid(names(flit))) {
+        flit <- model$x[, slope_coef, drop = FALSE] %>%
+          { structure(.[, 1], .Names = dimnames(.)[1]) }
+      }
+      xdata <- dplyr::full_join(flit %>%
+        { dataframe(index = as.numeric(names(.)), x = .) }, index_df) %>% dplyr::arrange(index) %>%
+        { structure(dplyr::pull(., x), .Names = .$index) } %>% interpNA() %>% `[`(, 1)
+      ydata <- dplyr::full_join(model$y %>%
+        { dataframe(index = as.numeric(names(.)), y = .) }, index_df) %>% dplyr::arrange(index) %>%
+        { structure(dplyr::pull(., y), .Names = .$index) }
     }
     temp_corr_matrix <- structure(cbind(
       ydata,
@@ -2307,8 +2357,10 @@ correct_monthly_autocorrelation <- function(
       stats::residuals(model),
       keystone::shift(stats::residuals(model), 1L, roll = FALSE)
     ), .Dimnames = list(as.character(xdata), c("x_t", "x_t-1"))) %>% as.data.frame
-    r <- stats::cor(temp_corr_matrix_resid$x_t, temp_corr_matrix_resid$`x_t-1`, use = "complete.obs")
     N <- stats::df.residual(model)
+    if (!(temp_corr_matrix_resid %>% complete.cases %>% any))
+      return (structure(NA, N_eff = N))
+    r <- stats::cor(temp_corr_matrix_resid$x_t, temp_corr_matrix_resid$`x_t-1`, use = "complete.obs")
     N_eff <- N * ((1 - r)/(1 + r))
     #`s_e^2` <- (1/(N_eff - 2)) * sum(stats::residuals(model)^2, na.rm = TRUE)
     `s_e^2` <- function(N) (1/N) * sum(stats::residuals(model)^2, na.rm = TRUE)

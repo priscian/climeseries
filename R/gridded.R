@@ -459,10 +459,10 @@ make_coverage_filter <- function(
 make_ghcn_temperature_series <- function(
   ghcn, # GHCN station data in climeseries format
   station_metadata,
-  series_name,
+  series_name, region,
   other_filters = rep(TRUE, length(get_climate_series_names(ghcn))), # Other filters for station selection
   grid_size = c(5.0, 5.0),
-  baseline = 1951:1980,
+  baseline = 1951:1980, # set to NULL to skip testing for baseline coverage
   lat_range = c(90, -90), long_range = c(-180, 180), # Default global coverage
   interpolate = FALSE,
   min_nonmissing_months = 6,#10, # Over baseline period
@@ -502,14 +502,23 @@ make_ghcn_temperature_series <- function(
     latRangeText <- sapply(lat_range, LatLongToText, sufs = c("S", "N"), simplify = TRUE)
     longRangeText <- sapply(long_range, LatLongToText, sufs = c("W", "E"), simplify = TRUE)
 
-    series_name <- sprintf("GHCN v%i %s, %s Land %s (%s cells%s)",
-      ver,
-      paste(latRangeText, collapse = "–"),
-      paste(longRangeText, collapse = "–"),
-      ifelse(quality %in% c("a", "f", "e", "_adj"), "Adj.", "Raw"),
-      paste(sapply(grid_size, sprintf, fmt = "%.1f°"), collapse = " × "),
-      ifelse(use_lat_zonal_weights, " zoned", "")
-    )
+    if (!missing(region)) {
+      series_name <- sprintf("%s Land %s (%s cells%s)",
+        region,
+        ifelse(quality %in% c("a", "f", "e", "_adj"), "Adj.", "Raw"),
+        paste(sapply(grid_size, sprintf, fmt = "%.1f°"), collapse = " × "),
+        ifelse(use_lat_zonal_weights, " zoned", "")
+      )
+    } else {
+      series_name <- sprintf("GHCN v%i %s, %s Land %s (%s cells%s)",
+        ver,
+        paste(latRangeText, collapse = "–"),
+        paste(longRangeText, collapse = "–"),
+        ifelse(quality %in% c("a", "f", "e", "_adj"), "Adj.", "Raw"),
+        paste(sapply(grid_size, sprintf, fmt = "%.1f°"), collapse = " × "),
+        ifelse(use_lat_zonal_weights, " zoned", "")
+      )
+    }
   }
 
   ## Which stations have adequate coverage over the baseline period?
@@ -930,8 +939,8 @@ make_ghcn_temperature_series <- function(
     # rio::export(head(l, 2), sprintf(pathTemplate, "a"), rowNames = head(rowNames, 2), colNames = TRUE)
     rio::export(l[[1]], sprintf(pathTemplate, "stations") %_% ".csv")
     rio::export(l[2], sprintf(pathTemplate, "metadata"), rowNames = rowNames[2], colNames = TRUE, overwrite = TRUE)
-    rio::export(tail(l, -2), sprintf(pathTemplate, "analyzed"), rowNames = tail(rowNames, -2),
-      colNames = TRUE, overwrite = TRUE)
+    rio::export(sapply(tail(l, -3), as.data.frame, optional = TRUE, simplify = FALSE),
+      sprintf(pathTemplate, "analyzed"), rowNames = tail(rowNames, -2), colNames = TRUE, overwrite = TRUE)
 
     cat(". Done.", fill = TRUE); utils::flush.console()
 
@@ -1085,7 +1094,7 @@ grid_info <- function(
 plot_stations_map <- function(
   metadata,
   region_name = "global",
-  title_text = "GHCN-m station distribution",
+  title_text = sprintf("GHCN-m %s station distribution", region_name),
   save_png = FALSE, save_png_dir, png... = list(),
   ...
 )
