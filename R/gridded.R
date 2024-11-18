@@ -895,23 +895,28 @@ make_ghcn_temperature_series <- function(
   str_baseline <- stringr::str_flatten(range(baseline), collapse = "-")
 
   l <- list(
+    ## Instead, make this the whole set of regional stations not filtered on the baseline:
+    #`all-station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.))),
+    `all-station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", any_of(station_metadata$id))),
+    `all-station-metadata` = station_metadata,
     `station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", any_of(attr(gg, "filtered_metadata")$id))),
-    `station-metadata` = attr(gg, "filtered_metadata"),
-    `all-station-data` = ghcn %>% dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.))),
-    `all-station-metadata` = station_metadata
+    `station-metadata` = attr(gg, "filtered_metadata")
   )
-  l[["stations_regional_base" %_% str_baseline]] <- g %>%
-    dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.)))
+  ## I think this is the same as 'unweight-stations_base[...]' below:
+  # l[["stations_regional_base" %_% str_baseline]] <- g %>%
+  #   dplyr::select(c("year", "month", "yr_part", get_climate_series_names(.)))
   l[["cell-counts" %_% stringr::str_flatten(sprintf("%.1f", attr(p0, "grid_size")), collapse = "x")]] <-
     structure(sapply(p0,
-      function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p0), .Dimnames = dimnames(p0))
+      function(x) { r <- x[[1]]; if (is.data.frame(r)) r <- NCOL(r); r }), .Dim = dim(p0),
+        .Dimnames = dimnames(p0)) %>% as.data.frame() %>% tibble::rownames_to_column(var = "lat")
   if (!is.null(unweighted_station_data)) {
     l[["unweight-stations_base" %_% str_baseline]] <-
       dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")),
         unweighted_station_data[, colnames(unweighted_station_data), drop = FALSE])
   }
   if (!is.null(station_weights))
-    l$`all-weights` <- station_weights
+    l$`all-weights` <- dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")),
+      station_weights)
   if (!is.null(weighted_station_data)) {
     l[["weighted-stations_base" %_% str_baseline]] <-
       dplyr::bind_cols(dplyr::select(g, c("year", "month", "yr_part")),
