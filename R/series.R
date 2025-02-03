@@ -1427,14 +1427,15 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
-    `ERA5 Sea Ice Extent` = ,
-    `ERA5 2m` = (function(p) {
+    `ERA5 Sea Ice Extent` =,
+    `ERA5 2m Europe` =,
+    `ERA5 2m Global` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
       if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
       else { currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear }
 
-      #uri <- sub("@@MONTHNUM@@", sprintf("%02d", currentMonth), sub("@@YEARNUM@@", currentYear, p))
-      uri <- gsub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM@@", currentYear, p))
+      uri <- gsub("@@MONTHNUM@@", sprintf("%02d", currentMonth), gsub("@@YEARNUM@@", currentYear, p))
+      #uri <- gsub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM@@", currentYear, p))
       uri <- gsub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
       if (httr::http_error(uri)) { ## Does the previous month's data exist?
         if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
@@ -1454,27 +1455,26 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       x <- NULL
 
-      skip <- 8L
+      skip <- 0L
 
       tryCatch({
-        x <- read.csv(uri, header=TRUE, skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+        x <- read.csv(uri, header = TRUE, skip = skip, check.names = FALSE, comment.char = "#")
+      }, error = Error, warning = Error)
 
-      re <- "(\\d{4})(\\d{2})"
+      #re <- "(\\d{4})(\\d{2})"
+      re <- "(\\d{4})-(\\d{2})-(\\d{2})"
       dateMatches <- stringr::str_match(x[[1]], re)
       yearValue <- as.numeric(dateMatches[, 2L])
       monthValue <- as.numeric(dateMatches[, 3L])
 
-      d <- data.frame(year=yearValue, yr_part=yearValue + (2 * monthValue - 1)/24, month=monthValue, check.names=FALSE, stringsAsFactors=FALSE)
-      #flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
-      flit <- x[, -1]; colnames(flit) <- paste(series, capwords(colnames(flit)))
-      d <- cbind(d, flit)
+      d <- dataframe(year = yearValue, yr_part = yearValue + (2 * monthValue - 1)/24, month = monthValue, temp = x$`2t`) %>%
+        dplyr::rename(!!series := temp)
 
       return (d)
     })(path),
 
-    `ERA-Interim 2m Global` =,
-    `ERA5 2m Global` = (function(p) {
+    #`ERA5 2m Global` =,
+    `ERA-Interim 2m Global` = (function(p) {
       x <- NULL
 
       skip <- 0L
@@ -1932,6 +1932,13 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
   #   attr(d, "baseline") <- attr(env[[ls(env)[1L]]], "baseline")
 
   d <- make_met_year(d)
+  if (FALSE) { # Add series from an earlier data set (e.g. in case of current failure)
+    env <- new.env()
+    load("C:/common/data/climate/climeseries/climate-series_raw_20241117.RData", envir = env)
+    flit <- env$d %>% dplyr::select(c(month, year, starts_with(c("JRA-55", "NCEP/CFSR")))) %>%
+      dplyr::left_join(d, ., by = c("month", "year"))
+    d <- flit
+  }
 
   suffix <- format(Sys.Date(), "%Y%m%d")
 

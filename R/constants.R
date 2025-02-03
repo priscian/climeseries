@@ -45,7 +45,7 @@ if (current_month == 1) {
   current_year_lagged <- current_year - 1
   current_month_lagged <- 12
 }
-#current_year_lagged <- 2023
+current_year_lagged <- 2024
 
 dataDir <- "."
 filenameBase <- "climate-series_"
@@ -56,8 +56,8 @@ defaultBaseline <- 1981:2010
 gistempBaseV3 <- "https://data.giss.nasa.gov/gistemp/tabledata_v3/"
 gistempBaseV4 <- "https://data.giss.nasa.gov/gistemp/tabledata_v4/"
 nceiBase <- "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/"
-nceiGlobalMonthly <- sprintf("/all/1/1850-%s/data.csv", current_year_lagged) # N.B. Change this back in Feb 2024!!
-nceiUsMonthly <- sprintf("/all/1/1895-%s.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000", current_year_lagged) # N.B. Change this back in Feb 2024!!
+nceiGlobalMonthly <- sprintf("/1/0/1850-%s/data.csv", current_year_lagged) # N.B. Change this back in Feb 2024!!
+nceiUsMonthly <- sprintf("/1/0/1895-%s.csv?base_prd=true&begbaseyear=1901&endbaseyear=2000", current_year_lagged) # N.B. Change this back in Feb 2024!!
 crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
@@ -86,7 +86,8 @@ modisAodBase <- "http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager
 ## ERA-Interim 2m temperature
 ## https://climate.copernicus.eu/surface-air-temperature-maps
 ## https://confluence.ecmwf.int/display/CKB/How+to+download+ERA-Interim+data+from+the+ECMWF+data+archive
-eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/ftp-data/temperature/"
+#eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/ftp-data/temperature/"
+eraInterim2mTempBase <- "https://climate.copernicus.eu/sites/default/files/"
 noaaOhcBase <- "https://data.nodc.noaa.gov/woa/DATA_ANALYSIS/3M_HEAT_CONTENT/DATA/basin/"
 #nasaLandIceMassBase <- "https://podaac-tools.jpl.nasa.gov/drive/files/allData/tellus/L4/ice_mass/RL06.1/v03/mascon_CRI/"
 nasaLandIceMassBase <- "https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/"
@@ -103,7 +104,7 @@ make_reanalysis_urls <- function()
   ## 3 Jan 2022: Needed to add '&level=1000mb&level2=1000mb' to meet server requirements to retrieve data (should be irrelevant for 2-m air, though):
   writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year_lagged) # N.B. Change this back in Feb 2024!!
   reanalyses <- list(
-    `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
+    #`JRA-55` = sub("@@SERIES@@", "JRA-55", writBase), # Broken as of 02 Feb 2025
     `ERA5` = sub("@@SERIES@@", "ERA5", writBase),
     `NCEP/NCAR R1` = sub("@@SERIES@@", "NCEP%2FNCAR+R1", writBase),
     `NCEP/DOE R2` = sub("@@SERIES@@", "NCEP%2FDOE+R2", writBase),
@@ -203,7 +204,9 @@ data_urls <- c(list(
   `HadCET` = "https://www.metoffice.gov.uk/hadobs/hadcet/data/meantemp_monthly_totals.txt",
   `NCEI Ocean Heat Content` = list(path = noaaOhcBase, type = "OHC"),
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
-  `ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM_LASTMONTH@@/@@MONTHNUM_LASTMONTH@@/ERA5_1991-2020/ts_1month_anomaly_Global_ERA5_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1991-2020_v01.1.csv",
+  #`ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM_LASTMONTH@@/@@MONTHNUM_LASTMONTH@@/ERA5_1991-2020/ts_1month_anomaly_Global_ERA5_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1991-2020_v01.1.csv",
+  `ERA5 2m Global` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig1b_timeseries_anomalies_ref1991-2020_global_allmonths_data.csv",
+  `ERA5 2m Europe` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig5b_timeseries_anomalies_ref1991-2020_Europe_allmonths_data.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
   ## Check here in case of failure of ERA5 sea ice: https://climate.copernicus.eu/sea-ice-cover-march-2020 etc.
@@ -214,9 +217,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
   `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202408.txt", type = "land ice"),
-  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202408.txt", type = "land ice"),
-  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202408.txt", type = "ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202410.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202410.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202410.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -236,15 +239,15 @@ data_urls <- c(list(
   `GISTEMP v4 Zonal` = gistempBaseV4 %_% "ZonAnn.Ts+dSST.csv",
   `GISTEMP v4 Zonal Land` = gistempBaseV4 %_% "ZonAnn.Ts.csv",
   ## NCEI (N.B. All the NCEI URLs need attention!)
-  `NCEI Global` = nceiBase %_% "global/time-series/globe/land_ocean" %_% nceiGlobalMonthly,
-  `NCEI SH` = nceiBase %_% "global/time-series/shem/land_ocean" %_% nceiGlobalMonthly,
-  `NCEI NH` = nceiBase %_% "global/time-series/nhem/land_ocean" %_% nceiGlobalMonthly,
-  `NCEI Global Land` = nceiBase %_% "global/time-series/globe/land" %_% nceiGlobalMonthly,
-  `NCEI SH Land` = nceiBase %_% "global/time-series/shem/land" %_% nceiGlobalMonthly,
-  `NCEI NH Land` = nceiBase %_% "global/time-series/nhem/land" %_% nceiGlobalMonthly,
-  `NCEI Global Ocean` = nceiBase %_% "global/time-series/globe/ocean" %_% nceiGlobalMonthly,
-  `NCEI SH Ocean` = nceiBase %_% "global/time-series/shem/ocean" %_% nceiGlobalMonthly,
-  `NCEI NH Ocean` = nceiBase %_% "global/time-series/nhem/ocean" %_% nceiGlobalMonthly,
+  `NCEI Global` = nceiBase %_% "global/time-series/globe/tavg/land_ocean" %_% nceiGlobalMonthly,
+  `NCEI SH` = nceiBase %_% "global/time-series/shem/tavg/land_ocean" %_% nceiGlobalMonthly,
+  `NCEI NH` = nceiBase %_% "global/time-series/nhem/tavg/land_ocean" %_% nceiGlobalMonthly,
+  `NCEI Global Land` = nceiBase %_% "global/time-series/globe/tavg/land" %_% nceiGlobalMonthly,
+  `NCEI SH Land` = nceiBase %_% "global/time-series/shem/tavg/land" %_% nceiGlobalMonthly,
+  `NCEI NH Land` = nceiBase %_% "global/time-series/nhem/tavg/land" %_% nceiGlobalMonthly,
+  `NCEI Global Ocean` = nceiBase %_% "global/time-series/globe/tavg/ocean" %_% nceiGlobalMonthly,
+  `NCEI SH Ocean` = nceiBase %_% "global/time-series/shem/tavg/ocean" %_% nceiGlobalMonthly,
+  `NCEI NH Ocean` = nceiBase %_% "global/time-series/nhem/tavg/ocean" %_% nceiGlobalMonthly,
   `NCEI US Avg. Temp.` = nceiBase %_% "national/time-series/110/tavg" %_% nceiUsMonthly, # Schema "110/00" appears to be "region/division".
   `NCEI US Max. Temp.` = nceiBase %_% "national/time-series/110/tmax" %_% nceiUsMonthly,
   `NCEI US Min. Temp.` = nceiBase %_% "national/time-series/110/tmin" %_% nceiUsMonthly,
@@ -376,7 +379,7 @@ data_urls <- c(list(
   `OSI Sea Ice` = list(path = "ftp://osisaf.met.no/prod_test/ice/index/v2p2", type = "sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path = "http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type = "sea ice"),
   #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"), # 1976–2016 (daily)
-  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20240927.txt", type = "solar"), # 1996– (daily)
+  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20241227.txt", type = "solar"), # 1996– (daily)
   `TSI Reconstructed` = list(path = "https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type = "solar"), # 1610–2018 (yearly)
   # `TSIS/TIM TSI` = list(path = "https://lasp.colorado.edu/data/tsis/tsi_data/tsis_tsi_L3_c24h_latest.txt", type = "solar") # Replaces SORCE; 2018– (daily)
   ## Also see: https://www.pmodwrc.ch/en/research-development/solar-physics/tsi-composite/
@@ -397,8 +400,9 @@ data_urls <- c(list(
   `CSIRO Reconstructed Global Mean Sea Level` = list(path = "http://www.cmar.csiro.au/sealevel/downloads/church_white_gmsl_2011_up.zip", type = "sea level"),
   ## https://data.aviso.altimetry.fr/aviso-gateway/data/indicators/msl/
   #`AVISO Global Mean Sea Level` = list(path = "ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m.txt", type = "sea level"),
-  `AVISO Global Mean Sea Level` = list(path = "https://data.aviso.altimetry.fr/aviso-gateway/data/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_NoAdjust_Filter2m_NRT.txt", type = "sea level"),
-  `AVISO Global Mean Sea Level (nonseasonal)` = list(path = "https://data.aviso.altimetry.fr/aviso-gateway/data/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m_NRT.txt", type = "sea level"),
+  #`AVISO Global Mean Sea Level` = list(path = "https://data.aviso.altimetry.fr/aviso-gateway/data/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_NoAdjust_Filter2m_NRT.txt", type = "sea level"),
+  `AVISO Global Mean Sea Level` = list(path = "ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_NoAdjust_Filter2m_NRT.txt", type = "sea level"),
+  `AVISO Global Mean Sea Level (nonseasonal)` = list(path = "ftp://ftp.aviso.altimetry.fr/pub/oceano/AVISO/indicators/msl/MSL_Serie_MERGED_Global_AVISO_GIA_Adjust_Filter2m_NRT.txt", type = "sea level"),
   ## Global average CO2 series:
   # https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_gl.txt
   # ftp://podaac.jpl.nasa.gov/allData/merged_alt/L2/TP_J1_OSTM/global_mean_sea_level/GMSL_TPJAOS_V4_199209_201704.txt
