@@ -2,9 +2,9 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20250202.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
+Okay! It's [here](inst/extdata/latest/climate-series_20250321.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
 
-*climeseries* includes more than 1000 individual monthly climate time series; the full set of series names is listed [below](#latest-column-names).
+*climeseries* includes more than 1100 individual monthly climate time series; the full set of series names is listed [below](#latest-column-names).
 
 (If you're instead looking for the [list of paleoclimate studies](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a) that use a variety of temperature proxies and methodologies in affirmation of [Michael Mann's hockey stick result](https://dx.doi.org/10.1038/33859), you can find that [here](https://gist.github.com/priscian/5a10f13dbf727048aee17e5d3849041a).)
 
@@ -58,7 +58,7 @@ inst0 <- create_aggregate_variable(inst0, c("20th C. Reanalysis V3 Surface Air G
 inst0[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
-  "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
+  "UAH TLT 6.0 Global", "JRA-3Q Surface Air Global", "ERA5 2m Global",
   "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global",
   "RATPAC-A Surface GLOBE", airs_series)
 inst <- inst0 %>%
@@ -131,7 +131,7 @@ inst <- create_aggregate_variable(inst, c("20th C. Reanalysis V3 Surface Air Glo
   "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global", type = "head")
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
-  "UAH TLT 6.0 Global", "JRA-55 Surface Air Global", "ERA5 2m Global",
+  "UAH TLT 6.0 Global", "JRA-3Q Surface Air Global", "ERA5 2m Global",
   "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global")
 start <- 1950; end <- NULL
 g <- remove_exogenous_influences(inst, series = series, start = start, end = end, max_lag = 12)
@@ -339,7 +339,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20250202.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20250321.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -423,8 +423,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. BEST Global Land_uncertainty
 1. BEST Greenland
 1. BEST Greenland_uncertainty
-1. BE Land+SST (Air Ice Temp.) (0N-90N, 180W-180E)
-1. BE Land+SST (Air Ice Temp.) (90S-0N, 180W-180E)
+1. Berkeley Earth Land+SST (Air Ice Temp.) (0N-90N, 180W-180E)
+1. Berkeley Earth Land+SST (Air Ice Temp.) (90S-0N, 180W-180E)
 1. BEST NH Land
 1. BEST NH Land_uncertainty
 1. BEST SH Land
@@ -453,8 +453,8 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. CSIRO Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level
 1. CSIRO Reconstructed Global Mean Sea Level_uncertainty
+1. ERA5 2m Europe
 1. ERA5 2m Global
-1. ERA5 2m European
 1. ERA5 Surface Air Global
 1. ERA5 Surface Air Global Land
 1. ERA5 Surface Air Global Ocean
@@ -657,6 +657,27 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. HadSST4 Tropics
 1. HadSST4 Tropics_uncertainty
 1. JMA Global
+1. JRA-3Q Surface Air Global
+1. JRA-3Q Surface Air Global Land
+1. JRA-3Q Surface Air Global Ocean
+1. JRA-3Q Surface Air NH
+1. JRA-3Q Surface Air NH Land
+1. JRA-3Q Surface Air NH Ocean
+1. JRA-3Q Surface Air NH Polar
+1. JRA-3Q Surface Air NH Polar Land
+1. JRA-3Q Surface Air NH Polar Ocean
+1. JRA-3Q Surface Air SH
+1. JRA-3Q Surface Air SH Land
+1. JRA-3Q Surface Air SH Ocean
+1. JRA-3Q Surface Air SH Polar
+1. JRA-3Q Surface Air SH Polar Land
+1. JRA-3Q Surface Air SH Polar Ocean
+1. JRA-3Q Surface Air Tropics
+1. JRA-3Q Surface Air Tropics Land
+1. JRA-3Q Surface Air Tropics Ocean
+1. JRA-3Q Surface Air USA 48
+1. JRA-3Q Surface Air USA 48 Land
+1. JRA-3Q Surface Air USA 48 Ocean
 1. JRA-55 Surface Air Global
 1. JRA-55 Surface Air Global Land
 1. JRA-55 Surface Air Global Ocean
@@ -813,30 +834,30 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEI US PHDI
 1. NCEI US PMDI
 1. NCEI US Precip.
-1. NCEI v4 Land 60S-30S
-1. NCEI v4 Land 60N-90N
-1. NCEI v4 Land 60S-60N
-1. NCEI v4 Land 90S-00N
-1. NCEI v4 Land 90S-20S
-1. NCEI v4 Land 90S-60S
-1. NCEI v4 Land 90S-90N
-1. NCEI v4 Land + Ocean 00N-90N
-1. NCEI v4 Land + Ocean 00N-30N
-1. NCEI v4 Land + Ocean 20N-90N
-1. NCEI v4 Land + Ocean 20S-20N
-1. NCEI v4 Land + Ocean 30N-60N
-1. NCEI v4 Land + Ocean 30S-00N
 1. NCEI v4 Land 00N-30N
 1. NCEI v4 Land 00N-90N
 1. NCEI v4 Land 20N-90N
 1. NCEI v4 Land 20S-20N
 1. NCEI v4 Land 30N-60N
+1. NCEI v4 Land 30S-00N
+1. NCEI v4 Land 60N-90N
+1. NCEI v4 Land 60S-30S
+1. NCEI v4 Land 60S-60N
+1. NCEI v4 Land 90S-00N
+1. NCEI v4 Land 90S-20S
+1. NCEI v4 Land 90S-60S
+1. NCEI v4 Land 90S-90N
+1. NCEI v4 Land + Ocean 00N-30N
+1. NCEI v4 Land + Ocean 00N-90N
+1. NCEI v4 Land + Ocean 20N-90N
+1. NCEI v4 Land + Ocean 20S-20N
+1. NCEI v4 Land + Ocean 30N-60N
+1. NCEI v4 Land + Ocean 30S-00N
 1. NCEI v4 Land + Ocean 60N-90N
 1. NCEI v4 Land + Ocean 60S-30S
 1. NCEI v4 Land + Ocean 60S-60N
 1. NCEI v4 Land + Ocean 90S-00N
 1. NCEI v4 Land + Ocean 90S-20S
-1. NCEI v4 Land 30S-00N
 1. NCEI v4 Land + Ocean 90S-60S
 1. NCEI v4 Land + Ocean 90S-90N
 1. NCEI v4 Ocean 00N-30N
@@ -852,45 +873,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. NCEI v4 Ocean 90S-20S
 1. NCEI v4 Ocean 90S-60S
 1. NCEI v4 Ocean 90S-90N
-1. NCEI v4 Land 60S-30S_uncertainty
-1. NCEI v4 Land 60N-90N_uncertainty
-1. NCEI v4 Land 60S-60N_uncertainty
-1. NCEI v4 Land 90S-00N_uncertainty
-1. NCEI v4 Land 90S-20S_uncertainty
-1. NCEI v4 Land 90S-60S_uncertainty
-1. NCEI v4 Land 90S-90N_uncertainty
-1. NCEI v4 Land + Ocean 00N-90N_uncertainty
-1. NCEI v4 Land + Ocean 00N-30N_uncertainty
-1. NCEI v4 Land + Ocean 20N-90N_uncertainty
-1. NCEI v4 Land + Ocean 20S-20N_uncertainty
-1. NCEI v4 Land + Ocean 30N-60N_uncertainty
-1. NCEI v4 Land + Ocean 30S-00N_uncertainty
-1. NCEI v4 Land 00N-30N_uncertainty
-1. NCEI v4 Land 00N-90N_uncertainty
-1. NCEI v4 Land 20N-90N_uncertainty
-1. NCEI v4 Land 20S-20N_uncertainty
-1. NCEI v4 Land 30N-60N_uncertainty
-1. NCEI v4 Land + Ocean 60N-90N_uncertainty
-1. NCEI v4 Land + Ocean 60S-30S_uncertainty
-1. NCEI v4 Land + Ocean 60S-60N_uncertainty
-1. NCEI v4 Land + Ocean 90S-00N_uncertainty
-1. NCEI v4 Land + Ocean 90S-20S_uncertainty
-1. NCEI v4 Land 30S-00N_uncertainty
-1. NCEI v4 Land + Ocean 90S-60S_uncertainty
-1. NCEI v4 Land + Ocean 90S-90N_uncertainty
-1. NCEI v4 Ocean 00N-30N_uncertainty
-1. NCEI v4 Ocean 00N-90N_uncertainty
-1. NCEI v4 Ocean 20N-90N_uncertainty
-1. NCEI v4 Ocean 20S-20N_uncertainty
-1. NCEI v4 Ocean 30N-60N_uncertainty
-1. NCEI v4 Ocean 30S-00N_uncertainty
-1. NCEI v4 Ocean 60N-90N_uncertainty
-1. NCEI v4 Ocean 60S-30S_uncertainty
-1. NCEI v4 Ocean 60S-60N_uncertainty
-1. NCEI v4 Ocean 90S-00N_uncertainty
-1. NCEI v4 Ocean 90S-20S_uncertainty
-1. NCEI v4 Ocean 90S-60S_uncertainty
-1. NCEI v4 Ocean 90S-90N_uncertainty
 1. NCEP/CFSR Surface Air Global
 1. NCEP/CFSR Surface Air Global Land
 1. NCEP/CFSR Surface Air Global Ocean

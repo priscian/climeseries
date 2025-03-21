@@ -45,7 +45,7 @@ if (current_month == 1) {
   current_year_lagged <- current_year - 1
   current_month_lagged <- 12
 }
-current_year_lagged <- 2024
+#current_year_lagged <- 2024
 
 dataDir <- "."
 filenameBase <- "climate-series_"
@@ -61,7 +61,7 @@ nceiUsMonthly <- sprintf("/1/0/1895-%s.csv?base_prd=true&begbaseyear=1901&endbas
 crutemBase <- "https://crudata.uea.ac.uk/cru/data/temperature/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
-hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/csv/"
+hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/data/"
 crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.2.0/diagnostics/"
 hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.0.2.0/analysis/diagnostics/"
 hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.0.2.0/non-infilled/diagnostics/"
@@ -104,11 +104,12 @@ make_reanalysis_urls <- function()
   ## 3 Jan 2022: Needed to add '&level=1000mb&level2=1000mb' to meet server requirements to retrieve data (should be irrelevant for 2-m air, though):
   writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year_lagged) # N.B. Change this back in Feb 2024!!
   reanalyses <- list(
-    #`JRA-55` = sub("@@SERIES@@", "JRA-55", writBase), # Broken as of 02 Feb 2025
+    `NCEP/CFSR` = sub("@@SERIES@@", "NCEP%2FCFSR", writBase),
+    `JRA-55` = sub("@@SERIES@@", "JRA-55", writBase),
+    `JRA-3Q` = sub("@@SERIES@@", "JRA-3Q", writBase),
     `ERA5` = sub("@@SERIES@@", "ERA5", writBase),
     `NCEP/NCAR R1` = sub("@@SERIES@@", "NCEP%2FNCAR+R1", writBase),
     `NCEP/DOE R2` = sub("@@SERIES@@", "NCEP%2FDOE+R2", writBase),
-    `NCEP/CFSR` = sub("@@SERIES@@", "NCEP%2FCFSR", writBase),
     `MERRA-2` = sub("@@SERIES@@", "MERRA-2", writBase),
     `20th C. Reanalysis V3` = sub("@@SERIES@@", "20th+Century+Reanalysis+V3", writBase)
     #`20th C. Reanalysis V3` = sub("@@SERIES@@", "20th+Century+Reanalysis+V2c", writBase) # Temporary
@@ -178,7 +179,7 @@ make_reanalysis_urls <- function()
   rv <- purrr::flatten(rrr)
   ## Remove the unecessary/paradoxical SST series
   rv <- rv[names(rv) %>% stringr::str_detect("Sea Surface.+?(Land|Ocean)$", negate = TRUE)]
-  rv <- rv[names(rv) %>% stringr::str_detect("^(JRA-55|ERA5|NCEP/CSFR|MERRA-2).*?Sea Surface", negate = TRUE)]
+  rv <- rv[names(rv) %>% stringr::str_detect("^(JRA-55|JRA-3Q|ERA5|NCEP/CFSR|MERRA-2).*?Sea Surface", negate = TRUE)]
 
   rv
 }
@@ -206,7 +207,7 @@ data_urls <- c(list(
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
   #`ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM_LASTMONTH@@/@@MONTHNUM_LASTMONTH@@/ERA5_1991-2020/ts_1month_anomaly_Global_ERA5_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1991-2020_v01.1.csv",
   `ERA5 2m Global` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig1b_timeseries_anomalies_ref1991-2020_global_allmonths_data.csv",
-  `ERA5 2m Europe` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig5b_timeseries_anomalies_ref1991-2020_Europe_allmonths_data.csv",
+  `ERA5 2m Europe` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig4b_timeseries_anomalies_ref1991-2020_Europe_allmonths_data.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
   ## Check here in case of failure of ERA5 sea ice: https://climate.copernicus.eu/sea-ice-cover-march-2020 etc.
@@ -217,9 +218,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
   `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202410.txt", type = "land ice"),
-  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202410.txt", type = "land ice"),
-  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202410.txt", type = "ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202412.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202412.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202412.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -281,10 +282,10 @@ data_urls <- c(list(
   `HadSST3 SH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
   `HadSST3 NH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
   `HadSST3 Tropics` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
-  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_GLOBE.csv",
-  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_SHEM.csv",
-  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_NHEM.csv",
-  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.0.1.0_monthly_TROP.csv",
+  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_GLOBE.csv",
+  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_SHEM.csv",
+  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_NHEM.csv",
+  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Hadley v5
   `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.global.monthly.nc",
