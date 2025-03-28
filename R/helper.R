@@ -2067,22 +2067,27 @@ create_timeseries_from_gridded <- function(
 create_zonal_data <- function(
   x, # series from call to 'get_climate_data()'
   sub_lat = c(-90, 90), sub_long = c(-180, 180),
-  what = c("hadcrut", "hadsst", "crutem", "cw", "be"),
+  what = c("hadcrut", "hadcrut4", "hadsst", "crutem", "cw", "be"),
   data_dir = getOption("climeseries_data_dir"),
   metadata = list( # Names should be same as 'what' options
     ## HadCRUT4 url: https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc
     hadcrut = list(
-      url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.1.0.analysis.anomalies.ensemble_mean.nc",
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.2.0.analysis.anomalies.ensemble_mean.nc",
       tempvar = "tas_mean",
       series = "HadCRUT5"
     ),
+    hadcrut4 = list(
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc",
+      tempvar = "temperature_anomaly",
+      series = "HadCRUT4"
+    ),
     hadsst = list(
-      url = "https://www.metoffice.gov.uk/hadobs/hadsst4/data/netcdf/HadSST.4.0.1.0_median.nc",
+      url = "https://www.metoffice.gov.uk/hadobs/hadsst4/data/netcdf/HadSST.4.1.0.0_median.nc",
       tempvar = "tos",
       series = "HadSST4"
     ),
     crutem = list(
-      url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.1.0.anomalies.nc",
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.2.0.anomalies.nc",
       tempvar = "tas",
       series = "CRUTEM5"
     ),
@@ -2147,11 +2152,12 @@ create_zonal_data <- function(
       filePath
     },
     hadcrut =,
+    hadcrut4 =,
     hadsst =,
     crutem =,
     be = {
       if (!use_local || !file.exists(filePath))
-        download.file(gurl, filePath, mode = "wb", quiet = TRUE)
+        download.file(gurl, filePath, mode = "wb", quiet = FALSE)
 
       filePath
     }

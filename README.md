@@ -58,8 +58,9 @@ inst0 <- create_aggregate_variable(inst0, c("20th C. Reanalysis V3 Surface Air G
 inst0[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
-  "UAH TLT 6.0 Global", "JRA-3Q Surface Air Global", "ERA5 2m Global",
-  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global",
+  "UAH TLT 6.0 Global", "STAR v5.0 TLT Global Mean", "JRA-3Q Surface Air Global",
+  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global",
+  "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global",
   "RATPAC-A Surface GLOBE", airs_series)
 inst <- inst0 %>%
   dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
@@ -131,8 +132,9 @@ inst <- create_aggregate_variable(inst, c("20th C. Reanalysis V3 Surface Air Glo
   "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global", type = "head")
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
-  "UAH TLT 6.0 Global", "JRA-3Q Surface Air Global", "ERA5 2m Global",
-  "NCEP/NCAR R1 Surface Air Global", "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global")
+  "UAH TLT 6.0 Global", "STAR v5.0 TLT Global Mean", "JRA-3Q Surface Air Global",
+  "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global",
+  "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global")
 start <- 1950; end <- NULL
 g <- remove_exogenous_influences(inst, series = series, start = start, end = end, max_lag = 12)
 series_adj <- paste(series, "(adj.)")
