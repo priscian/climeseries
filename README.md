@@ -64,7 +64,7 @@ series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "RATPAC-A Surface GLOBE", airs_series)
 inst <- inst0 %>%
   dplyr::select(all_of(c(get_climate_series_names(inst0, invert = FALSE), series))) %>%
-  recenter_anomalies(baseline = baseline, keep = series, skip = "AIRS v7 Global")
+  recenter_anomalies(baseline = baseline, keep = series, skip = airs_series)
 ## N.B. Don't rebaseline here!
 plot_climate_data(inst, series = series, 1880, yearly = TRUE, lwd = 2, ylim = c(-1.0, 1.0),
   save_png = FALSE)
@@ -126,21 +126,33 @@ plot_models_and_climate_data(inst, cmip5, series = series, scenario = NULL, star
 ## Update 2024: https://tamino.wordpress.com/2024/02/16/adjusted-global-temperature-data/
 ########################################
 
-inst <- get_climate_data(download = FALSE, baseline = FALSE)
-inst <- create_aggregate_variable(inst, c("20th C. Reanalysis V3 Surface Air Global",
+airs_series <- "AIRS v7 Global"; baseline <- 1981:2010
+inst0 <- get_climate_data(download = FALSE, baseline = FALSE)
+new_airs <- interpolate_baseline(airs_series, inst0, baseline = baseline)
+inst0 <- create_aggregate_variable(inst0, c("20th C. Reanalysis V3 Surface Air Global",
   "NCEP/DOE R2 Surface Air Global"),
   "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global", type = "head")
+inst0[[airs_series]] <- new_airs[[airs_series]]
 series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global",
   "BEST Global (Air Ice Temp.)", "JMA Global", "RSS TLT 4.0 -70.0/82.5",
   "UAH TLT 6.0 Global", "STAR v5.0 TLT Global Mean", "JRA-3Q Surface Air Global",
   "ERA5 2m Global", "NCEP/NCAR R1 Surface Air Global",
-  "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global")
+  "20th C. Reanalysis V3–NCEP/DOE R2 Surface Air Global",
+  "RATPAC-A Surface GLOBE", airs_series)
+inst <- inst0 %>%
+  recenter_anomalies(baseline = baseline, keep = series, skip = airs_series)
 start <- 1950; end <- NULL
-g <- remove_exogenous_influences(inst, series = series, start = start, end = end, max_lag = 12)
+g0 <- remove_exogenous_influences(inst, series = series, start = start, end = end, max_lag = 12)
+airs_series_adj <- paste(airs_series, "(adj.)")
+new_airs_adj <- interpolate_baseline(airs_series_adj, g0, baseline = baseline)
 series_adj <- paste(series, "(adj.)")
+g <- g0 %>%
+  recenter_anomalies(baseline = baseline, keep = series_adj, skip = air_series_adj)
+g[[airs_series_adj]] <- new_airs_adj[[airs_series_adj]]
 main <- "Average Temperature Adjusted for ENSO, Volcanic, & Solar Influences"
-plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 19, baseline = TRUE,
-  save_png = FALSE)
+## N.B. Don't rebaseline here!
+plot_climate_data(g, series_adj, yearly = TRUE, main = main, type = "o", pch = 19,
+  baseline = FALSE, save_png = FALSE)
 
 ## Plot several forcing variables
 inst <- get_climate_data(download = FALSE, baseline = FALSE) %>%
