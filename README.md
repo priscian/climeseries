@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20250321.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
+Okay! It's [here](inst/extdata/latest/climate-series_20250404.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
 
 *climeseries* includes more than 1100 individual monthly climate time series; the full set of series names is listed [below](#latest-column-names).
 
@@ -353,7 +353,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20250321.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20250404.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -452,6 +452,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Cowtan & Way Krig. Global
 1. Cowtan & Way Krig. Global_uncertainty
 1. Cowtan & Way Krig. Global Land
+1. CRUTEM3 Global
+1. CRUTEM3 NH
+1. CRUTEM3 SH
+1. CRUTEM3v Global
+1. CRUTEM3v NH
+1. CRUTEM3v SH
 1. CRUTEM4 Global
 1. CRUTEM4 NH
 1. CRUTEM4 SH
@@ -634,6 +640,12 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. Greenland Land Ice Mass Variation
 1. Greenland Land Ice Mass Variation_uncertainty
 1. HadCET
+1. HadCRUT3 Global
+1. HadCRUT3 NH
+1. HadCRUT3 SH
+1. HadCRUT3v Global
+1. HadCRUT3v NH
+1. HadCRUT3v SH
 1. HadCRUT4 Global
 1. HadCRUT4 Global_uncertainty
 1. HadCRUT4 NH
@@ -654,6 +666,9 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. HadCRUT5 SH_uncertainty
 1. HadCRUT5 SH (not infilled)
 1. HadCRUT5 SH (not infilled)_uncertainty
+1. HadSST2 Global
+1. HadSST2 NH
+1. HadSST2 SH
 1. HadSST3 Global
 1. HadSST3 Global_uncertainty
 1. HadSST3 NH
