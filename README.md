@@ -2,7 +2,7 @@
 Download, aggregate, process, and display monthly climatological data.
 
 ## I don't care about the stupid package&mdash;where's the latest data?!
-Okay! It's [here](inst/extdata/latest/climate-series_20250404.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
+Okay! It's [here](inst/extdata/latest/climate-series_20250728.zip?raw=true). The "raw" data (as close as possible to the official source) is file `climate-series_raw_yyyymmdd.csv`; the data given as anomalies from a 1981–2010 baseline is file `climate-series_yyyymmdd.csv`. It's tabular data, arranged rows × columns for month/year × monthly series.
 
 *climeseries* includes more than 1100 individual monthly climate time series; the full set of series names is listed [below](#latest-column-names).
 
@@ -353,7 +353,7 @@ library(help = climeseries)
 from the R command line.
 
 ## Data sets
-The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20250404.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
+The latest data sets downloaded by me (where "latest" means whenever I've gotten around to updating them) can be found here: [Current "climeseries" data](inst/extdata/latest/climate-series_20250728.zip?raw=true). Older data sets are listed [here](inst/extdata/latest), too.
 
 ### Latest column names
 The current column names&mdash;the names of the monthly climatological data sets&mdash;are given below. You will eventually find more information on each data set from the R command line via:
@@ -445,6 +445,9 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. BEST SH Land_uncertainty
 1. BEST US
 1. BEST US_uncertainty
+1. ClimDiv Avg
+1. ClimDiv Max
+1. ClimDiv Min
 1. CO2 Cape Grim
 1. CO2 Cape Grim_uncertainty
 1. CO2 Mauna Loa
@@ -1569,3 +1572,6 @@ The current column names&mdash;the names of the monthly climatological data sets
 1. UAH TTP 6.0 USA 48
 1. UAH TTP 6.0 USA 48 + Alaska
 1. UAH TTP 6.0 Australia
+1. USCRN Avg
+1. USCRN Max
+1. USCRN Min

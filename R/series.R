@@ -131,6 +131,39 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       return (d)
     })(path),
 
+
+    `ClimDiv Min` =,
+    `USCRN Min` =,
+    `ClimDiv Max` =,
+    `USCRN Max` =,
+    `ClimDiv Avg` =,
+    `USCRN Avg` = (function(p) {
+      x <- NULL
+
+      skip <- 1L
+
+      tryCatch({
+        x <- read.csv(p, header = TRUE, skip = skip, fill = TRUE, check.names = FALSE)
+      }, error = Error, warning = Error)
+
+      re <- "(\\d{4})(\\d{2})"
+      yearMatches <- stringr::str_match(x$Date, re)
+      yearValue <- as.numeric(yearMatches[, 2L])
+      monthValue <- as.numeric(yearMatches[, 3L])
+
+      ## Get correct column name
+      temp_name <- trimws(strsplit(series, " ")[[1]][1])
+
+      d <- data.frame(year = yearValue, yr_part = yearValue + (2 * monthValue - 1)/24,
+        month = monthValue, temp = x[[temp_name]], check.names = FALSE, stringsAsFactors = FALSE)
+
+      is.na(d$temp) <- d$temp == -99.99
+      ## Convert °F anomalies to °C
+      d$temp <- d$temp/1.8
+
+      return (d)
+    })(path),
+
     `STAR v5.0` = (function(p) {
       skip <- 0L
 

@@ -194,6 +194,12 @@ reanalysis_urls <- make_reanalysis_urls()
 data_urls <- c(list(
   ## N.B. Need to read directory to get latest file name!
   #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20230411.zip", type = "solar"), # 1996– (daily)
+  `ClimDiv Avg` = "https://www.ncei.noaa.gov/access/monitoring/national-temperature-index/time-series/anom-tavg/1/0/data.csv",
+  `USCRN Avg` = "https://www.ncei.noaa.gov/access/monitoring/national-temperature-index/time-series/anom-tavg/1/0/data.csv",
+  `ClimDiv Min` = "https://www.ncei.noaa.gov/access/monitoring/national-temperature-index/time-series/anom-tmin/1/0/data.csv",
+  `USCRN Min` = "https://www.ncei.noaa.gov/access/monitoring/national-temperature-index/time-series/anom-tmin/1/0/data.csv",
+  `ClimDiv Max` = "https://www.ncei.noaa.gov/access/monitoring/national-temperature-index/time-series/anom-tmax/1/0/data.csv",
+  `USCRN Max` = "https://www.ncei.noaa.gov/access/monitoring/national-temperature-index/time-series/anom-tmax/1/0/data.csv",
   ## AIRS
   `AIRS Zonal` = gistempBaseV4 %_% "T_AIRS/ZonAnn.Ts+dSST.csv",
   `AIRS Global` = gistempBaseV4 %_% "T_AIRS/GLB.Ts+dSST.csv",
@@ -208,7 +214,7 @@ data_urls <- c(list(
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
   #`ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM_LASTMONTH@@/@@MONTHNUM_LASTMONTH@@/ERA5_1991-2020/ts_1month_anomaly_Global_ERA5_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1991-2020_v01.1.csv",
   `ERA5 2m Global` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig1b_timeseries_anomalies_ref1991-2020_global_allmonths_data.csv",
-  `ERA5 2m Europe` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig4b_timeseries_anomalies_ref1991-2020_Europe_allmonths_data.csv",
+  `ERA5 2m Europe` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig3b_timeseries_anomalies_ref1991-2020_Europe_allmonths_data.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
   ## Check here in case of failure of ERA5 sea ice: https://climate.copernicus.eu/sea-ice-cover-march-2020 etc.
@@ -219,9 +225,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
   `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202501.txt", type = "land ice"),
-  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202501.txt", type = "land ice"),
-  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202501.txt", type = "ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202505.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202505.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202505.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -299,10 +305,10 @@ data_urls <- c(list(
   `HadSST3 SH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
   `HadSST3 NH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
   `HadSST3 Tropics` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
-  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_GLOBE.csv",
-  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_SHEM.csv",
-  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_NHEM.csv",
-  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.1.0.0_monthly_TROP.csv",
+  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_GLOBE.csv",
+  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_SHEM.csv",
+  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_NHEM.csv",
+  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Hadley v5
   `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.global.monthly.nc",

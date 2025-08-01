@@ -1269,7 +1269,7 @@ create_osiris_daily_saod_data <- function(
 )
 {
   if (extract) {
-    fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3-", full.names = TRUE)
+    fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_4-", full.names = TRUE)
     fileDates <- tools::file_path_sans_ext(basename(fileNames)) %>% stringr::str_extract("\\d{6}$")
     x <- sapply(fileNames,
       function(i)
