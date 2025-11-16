@@ -63,9 +63,9 @@ hadcrut3Base <- "https://crudata.uea.ac.uk/cru/data/crutem3/"
 hadcrutBase <- "http://www.metoffice.gov.uk/hadobs/hadcrut4/data/current/time_series/"
 hadsstBaseV3 <- "http://www.metoffice.gov.uk/hadobs/hadsst3/data/HadSST.3.1.1.0/diagnostics/"
 hadsstBaseV4 <- "https://www.metoffice.gov.uk/hadobs/hadsst4/data/data/"
-crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.0.2.0/diagnostics/"
-hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.0.2.0/analysis/diagnostics/"
-hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.0.2.0/non-infilled/diagnostics/"
+crutem5Base <- "https://www.metoffice.gov.uk/hadobs/crutem5/data/CRUTEM.5.1.0.0/diagnostics/"
+hadcrut5Base <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.1.0.0/analysis/diagnostics/"
+hadcrut5NonInfilledBase <- "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.1.0.0/non-infilled/diagnostics/"
 cowtanWayBase <- "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/"
 #bestBase <- "http://berkeleyearth.lbl.gov/auto/"
 bestBase <- "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/"
@@ -213,8 +213,8 @@ data_urls <- c(list(
   `NCEI Ocean Heat Content` = list(path = noaaOhcBase, type = "OHC"),
   ## On failure check here: https://climate.copernicus.eu/surface-air-temperature-maps
   #`ERA5 2m` = eraInterim2mTempBase %_% "@@YEARNUM_LASTMONTH@@/@@MONTHNUM_LASTMONTH@@/ERA5_1991-2020/ts_1month_anomaly_Global_ERA5_2t_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_1991-2020_v01.1.csv",
-  `ERA5 2m Global` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig1b_timeseries_anomalies_ref1991-2020_global_allmonths_data.csv",
-  `ERA5 2m Europe` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig3b_timeseries_anomalies_ref1991-2020_Europe_allmonths_data.csv",
+  `ERA5 2m Global` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig1b_timeseries_anomalies_ref1991-2020_global_allmonths_DATA.csv",
+  `ERA5 2m Europe` = eraInterim2mTempBase %_% "@@YEARNUM@@-@@MONTHNUM@@/C3S_Bulletin_temp_@@YEARNUM_LASTMONTH@@@@MONTHNUM_LASTMONTH@@_Fig3b_timeseries_anomalies_ref1991-2020_Europe_allmonths_DATA.csv",
   #`ERA-Interim 2m Global` = "http://climexp.knmi.nl/data/ierai_t2m_0-360E_-90-90N_n_su.dat",
   #`ERA5 2m Global` = "http://climexp.knmi.nl/data/iera5_t2m_0-360E_-90-90N_n_su.dat",
   ## Check here in case of failure of ERA5 sea ice: https://climate.copernicus.eu/sea-ice-cover-march-2020 etc.
@@ -225,9 +225,9 @@ data_urls <- c(list(
   `Multivariate ENSO Index` = list(path = "https://www.esrl.noaa.gov/psd/enso/mei/data/meiv2.data", type = "ENSO"),
   `Extended Multivariate ENSO Index` = list(path = "http://www.esrl.noaa.gov/psd/enso/mei.ext/table.ext.html", type = "ENSO"),
   ## Land Ice Mass (v. https://climate.nasa.gov/vital-signs/land-ice/)
-  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202505.txt", type = "land ice"),
-  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202505.txt", type = "land ice"),
-  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202505.txt", type = "ocean mass"),
+  `Antarctica Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "ANTARCTICA_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/antarctica_mass_200204_202508.txt", type = "land ice"),
+  `Greenland Land Ice Mass Variation` = list(path = nasaLandIceMassBase %_% "GREENLAND_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/greenland_mass_200204_202508.txt", type = "land ice"),
+  `Ocean Mass Variation` = list(path = nasaOceanMassBase %_% "OCEAN_MASS_TELLUS_MASCON_CRI_TIME_SERIES_RL06.3_V4/ocean_mass_200204_202508.txt", type = "ocean mass"),
   ## GISTEMP v3
   `GISTEMP v3 Global` = gistempBaseV3 %_% "GLB.Ts+dSST.csv",
   `GISTEMP v3 SH` = gistempBaseV3 %_% "SH.Ts+dSST.csv",
@@ -305,21 +305,21 @@ data_urls <- c(list(
   `HadSST3 SH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_sh_ts.txt",
   `HadSST3 NH` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_nh_ts.txt",
   `HadSST3 Tropics` = hadsstBaseV3 %_% "HadSST.3.1.1.0_monthly_tropics_ts.txt",
-  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_GLOBE.csv",
-  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_SHEM.csv",
-  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_NHEM.csv",
-  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.1.1.0_monthly_TROP.csv",
+  `HadSST4 Global` = hadsstBaseV4 %_% "HadSST.4.2.0.0_monthly_GLOBE.csv",
+  `HadSST4 SH` = hadsstBaseV4 %_% "HadSST.4.2.0.0_monthly_SHEM.csv",
+  `HadSST4 NH` = hadsstBaseV4 %_% "HadSST.4.2.0.0_monthly_NHEM.csv",
+  `HadSST4 Tropics` = hadsstBaseV4 %_% "HadSST.4.2.0.0_monthly_TROP.csv",
   ## https://crudata.uea.ac.uk/cru/data/temperature/
   ## Hadley v5
-  `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.global.monthly.nc",
-  `CRUTEM5 NH` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.northern_hemisphere.monthly.nc",
-  `CRUTEM5 SH` = crutem5Base %_% "CRUTEM.5.0.2.0.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 Global` = hadcrut5Base %_% "HadCRUT.5.0.2.0.analysis.summary_series.global.monthly.nc",
-  `HadCRUT5 SH` = hadcrut5Base %_% "HadCRUT.5.0.2.0.analysis.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 NH` = hadcrut5Base %_% "HadCRUT.5.0.2.0.analysis.summary_series.northern_hemisphere.monthly.nc",
-  `HadCRUT5 Global (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.2.0.summary_series.global.monthly.nc",
-  `HadCRUT5 SH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.2.0.summary_series.southern_hemisphere.monthly.nc",
-  `HadCRUT5 NH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.0.2.0.summary_series.northern_hemisphere.monthly.nc",
+  `CRUTEM5 Global` = crutem5Base %_% "CRUTEM.5.1.0.0.summary_series.global.monthly.nc",
+  `CRUTEM5 NH` = crutem5Base %_% "CRUTEM.5.1.0.0.summary_series.northern_hemisphere.monthly.nc",
+  `CRUTEM5 SH` = crutem5Base %_% "CRUTEM.5.1.0.0.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 Global` = hadcrut5Base %_% "HadCRUT.5.1.0.0.analysis.summary_series.global.monthly.nc",
+  `HadCRUT5 SH` = hadcrut5Base %_% "HadCRUT.5.1.0.0.analysis.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH` = hadcrut5Base %_% "HadCRUT.5.1.0.0.analysis.summary_series.northern_hemisphere.monthly.nc",
+  `HadCRUT5 Global (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.1.0.0.noninfilled.summary_series.global.monthly.nc",
+  `HadCRUT5 SH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.1.0.0.noninfilled.summary_series.southern_hemisphere.monthly.nc",
+  `HadCRUT5 NH (not infilled)` = hadcrut5NonInfilledBase %_% "HadCRUT.5.1.0.0.noninfilled.summary_series.northern_hemisphere.monthly.nc",
   ## Cowtan & Way
   `Cowtan & Way Krig. Global` = cowtanWayBase %_% "had4_krig_v2_0_0.txt",
   `Cowtan & Way Krig. Global Land` = cowtanWayBase %_% "cru4_krig_v2_0_0.txt",
@@ -400,10 +400,10 @@ data_urls <- c(list(
   `CO2 Cape Grim` = list(path = "https://capegrim.csiro.au/GreenhouseGas/data/CapeGrim_CO2_data_download.csv", type = "CO2"),
   ## TODO: Add Cape Grim CH4 and N2O data (should be easy).
   `NSIDC Sea Ice` = list(path = "ftp://sidads.colorado.edu/DATASETS/NOAA/G02135", type = "sea ice"),
-  `OSI Sea Ice` = list(path = "ftp://osisaf.met.no/prod_test/ice/index/v2p2", type = "sea ice"),
+  `OSI Sea Ice` = list(path = "ftp://osisaf.met.no/prod_test/ice/index/v2p3", type = "sea ice"),
   `PIOMAS Arctic Sea Ice Volume` = list(path = "http://psc.apl.uw.edu/wordpress/wp-content/uploads/schweiger/ice_volume/PIOMAS.2sst.monthly.Current.v2.1.txt", type = "sea ice"),
   #`PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/composite/DataPlots/ext_composite_42_65_1605.dat", type = "solar"), # 1976–2016 (daily)
-  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20250330.txt", type = "solar"), # 1996– (daily)
+  `PMOD TSI` = list(path = "ftp://ftp.pmodwrc.ch/pub/data/irradiance/virgo/TSI/VIRGO_TSI_Daily_V8_20250801.txt", type = "solar"), # 1996– (daily)
   `TSI Reconstructed` = list(path = "https://spot.colorado.edu/~koppg/TSI/Historical_TSI_Reconstruction.txt", type = "solar"), # 1610–2018 (yearly)
   # `TSIS/TIM TSI` = list(path = "https://lasp.colorado.edu/data/tsis/tsi_data/tsis_tsi_L3_c24h_latest.txt", type = "solar") # Replaces SORCE; 2018– (daily)
   ## Also see: https://www.pmodwrc.ch/en/research-development/solar-physics/tsi-composite/

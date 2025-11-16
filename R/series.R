@@ -970,7 +970,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           {
             r <- data.frame()
             for (i in c("north", "south")) {
-              flit <- readLines(paste(p, i, "monthly", "data", paste(toupper(substr(i, 1, 1)), y, "extent_v3.0.csv", sep="_"), sep="/"))
+              flit <- readLines(paste(p, i, "monthly", "data", paste(toupper(substr(i, 1, 1)), y, "extent_v4.0.csv", sep="_"), sep="/"))
               flit <- read.csv(text=flit[!grepl("^\\s+", flit)], header=TRUE, check.names=FALSE)
               r <- rbind(r, flit)
             }

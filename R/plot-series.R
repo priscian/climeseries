@@ -864,7 +864,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
 #' }
 #' @export
-plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = NULL, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.1, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.9, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...) # Was 'smooth_span = 0.4'
+plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, yearly_i = yearly, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = NULL, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.1, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.9, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...) # Was 'smooth_span = 0.4'
 {
   envelope_type <- match.arg(envelope_type)
 
@@ -922,12 +922,14 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   endTS <- nearest_year_month_from_numeric(flit[, "yr_part"], tsp(flit)[2], "below")
   textRange <- paste(paste(startTS, collapse="."), paste(endTS, collapse="."), sep="-"); flit <- NULL
 
-  if (yearly) {
+  if (yearly_i) {
     i <- make_yearly_data(i)
     i$yr_part <- i$year
     i <- make_time_series_from_anomalies(i, frequency=1)
     ma_i <- NULL
+  }
 
+  if (yearly) {
     m <- make_yearly_data(m)
     m$yr_part <- m$year
     m <- make_time_series_from_anomalies(m, frequency=1)
@@ -958,7 +960,8 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   }
   else {
     if (!is.null(ma))
-      ma_iText <- " (no m.a.)"
+      # ma_iText <- " (no m.a.)"
+      ma_iText <- ""
   }
 
   ## Convert to 'zoo' objects for plotting.
@@ -968,7 +971,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   baselineText <- ""
   baselineAttribute <- attr(instrumental, "baseline")
   if (!is.null(baselineAttribute))
-    baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
+    baselineText <- " w.r.t. " %_% min(baselineAttribute) %_% "\u2013" %_% max(baselineAttribute)
 
   xlab <- "Year"
   ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l), unit, ")", b, sep="")), list(b=baselineText, unit=unit)))
@@ -1105,7 +1108,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
     quantiles = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- quantile(x, c(ecd, 1.0 - ecd), na.rm=TRUE); return (rv) }) }),
 
-    normal = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf_int; return (rv) }) })
+    normal = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf.int; return (rv) }) })
   )
 
   lowerEnvelope <- sapply(modelsRange, function(x) x[1L, ], simplify=FALSE); upperEnvelope <- sapply(modelsRange, function(x) x[2L, ], simplify=FALSE)

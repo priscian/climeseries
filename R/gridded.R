@@ -337,29 +337,72 @@ get_series_from_ghcn_gridded <- function(
       pivot_re <- "^(value)"
     } else {
       dataFormat <- c(11, 4, 4, rep(c(5, 1, 1, 1), 12))
-      station_data <-
-        read.fwf(dat, widths = dataFormat, comment.char = "", na.strings = na_strings, stringsAsFactors = FALSE, n = -1)
+
+      # Use readr::read_fwf for 5-10x faster file reading (vs base read.fwf)
+      cat("Reading data file with readr::read_fwf()...\n"); flush.console()
+      tictoc::tic("File reading")
+
+      station_data <- readr::read_fwf(
+        dat,
+        col_positions = readr::fwf_widths(dataFormat),
+        col_types = readr::cols(.default = "c"),  # Read all as character
+        na = as.character(na_strings),
+        progress = TRUE,
+        show_col_types = FALSE
+      ) %>% as.data.frame()
+
+      tictoc::toc()
+
       dataNames <- c("id", "year", "element", apply(expand.grid(c("value", "dmflag", "qcflag", "dsflag"), 1:12), 1,
         function(i) paste(trimws(i), collapse = "")))
       pivot_re <- "^(value|dmflag|qcflag|dsflag)"
     }
     colnames(station_data) <- dataNames
 
-    station_data_list <- station_data %>%
-      dplyr::group_by(id) %>%
-      dplyr::group_map(
-        function(x, y)
-        {
-          xx <- x %>% tidyr::pivot_longer(
-            cols = dplyr::matches(pivot_re),
-            names_to = c(".value", "month"),
-            names_pattern = "(.*?)(\\d+)"
-          )
+    if (v != 2) {
+      station_data$year <- as.integer(station_data$year)
+      value_cols <- grep("^value\\d+$", names(station_data))
+      station_data[, value_cols] <- lapply(station_data[, value_cols], as.numeric)
+    }
 
-          attr(xx, "groups") <- y
+    # station_data_list <- station_data %>%
+    #   dplyr::group_by(id) %>%
+    #   dplyr::group_map(
+    #     function(x, y)
+    #     {
+    #       xx <- x %>% tidyr::pivot_longer(
+    #         cols = dplyr::matches(pivot_re),
+    #         names_to = c(".value", "month"),
+    #         names_pattern = "(.*?)(\\d+)"
+    #       )
 
-          xx
-        }, .keep = TRUE)
+    #       attr(xx, "groups") <- y
+
+    #       xx
+    #     }, .keep = TRUE)
+
+    # Split by station (fast)
+    station_data_split <- split(station_data, station_data$id)
+
+    # Process in parallel
+    station_data_list <- keystone::psapply(
+      station_data_split,
+      function(x) {
+        station_id <- unique(x$id)[1]
+
+        xx <- x %>% tidyr::pivot_longer(
+          cols = dplyr::matches(pivot_re),
+          names_to = c(".value", "month"),
+          names_pattern = "(.*?)(\\d+)"
+        )
+        xx$month <- as.integer(xx$month)
+
+        attr(xx, "groups") <- tibble::tibble(id = station_id)
+        xx
+      },
+      simplify = FALSE,
+      USE.NAMES = TRUE
+    )
 
     station_names <- sapply(station_data_list, function(x) attr(x, "groups")[[1, 1]])
     names(station_data_list) <- station_names
@@ -368,6 +411,7 @@ get_series_from_ghcn_gridded <- function(
     flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
 
     ghcn <- sapply(station_data_list,
+    # ghcn <- keystone::psapply(station_data_list, # Is this slowing things down...?
       function(i)
       {
         ## For V2, follow merging algorithm described in §3.1 of https://dx.doi.org/10.1029/2011JD016187
@@ -400,7 +444,8 @@ get_series_from_ghcn_gridded <- function(
           }
         }
 
-        merge(flit, i[, c("year", "month", "value")], by = c("year", "month"), all = TRUE)[[3]] / divide_by
+        # merge(flit, i[, c("year", "month", "value")], by = c("year", "month"), all = TRUE)[[3]] / divide_by
+        result <- dplyr::full_join(flit, i[, c("year", "month", "value")], by = c("year", "month")); result$value / divide_by
       }, simplify = TRUE)
     colnames(ghcn) <- station_names
     y <- flit %>%

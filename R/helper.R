@@ -986,6 +986,10 @@ interpolate_baseline <- function(
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
+  if (is.null(series) || length(series) > 1) {
+    return (interpolate_baselines(series, x, baseline))
+  }
+
   series <- series[1]
   xu <- x[na_unwrap(x[[series]]), c(common_columns, series)]
 
@@ -997,9 +1001,9 @@ interpolate_baseline <- function(
       is_na <- is.na(xx[[series]])
       m <- stats::lm(substitute(s ~ yr_part, list(s = as.name(series))), data = x)
       ## Calculate linear prediction back to start of baseline (don't go back further than about 1970).
-      xx[[series]][is_na] <- stats::predict(m, dataframe(yr_part = xx$yr_part))[is_na]
+      xx[, series][is_na] <- stats::predict(m, dataframe(yr_part = xx$yr_part))[is_na]
       xxx <- recenter_anomalies(xx, baseline)
-      is.na(xxx[[series]]) <- is_na
+      is.na(xxx[, series]) <- is_na
 
       r <- merge(x[, common_columns], xxx[, c("year", "month", series)], all.x = TRUE)
     } else {
@@ -1010,6 +1014,25 @@ interpolate_baseline <- function(
   }
 
   r
+}
+
+
+#' @export
+interpolate_baselines <- function(
+  series = NULL, # A vector of column names in 'x', NULL for all columns
+  x, # A 'climeseries' data set
+  baseline = NULL # Single baseline, but multiples might be allowed later
+)
+{
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
+
+  if (is.null(series))
+    series <- get_climate_series_names(x)
+
+  plyr::l_ply(series, function(s) { x[, s] <<- interpolate_baseline(s, x, baseline)[, s] })
+
+  x
 }
 
 
@@ -1260,7 +1283,7 @@ create_cmip5_atmosphere_temps <- function(
 
 
 #' @export
-create_osiris_daily_saod_data <- function(
+create_osiris_daily_saod_data_orig <- function(
   data_path = ".",
   rdata_path = ".",
   daily_filename = "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData",
@@ -1410,6 +1433,198 @@ create_osiris_daily_saod_data <- function(
       saodDaily <- rbind(saodDaily, saodTodayDf, make.row.names = FALSE, stringsAsFactors = FALSE)
     }
   }
+
+  saod_daily <- saodDaily
+  save(saod_daily, file = paste(rdata_path, daily_filename, sep = "/"))
+}
+
+
+#' @export
+create_osiris_daily_saod_data <- function(
+  data_path = ".",
+  rdata_path = ".",
+  daily_filename = "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData",
+  planetary_grid = NULL,
+  extract = FALSE,
+  parallel = TRUE
+)
+{
+  if (extract) {
+    fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_4-", full.names = TRUE)
+    fileDates <- tools::file_path_sans_ext(basename(fileNames)) %>% stringr::str_extract("\\d{6}$")
+
+    # Function to process a single file
+    process_file <- function(i) {
+      cat("    Processing file", basename(i), fill = TRUE); flush.console()
+
+      nc0 <- RNetCDF::open.nc(i)
+      origin <- sub("^\\s*days since\\s*", "", RNetCDF::att.get.nc(nc0, "time", "units"), ignore.case = TRUE)
+      dates <- RNetCDF::var.get.nc(nc0, "time") %>% as.Date(origin = origin)
+      RNetCDF::close.nc(nc0)
+      datesC <- dates %>% as.character
+
+      nc <- tidync::tidync(i)
+      varNames <- c("extinction", "altitude", "latitude", "longitude")
+      x <- sapply(varNames,
+        function(a)
+        {
+          substitute(tidync::hyper_tbl_cube(nc %>% tidync::activate(A))$mets[[B]], list(A = as.name(a), B = a)) %>% eval
+        }, simplify = FALSE)
+
+      xx <- by(seq_along(datesC), datesC,
+        function(a)
+        {
+          list(
+            extinction = x$extinction[, a, drop = FALSE] %>% unclass %>% { `[<-`(., is.nan(.), NA) },
+            alt = x$altitude,
+            lat = x$latitude[a],
+            long = x$longitude[a]
+          )
+        }, simplify = FALSE) %>% unclass
+
+      xx
+    }
+
+    # Parallelize file processing with proper package loading
+    if (parallel && requireNamespace("future.apply", quietly = TRUE)) {
+      x <- future.apply::future_lapply(fileNames, process_file,
+                                        future.packages = c("RNetCDF", "tidync", "magrittr"),
+                                        future.seed = TRUE)
+    } else {
+      x <- lapply(fileNames, process_file)
+    }
+
+    names(x) <- fileDates
+
+    save(x, file = paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
+  }
+  else
+    load(paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
+
+  ### Process the extinction data to calculate daily SAOD.
+
+  # Pre-create planetary grid once
+  if (is.null(planetary_grid))
+    planetary_grid <- make_planetary_grid()
+
+  # Get package namespace for exporting functions
+  pkg_env <- parent.env(environment())
+
+  # Function to process a single month's data
+  process_month <- function(i, x_data, pg, integratex_fn, find_grid_fn) {
+    re <- "(\\d{4})(\\d{2})"
+    yearMatches <- stringr::str_match(i, re)
+    yearValue <- as.numeric(yearMatches[, 2L])
+    monthValue <- as.numeric(yearMatches[, 3L])
+    saodDailyTemplate <-
+      data.frame(year = yearValue, month = monthValue, day = NA, saod = NA, check.names = FALSE, stringsAsFactors = FALSE)
+
+    results <- list()
+
+    for (j in seq_along(x_data[[i]])) {
+      dayValue <- as.numeric(stringr::str_match(names(x_data[[i]])[j], "\\d{4}-\\d{2}-(\\d{2})")[, 2])
+      cat("    Processing object", names(x_data[[i]])[j], fill = TRUE); flush.console()
+
+      extinction <- x_data[[i]][[j]]$extinction
+      alt <- x_data[[i]][[j]]$alt
+      extinction <- data.frame(extinction, check.names = FALSE, stringsAsFactors = FALSE)
+      rownames(extinction) <- alt
+      lat <- x_data[[i]][[j]]$lat
+      long <- x_data[[i]][[j]]$long
+      coords <- mapply(function(x, y) c(lat = x, long = y), lat, long, SIMPLIFY = FALSE)
+
+      ## Get stratospheric subset of extinction values from 15–35 km.
+      keepRows <- alt >= 15 & alt <= 35
+      e <- subset(extinction, keepRows)
+      for (k in seq_along(coords)) {
+        attr(e[[k]], "alt") <- alt[keepRows]
+        attr(e[[k]], "coords") <- coords[[k]]
+      }
+
+      gridSaod <- sapply(e,
+        function(y)
+        {
+          r <- NA
+
+          ## Calculate vertical column integral of aerosol extinction.
+          if (!all(is.na(y))) {
+            r <- integratex_fn(attr(y, "alt"), y)$value
+            ## Convert to 550 nm wavelength
+            r <- r * 2.04
+          }
+
+          attr(r, "coords") <- attr(y, "coords")
+
+          r
+        }, simplify = FALSE
+      )
+
+      ## Create a fresh grid for this day
+      g <- pg
+
+      dev_null <- sapply(gridSaod,
+        function(y)
+        {
+          coords <- attr(y, "coords")
+          lat <- coords["lat"]; long <- coords["long"]
+          rc <- find_grid_fn(g, lat, long)
+          if (any(is.na(rc))) return ()
+          sq <- g[[rc["row"], rc["col"]]][[1]]
+          if (all(is.na(sq)))
+            g[[rc["row"], rc["col"]]][[1]] <<- as.vector(y)
+          else
+            g[[rc["row"], rc["col"]]][[1]] <<- c(sq, as.vector(y))
+        }
+      )
+
+      ## From the global grid, create a data frame of mean values
+      d <- sapply(g,
+        function(y)
+        {
+          r <- c(value = NA, weight = attr(y, "weight"))
+          if (all(is.na(y[[1]]))) return (r)
+          r["value"] <- mean(y[[1]], na.rm = TRUE)
+
+          r
+        }, simplify = FALSE
+      )
+
+      d <- data.matrix(Reduce(rbind, d))
+      saodToday <- stats::weighted.mean(d[, "value"], d[, "weight"], na.rm = TRUE)
+      is.na(saodToday) <- is.nan(saodToday)
+      saodTodayDf <- saodDailyTemplate
+      saodTodayDf$day <- dayValue
+      saodTodayDf$saod <- saodToday
+
+      results[[j]] <- saodTodayDf
+    }
+
+    do.call(rbind, results)
+  }
+
+  cat(fill = TRUE)
+
+  # Parallelize month processing with explicit function export
+  if (parallel && requireNamespace("future.apply", quietly = TRUE)) {
+    saodDailyList <- future.apply::future_lapply(
+      names(x),
+      process_month,
+      x_data = x,
+      pg = planetary_grid,
+      integratex_fn = integratex,
+      find_grid_fn = find_planetary_grid_square,
+      future.packages = c("stringr", "stats"),
+      future.seed = TRUE
+    )
+  } else {
+    saodDailyList <- lapply(names(x), process_month,
+                           x_data = x,
+                           pg = planetary_grid,
+                           integratex_fn = integratex,
+                           find_grid_fn = find_planetary_grid_square)
+  }
+
+  saodDaily <- do.call(rbind, saodDailyList)
 
   saod_daily <- saodDaily
   save(saod_daily, file = paste(rdata_path, daily_filename, sep = "/"))
@@ -1585,6 +1800,7 @@ get_yearly_difference <- function(
 
 ## usage:
 # series <- c("GISTEMP v4 Global", "NCEI Global", "HadCRUT5 Global", "BEST Global (Air Ice Temp.)", "JMA Global")
+# series <- c("NCEI Global", "BEST Global (Air Ice Temp.)", "HadCRUT5 Global", "JRA-3Q Surface Air Global")
 # ytd <- get_yearly_difference(series, 1880)
 # ytd <- get_yearly_difference(series, 1880, loess = TRUE)
 # ytd <- get_yearly_difference(series, 1880, loess = TRUE, loess... = list(span = 0.4))
