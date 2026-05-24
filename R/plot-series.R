@@ -436,6 +436,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       data = as.data.frame(y[, c(intersect(common_columns, colnames(y)), series)]),
       range = range(as.data.frame(w)[, "yr_part"], na.rm = TRUE),
       lwd = trend_lwd,
+      lty = "solid",
       legend_inset = trend_legend_inset,
       trend_multiplier = 10,
       rate_expression = sprintf("expression(Delta ~ \"= %%+%s ± %%%s %s/dec.\")", trend_format, trend_format, unit),
@@ -465,6 +466,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         trendArgs$m[[i]]$col <- scales::alpha(col[names(trendArgs$m)[i]], trendArgs$m[[i]]$alpha)
       if (is_invalid(trendArgs$m[[i]]$lwd))
         trendArgs$m[[i]]$lwd <- rep(trendArgs$lwd, length.out = length(trendArgs$m))[i]
+      if (is_invalid(trendArgs$m[[i]]$lty))
+        trendArgs$m[[i]]$lty <- rep(trendArgs$lty, length.out = length(trendArgs$m))[i]
 
       trendArgs$m[[i]]$sdata <- trendArgs$data %>%
         dplyr::select(c(intersect(common_columns, colnames(trendArgs$data)), names(trendArgs$m)[i])) %>%
@@ -480,11 +483,14 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         ydata = yfb[, names(trendArgs$m)[i]],
         model = trendArgs$m[[i]]$lm
       )
+      rate_exp <- trendArgs$rate_expression
+      if (!is_invalid(trendArgs$m[[i]]$rate_expression))
+        rate_exp <- trendArgs$m[[i]]$rate_expression
       if (!print_trend_ci) {
-        trendArgs$m[[i]]$rateText <- eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate))
+        trendArgs$m[[i]]$rateText <- eval_js(sprintf(rate_exp, trendArgs$m[[i]]$rate))
       } else {
         trendArgs$m[[i]]$rateText <-
-          eval_js(sprintf(trendArgs$rate_expression, trendArgs$m[[i]]$rate, trendArgs$m[[i]]$autocorrelation$decadal_2sigma))
+          eval_js(sprintf(rate_exp, trendArgs$m[[i]]$rate, trendArgs$m[[i]]$autocorrelation$decadal_2sigma))
       }
     }
     if (trendArgs$sort_by_name)
@@ -499,7 +505,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       usr <- par("usr")
       clip(xRange[1], xRange[2], yRange[1], yRange[2])
 
-      abline(trendArgs$m[[i]]$lm, col = trendArgs$m[[i]]$col, lwd = trendArgs$m[[i]]$lwd)
+      abline(trendArgs$m[[i]]$lm, col = trendArgs$m[[i]]$col, lwd = trendArgs$m[[i]]$lwd, lty = trendArgs$m[[i]]$lty)
 
       ## Reset clipping to plot region.
       do.call("clip", as.list(usr))
@@ -509,7 +515,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
     if (!is.null(trendArgs$legend_inset))
       legend("bottomright", inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col),
-        lwd = sapply(trendArgs$m, function(a) a$lwd), bty = "n", cex = 0.8)
+        lwd = sapply(trendArgs$m, function(a) a$lwd), lty = sapply(trendArgs$m, function(a) a$lty), bty = "n", cex = 0.8)
 
     r$trend <<- trendArgs$m
   })
@@ -542,6 +548,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         add = TRUE,
         rug = FALSE,
         lwd = 2,
+        lty = 1,
         #lty = "longdash",
         col = col[i],
         alpha = alpha
@@ -582,7 +589,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
           clip(xRange[1], xRange[2], yRange[1], yRange[2])
         }
       } else {
-        abline(sm$piecewise[[i]]$lm, col = scales::alpha(plot.segmentedArgs$col, plot.segmentedArgs$alpha), lwd = plot.segmentedArgs$lwd)
+        abline(sm$piecewise[[i]]$lm, col = scales::alpha(plot.segmentedArgs$col, plot.segmentedArgs$alpha),
+          lwd = plot.segmentedArgs$lwd, lty = plot.segmentedArgs$lty)
       }
 
       ## Reset clipping to plot region.
