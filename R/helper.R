@@ -1048,7 +1048,6 @@ interpolate_baseline <- function(
 }
 
 
-#' @export
 interpolate_baselines <- function(
   series = NULL, # A vector of column names in 'x', NULL for all columns
   x, # A 'climeseries' data set
@@ -1329,7 +1328,6 @@ create_cmip5_atmosphere_temps <- function(
 }
 
 
-#' @export
 create_osiris_daily_saod_data_orig <- function(
   data_path = ".",
   rdata_path = ".",
