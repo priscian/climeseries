@@ -69,25 +69,13 @@ merge_fun_factory <- function(FUN=base::merge, SETDIFF=TRUE, ...){
 
 
 #' @export
-only_selected_series <- function(x, series, sort = FALSE, range = NULL, ...){
-  if (missing(series))
-    series <- NULL
-
-  colNames <- c(intersect(colnames(x), c(common_columns, series)))
-  if (!sort)
-    colNames <- char_sort(colNames, series)
-  r <- x[, colNames, ...]
-
-  if (!is.null(range)) {
-    if ("yr_part" %in% colNames)
-      yearVar <- "yr_part"
-    else if ("year" %in% colNames)
-      yearVar <- "year"
-
-    r <- r[r[[yearVar]] >= ifelse(is.na(range[1]), min(r[[yearVar]], na.rm = TRUE), range[1]) & r[[yearVar]] <= ifelse(is.na(range[2]), max(r[[yearVar]]), range[2]), ]
+only_selected_series <- function(x, series, range = NULL, x_var = NULL, ...) {
+  if (!is.null(range) && is.null(x_var)) {
+    cols <- intersect(colnames(x), common_columns)
+    x_var <- if ("yr_part" %in% cols) "yr_part" else "year"
   }
-
-  r
+  keystone::only_selected_series(x, series, common_columns = common_columns,
+    range = range, x_var = x_var, ...)
 }
 
 #' @export
@@ -95,8 +83,13 @@ oss <- only_selected_series
 
 
 #' @export
-view_only_selected_series <- function(..., fun = View){
-  fun(only_selected_series(...))
+view_only_selected_series <- function(x, series, range = NULL, x_var = NULL, ...) {
+  if (!is.null(range) && is.null(x_var)) {
+    cols <- intersect(colnames(x), common_columns)
+    x_var <- if ("yr_part" %in% cols) "yr_part" else "year"
+  }
+  keystone::view_only_selected_series(x, series, common_columns = common_columns,
+    range = range, x_var = x_var, ...)
 }
 
 #' @export
