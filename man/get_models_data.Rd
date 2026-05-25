@@ -67,8 +67,10 @@ cmip5 <- create_cmip5_tas_tos_data(save_to_package=TRUE)
 ## Create "meta" files to match up model runs with emissions scenarios. In each model-set directory, double-click on file "cmip(3|5).RData" and run the following code:
 x <- "cmip3" # Or:
 x <- "cmip5"
-write.csv(eval(substitute(data.frame(model=names(attr(cmip, "scenario")), scenario=attr(cmip, "scenario")),
-  list(cmip=as.symbol(x)))), file=paste(x, "_meta.csv", sep=""), row.names=FALSE)
+write.csv(eval(substitute(
+data.frame(model=names(attr(cmip, "scenario")), scenario=attr(cmip, "scenario")),
+  list(cmip=as.symbol(x))
+)), file=paste(x, "_meta.csv", sep=""), row.names=FALSE)
 }
 
 }

@@ -78,17 +78,25 @@ e <- get_climate_data(download=FALSE, baseline=FALSE)
 inst <- get_climate_data(download=FALSE, baseline=TRUE)
 series <- setdiff(names(inst), c(climeseries::common_columns, c("CO2 Mauna Loa")))
 yearType <- "year" # "year" or "met_year" = meteorological year.
-annual <- sapply(series, function(s) { rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv })
+annual <- sapply(series, function(s) {
+ rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv
+ })
 
 ## How many months for last year have data?
 lastYear <- as.integer(format(Sys.Date(), "\%Y")) - 1
 sapply(inst[inst[[yearType]] \%in\% lastYear, series], function(s) sum(!is.na(s)))
-mapply(function(x, y) x[y][1L], annual, sapply(annual, function(s) { order(s, decreasing=TRUE) }))
+mapply(function(x, y) x[y][1L], annual, sapply(annual, function(s) {
+ order(s, decreasing=TRUE)
+ }))
 
 ## Calculate max. anomaly for years not in 'excludeDate'. (Allows exclusion of e.g. partial current year.)
 excludeDate <- as.integer(format(Sys.Date(), "\%Y")) # Or excludeDate <- c(2016)
-annualLt <- sapply(annual, function(s) { s[!(as.numeric(names(s)) \%in\% excludeDate)] })
-mapply(function(x, y) x[y][1L], annualLt, sapply(annualLt, function(s) { order(s, decreasing=TRUE) }))
+annualLt <- sapply(annual, function(s) {
+ s[!(as.numeric(names(s)) \%in\% excludeDate)]
+ })
+mapply(function(x, y) x[y][1L], annualLt, sapply(annualLt, function(s) {
+ order(s, decreasing=TRUE)
+ }))
 }
 
 }
