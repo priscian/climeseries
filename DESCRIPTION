@@ -7,7 +7,8 @@ Description: These are various functions for collecting, processing, and
     plotting monthly climatological data.
 Depends: R (>= 3.5.0), magrittr, tribe
 Suggests: knitr, pander, testthat, colorRamps, forecast, ggfortify
-Imports: data.table, plyr, readr, R.utils, matrixStats, dtplyr, rlang,
+Imports: keystone,
+  data.table, plyr, readr, R.utils, matrixStats, dtplyr, rlang,
   future.apply,
   ggplot2, directlabels, grDevices, plotrix, RColorBrewer, colorRamps,
   maps,
