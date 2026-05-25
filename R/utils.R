@@ -1,7 +1,6 @@
 # http://stackoverflow.com/questions/16118050/how-to-check-if-a-vector-contains-n-consecutive-numbers
 #' @export
-seqle <- function(x, incr=1)
-{
+seqle <- function(x, incr=1){
   if (!is.numeric(x)) x <- as.numeric(x)
   n <- length(x)
   y <- x[-1L] != x[-n] + incr
@@ -19,22 +18,19 @@ na_unwrap <- function(x, ...)
 
 
 #' @export
-na_unwrap.matrix <- function(x, ...)
-{
+na_unwrap.matrix <- function(x, ...){
   apply(apply(x, 2, na_unwrap.default, ...), 1, any)
 }
 
 
 #' @export
-na_unwrap.data.frame <- function(x, ...)
-{
+na_unwrap.data.frame <- function(x, ...){
   na_unwrap.matrix(x, ...)
 }
 
 
 #' @export
-na_unwrap.default <- function(x, type=c("both", "head", "tail", "none"), ...)
-{
+na_unwrap.default <- function(x, type=c("both", "head", "tail", "none"), ...){
   type <- match.arg(type)
 
   nai <- stats:::na.omit.default(x) # Changed 14 Jan. 2017 to work with "ts" objects.
@@ -77,12 +73,10 @@ shift <- function(x, ...)
 
 
 #' @export
-shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
-{
+shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE){
   if (i == 0L) return (x)
 
-  naRm <- function(x, na_rm)
-  {
+  naRm <- function(x, na_rm)  {
     if (!na_rm) return (x)
 
     x[setdiff(seq_along(x), attr(na.omit(x), "na.action"))]
@@ -104,8 +98,7 @@ shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
   if (!roll && i > n) {
     rv <- x
     rv[seq_along(rv)] <- NaN
-  }
-  else {
+  } else {
     shifted <- 1L:(n - j)
     if (i > 0L)
       shifted <- (n - j + 1L):n
@@ -138,8 +131,7 @@ shift.default <- function (x, i=1L, roll=TRUE, na_rm=FALSE)
 
 
 #' @export
-shift.data.frame <- function(x, i, ...)
-{
+shift.data.frame <- function(x, i, ...){
   if (!is.list(i)) {
     i <- as.list(rep(i, length.out=length(x)))
     names(i) <- names(x)
@@ -153,8 +145,7 @@ shift.data.frame <- function(x, i, ...)
 
 
 ## Which values of 'v' are closest to the given values of 'x'?
-nearest_orig <- function(v, x, value = FALSE)
-{
+nearest_orig <- function(v, x, value = FALSE){
   d <- data.table::data.table(v, value = v)
   data.table::setattr(d, "sorted", "v")
   data.table::setkey(d, v) # Sort the data
@@ -178,8 +169,7 @@ nearest_orig <- function(v, x, value = FALSE)
 
 ## Same as 'DescTools::IsZero()'.
 #' @export
-is_zero <- function (x, tol = sqrt(.Machine$double.eps), na.rm = FALSE)
-{
+is_zero <- function (x, tol = sqrt(.Machine$double.eps), na.rm = FALSE){
   if (na.rm)
     x <- x[!is.na(x)]
   if (is.numeric(x))
@@ -191,8 +181,7 @@ is_zero <- function (x, tol = sqrt(.Machine$double.eps), na.rm = FALSE)
 ## Which values of 'x' are closest to the given values of 'v'? I.e. the "fixed" values are 'x'.
 ## Swiped from 'DescTools::Closest()'.
 #' @export
-nearest <- function (x, v, value = FALSE, na.rm = FALSE)
-{
+nearest <- function (x, v, value = FALSE, na.rm = FALSE){
   v <- v[1]
 
   if (na.rm)
@@ -216,10 +205,14 @@ nearest <- function (x, v, value = FALSE, na.rm = FALSE)
 
 
 #' @export
-nearest_below <- function(v, x, value = FALSE) { l <- which(v == max(v[(v < x)])); if (value) v[l] else l }
+nearest_below <- function(v, x, value = FALSE) {
+ l <- which(v == max(v[(v < x)])); if (value) v[l] else l
+ }
 
 #' @export
-nearest_above <- function(v, x, value = FALSE) { l <- which(v == min(v[(v > x)])); if (value) v[l] else l }
+nearest_above <- function(v, x, value = FALSE) {
+ l <- which(v == min(v[(v > x)])); if (value) v[l] else l
+ }
 
 
 ## Use convolution filter to calculate n-month moving average.
@@ -241,8 +234,7 @@ MA <- moving_average
 
 
 #' @export
-interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=TRUE, skip_all_is_na=TRUE, ...)
-{
+interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=TRUE, skip_all_is_na=TRUE, ...){
   if (!inherits(x, "matrix") && !inherits(x, "timeSeries"))
     x <- as(x, "matrix")
 
@@ -253,11 +245,12 @@ interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=T
   if (method[1] %nin% c("linear", "before", "after", "none")) # '?stats::spline' for available "method"s.
     ## The following code removes any unmatched arguments from a call to 'FUN()';
     ## e.g. 'stats::spline()' doesn't have a formal argument 'f', which is nonetheless passed in below.
-    fun <- function(...) { FUN <- stats::spline; d <- get_dots(...); a <- d$arguments[trimws(names(d$arguments)) %in% c("", formalArgs(FUN))]; do.call(FUN, a, quote=FALSE, envir=parent.frame()) }
+    fun <- function(...) {
+ FUN <- stats::spline; d <- get_dots(...); a <- d$arguments[trimws(names(d$arguments)) %in% c("", formalArgs(FUN))]; do.call(FUN, a, quote=FALSE, envir=parent.frame())
+ }
   #else unwrap = FALSE
 
-  interpVectorNA <- function(x, method, f, ...)
-  {
+  interpVectorNA <- function(x, method, f, ...)  {
     n <- length(x)
     idx <- (1:n)[!is.na(x)]
     if (length(idx) <= 1) return (x)
@@ -300,15 +293,13 @@ interpNA <- function (x, method=c("linear", "before", "after", "none"), unwrap=T
 
 ## http://stackoverflow.com/questions/16357962/r-split-numeric-vector-at-position
 #' @export
-split_at <- function(x, pos, split_after=FALSE)
-{
+split_at <- function(x, pos, split_after=FALSE){
   unname(split(x, cumsum(seq_along(x) %in% (pos + as.integer(split_after)))))
 }
 
 
 #' @export
-get_dots <- function(..., evaluate=FALSE)
-{
+get_dots <- function(..., evaluate=FALSE){
   caller <- sys.function(which=-1L)
   formalArguments <- NULL
   if (!is.null(caller)) {
@@ -381,8 +372,7 @@ get_all_args <- function(defaults = FALSE) {
 
 
 #' @export
-merge_fun_factory <- function(FUN=base::merge, SETDIFF=TRUE, ...)
-{
+merge_fun_factory <- function(FUN=base::merge, SETDIFF=TRUE, ...){
   if (SETDIFF)
     ## N.B. Note how '...' is NOT in 'function(x, y)'.
     function(x, y) FUN(x, y[, c(eval(get_dots(..., evaluate=TRUE)$evaluated$by), setdiff(colnames(y), colnames(x)))], ...)
@@ -392,15 +382,20 @@ merge_fun_factory <- function(FUN=base::merge, SETDIFF=TRUE, ...)
 
 
 #' @export
-nop <- function(x=NULL)
-{
+nop <- function(x=NULL){
   return (invisible(x))
 }
 
 
 #' @export
 capwords <- function(s, strict = FALSE) {
-  cap <- function(s) paste(toupper(substring(s, 1L, 1L)), { s <- substring(s, 2L); if (strict) tolower(s) else s }, sep='', collapse=' ')
+  cap <- function(s) paste(toupper(substring(s, 1L, 1L)),
+ {
+ s <- substring(s, 2L); if (strict) tolower(s) else s
+ },
+ sep='',
+ collapse=' '
+)
   sapply(strsplit(s, split=' '), cap, USE.NAMES=!is.null(names(s)))
 }
 
@@ -413,14 +408,15 @@ capwords <- function(s, strict = FALSE) {
 
 ## V. '?base::grep' from the R command line.
 #' @export
-parse_one <- function(res, result)
-{
-  m <- do.call(rbind, lapply(seq_along(res),
+parse_one <- function(res, result){
+  m <- do.call(rbind, lapply(
+seq_along(res),
     function(i) {
       if (result[i] == -1) return("")
       st <- attr(result, "capture.start")[i, ]
       substring(res[i], st, st + attr(result, "capture.length")[i, ] - 1)
-    }))
+    }
+))
   colnames(m) <- attr(result, "capture.names")
 
   m
@@ -429,8 +425,7 @@ parse_one <- function(res, result)
 
 ## Code "borrowed" from 'MESS::auc()' (https://cran.r-project.org/web/packages/MESS/).
 #' @export
-integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear"), absolutearea=FALSE, integrate...=list(), ...)
-{
+integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear"), absolutearea=FALSE, integrate...=list(), ...){
   type <- match.arg(type)
   if (length(x) != length(y))
     stop("x and y must have the same length")
@@ -443,14 +438,11 @@ integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear")
     res <- 0.5 * sum(diff(values$x) * (values$y[-1] + values$y[-length(values$y)]))
     if (absolutearea)
       res <- res - min(y) * (max(x) - min(x))
-  }
-  else {
+  } else {
     if (absolutearea)
-      myfunction <- function(x)
-      {
+      myfunction <- function(x)      {
         abs(splinefun(x, y, method="natural"))
-      }
-    else myfunction <- splinefun(x, y, method="natural")
+      } else myfunction <- splinefun(x, y, method="natural")
 
     integrateArgs <- list(
       f = myfunction,
@@ -467,22 +459,19 @@ integratex <- function (x, y, from=min(x), to=max(x), type=c("spline", "linear")
 
 
 #' @export
-backtick <- function(x, ...)
-{
+backtick <- function(x, ...){
   sapply(x, function(a) paste("`", as.character(a), "`", sep=""), ...)
 }
 
 
 #' @export
-dataframe <- function (..., row.names=NULL, check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
-{
+dataframe <- function (..., row.names=NULL, check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE){
   data.frame(..., row.names=row.names, check.rows=check.rows, check.names=check.names, fix.empty.names=fix.empty.names, stringsAsFactors=stringsAsFactors)
 }
 
 
 #' @export
-char_sort <- function(x, s)
-{
+char_sort <- function(x, s){
   x[which(x %in% s)] <- s[which(s %in% x)]
 
   x
@@ -490,8 +479,7 @@ char_sort <- function(x, s)
 
 
 #' @export
-only_selected_series <- function(x, series, sort = FALSE, range = NULL, ...)
-{
+only_selected_series <- function(x, series, sort = FALSE, range = NULL, ...){
   if (missing(series))
     series <- NULL
 
@@ -517,8 +505,7 @@ oss <- only_selected_series
 
 
 #' @export
-view_only_selected_series <- function(..., fun = View)
-{
+view_only_selected_series <- function(..., fun = View){
   fun(only_selected_series(...))
 }
 
@@ -538,8 +525,7 @@ vss <- view_only_selected_series
 ## Compare internal representations of R objects:
 ## http://stackoverflow.com/questions/9278715/value-reference-equality-for-same-named-function-in-package-namespace-environmen
 #' @export
-are_same <- function(x, y)
-{
+are_same <- function(x, y){
   f <- function(x) capture.output(.Internal(inspect(x)))
   all(f(x) == f(y))
 }
@@ -555,8 +541,7 @@ is_equal <- function(..., simplify = TRUE) sapply(all_equal(...), function(x) is
 
 
 #' @export
-is_invalid <- function(x, ...)
-{
+is_invalid <- function(x, ...){
   if (missing(x) || is.null(x) || length(x) == 0L)
     return (TRUE)
 
@@ -571,8 +556,7 @@ is_invalid <- function(x, ...)
 
 
 #' @export
-make_current_timestamp <- function(fmt = "%Y-%m-%d", use_seconds = FALSE, seconds_sep = '+')
-{
+make_current_timestamp <- function(fmt = "%Y-%m-%d", use_seconds = FALSE, seconds_sep = '+'){
   sysTime <- Sys.time()
   timestamp <- format(sysTime, fmt)
   if (use_seconds)
@@ -583,8 +567,7 @@ make_current_timestamp <- function(fmt = "%Y-%m-%d", use_seconds = FALSE, second
 
 
 #' @export
-add_months <- function(x, m)
-{
+add_months <- function(x, m){
   if (length(x) == 1)
     y <- nearest_year_month_from_numeric(x = x)
   else
@@ -603,8 +586,7 @@ add_months <- function(x, m)
 
 
 #' @export
-eval_js <- function(..., envir = parent.frame(), enclos = if(is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())
-{
+eval_js <- function(..., envir = parent.frame(), enclos = if(is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv()){
   dots <- get_dots(..., evaluate = TRUE)
   expr <- unlist(dots$evaluated)
 
@@ -631,8 +613,7 @@ eval_js <- function(..., envir = parent.frame(), enclos = if(is.list(envir) || i
 
 ## Cf. https://stackoverflow.com/questions/7414657/find-the-corresponding-row-and-column-number-to-an-indexed-element-in-a-matrix/7414764#7414764
 #' @export
-get_index_from_element <- function(i, m)
-{
+get_index_from_element <- function(i, m){
   x <- array(seq_along(m), dim = dim(m))
   which(x == i, arr.ind = TRUE)
 }
@@ -649,8 +630,7 @@ unzip_Z <- function(
   destfile,
   readBin_n = 99999999,
   remove = FALSE
-)
-{
+){
   ## This function is called for the side effect of uncompressing a .Z file
   ## 'zfile' is a path to the Zfile
   ## 'destfile' is the uncompressed file to be written
@@ -685,10 +665,8 @@ optimize_span <- function(
   criterion = c("aicc", "gcv"),
   span_range = c(0.05, 0.95),
   seed = 666
-)
-{
-  as.crit <- function(x)
-  {
+){
+  as.crit <- function(x)  {
     span <- x$pars$span
     traceL <- x$trace.hat
     sigma2 <- sum(x$residuals^2)/(x$n - 1)
@@ -700,8 +678,7 @@ optimize_span <- function(
   }
 
   criterion <- match.arg(criterion)
-  fn <- function(span)
-  {
+  fn <- function(span)  {
     mod <- update(model, span = span)
 
     as.crit(mod)[[criterion]]
@@ -726,8 +703,7 @@ LOESS <- function(
   plot = FALSE,
   optimize_span... = list(),
   ...
-)
-{
+){
   ## See equivalent code in 'stats::loess()' to create data frame from 'formula':
   # mf <- match.call(expand.dots = FALSE)
   # mf$span <- mf$plot <- mf$optimize_span... <- mf$... <- NULL
@@ -774,11 +750,14 @@ LOESS <- function(
       x2 <- seq(min(x[, 2]), max(x[, 2]), len = m)
       formVars <- all.vars(form)
       xNew <- expand.grid(x1 = x1, x2 = x2) %>%
-        `names<-`(tail(formVars, -1)) %>% `length<-`(2)
+        `names<-`(tail(formVars, -1)) %>%
+ `length<-`(2)
       fitNew <- matrix(stats::predict(modPlot, xNew), m, m)
 
-      graphics::persp(x1, x2, fitNew, theta = 40, phi = 30, ticktype = "detailed",
-        xlab = formVars[2], ylab = formVars[3], zlab = formVars[1], col = "lightblue", expand = 0.6)
+      graphics::persp(x1, x2, fitNew,
+ theta = 40, phi = 30, ticktype = "detailed",
+        xlab = formVars[2], ylab = formVars[3], zlab = formVars[1], col = "lightblue", expand = 0.6
+)
       mtext(sprintf("span: %1.2f", span), side = 3)
     }
   }
@@ -800,8 +779,7 @@ LOESS <- function(
 
 
 #' @export
-poly_eval <- function(expr, envir = parent.frame(), env = rlang::caller_env(), ...)
-{
+poly_eval <- function(expr, envir = parent.frame(), env = rlang::caller_env(), ...){
   if (is.null(expr))
     return (NULL)
 

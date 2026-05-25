@@ -44,13 +44,14 @@
 #' ## Create "meta" files to match up model runs with emissions scenarios. In each model-set directory, double-click on file "cmip(3|5).RData" and run the following code:
 #' x <- "cmip3" # Or:
 #' x <- "cmip5"
-#' write.csv(eval(substitute(data.frame(model=names(attr(cmip, "scenario")), scenario=attr(cmip, "scenario")),
-#'   list(cmip=as.symbol(x)))), file=paste(x, "_meta.csv", sep=""), row.names=FALSE)
+#' write.csv(eval(substitute(
+#' data.frame(model=names(attr(cmip, "scenario")), scenario=attr(cmip, "scenario")),
+#'   list(cmip=as.symbol(x))
+#' )), file=paste(x, "_meta.csv", sep=""), row.names=FALSE)
 #' }
 #'
 #' @export
-get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FALSE, data_dir, subdir=NULL, cmip3_raw=FALSE, center_fun="mean", convert_fun = kelvin_to_celsius)
-{
+get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FALSE, data_dir, subdir=NULL, cmip3_raw=FALSE, center_fun="mean", convert_fun = kelvin_to_celsius){
   if (missing(data_dir)) {
     if (!is.null(getOption("climeseries_models_dir")))
       data_dir <- getOption("climeseries_models_dir")
@@ -71,8 +72,7 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
 
   path <- paste(data_dir, ensemble, subdir, sep="/")
 
-  AlignCmip3Data <- function(x)
-  {
+  AlignCmip3Data <- function(x)  {
     scenario <- attr(x, "scenario")
 
     ## Clear any 20C3M scenario data after 2000; i.e. make it exclusively historical.
@@ -131,7 +131,9 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
       flit <- subset(x, x$year %in% baseline)
       bma <- tapply(flit$temp, flit$month, mean, na.rm=TRUE)
       x$base <- NA
-      null <- sapply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; x$base[x$month == s] <<- v }); null <- NULL
+      null <- sapply(names(bma), function(s) {
+ v <- bma[s]; if (is.nan(v)) v <- 0.0; x$base[x$month == s] <<- v
+ }); null <- NULL
 
       ## Center anomalies on average baseline-period temperatures.
       x[[modelDesignation]] <- round(x$temp - x$base, 3L)
@@ -167,7 +169,9 @@ get_models_data <- function(ensemble=c("cmip3", "cmip5"), baseline=NULL, save=FA
 
   attr(d, "model_type") <- subdir
 
-  attr(d, "scenario") <- factor(sapply(ls(e), function(s) { attr(e[[s]], "scenario") }))
+  attr(d, "scenario") <- factor(sapply(ls(e), function(s) {
+ attr(e[[s]], "scenario")
+ }))
 
   attr(d, "baseline") <- NULL
   if (length(e) > 0L)

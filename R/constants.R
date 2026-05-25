@@ -99,8 +99,7 @@ graceFoBase <- "http://gravis.gfz-potsdam.de/zipcsvdata/"
 
 
 ## Reanalyses:
-make_reanalysis_urls <- function()
-{
+make_reanalysis_urls <- function(){
   ## What's available: https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.pl
   ## 3 Jan 2022: Needed to add '&level=1000mb&level2=1000mb' to meet server requirements to retrieve data (should be irrelevant for 2-m air, though):
   writBase <- sprintf("https://psl.noaa.gov/cgi-bin/data/atmoswrit/timeseries.proc.pl?dataset1=@@SERIES@@&var=@@VAR@@&fyear=1840&fyear2=%s&fmonth=0&fmonth2=11&xlat1=@@LAT1@@&xlat2=@@LAT2@@&xlon1=@@LON1@@&xlon2=@@LON2@@&maskx=@@MASK@@&level=1000mb&level2=1000mb", current_year_lagged) # N.B. Change this back in Feb 2024!!
@@ -135,8 +134,7 @@ make_reanalysis_urls <- function()
   reanalysisMaskSuffixes <- c("All" = 0, "Land" = 1, "Ocean" = 2)
 
   r <- sapply(names(reanalyses),
-    function(a)
-    {
+    function(a)    {
       uri <- reanalyses[[a]]
 
       r <- list(
@@ -156,7 +154,9 @@ make_reanalysis_urls <- function()
       names(r) <- paste(a, reanalysisSeriesSuffixes)
 
       r
-    }, simplify = FALSE)
+    },
+ simplify = FALSE
+)
 
   ## Flatten list 'r' to a single level.
   ## These don't quite work: rr <- lapply(r, rapply, f = c); rr <- rlist::list.flatten(r)
@@ -169,13 +169,17 @@ make_reanalysis_urls <- function()
         function(b) {
           mask <- reanalysisMaskSuffixes[b]
           mgsub::mgsub(rr[[a]], "@@MASK@@", mask)
-        }, simplify = FALSE)
+        },
+ simplify = FALSE
+)
 
       names(r) <- paste0(a, c("", " Land", " Ocean"))
 
       #browser()
       r
-    }, simplify = FALSE)
+    },
+ simplify = FALSE
+)
 
   rv <- purrr::flatten(rrr)
   ## Remove the unecessary/paradoxical SST series

@@ -1,7 +1,6 @@
 get_ushcn_data <- function(
   archive_type = c(Average = "avg", Minimum = "min", Maximum = "max")
-)
-{
+){
   tic("USHCN raw v. final")
 
   ## N.B. Pick your desired temp type here by index or name!
@@ -16,8 +15,7 @@ get_ushcn_data <- function(
   archivePaths <- paste("https://www.ncei.noaa.gov/pub/data/ushcn/v2.5", archiveNames, sep = "/")
 
   fileList <- sapply(archivePaths,
-    function(x, download)
-    {
+    function(x, download)    {
       archiveName <- paste(dataDir, basename(x), sep = "/")
 
       if (download) {
@@ -26,7 +24,9 @@ get_ushcn_data <- function(
       }
 
       untar(archiveName, compressed = NA, list = TRUE)
-    }, download = TRUE, simplify = FALSE) # 'download = FALSE' to use existing archives.
+    },
+ download = TRUE, simplify = FALSE
+) # 'download = FALSE' to use existing archives.
 
   temp <- sapply(fileList, function(x) paste(dataDir, x, sep = "/"), simplify = FALSE)
   ## https://stackoverflow.com/questions/46147901/r-test-if-a-file-exists-and-is-not-a-directory
@@ -37,11 +37,9 @@ get_ushcn_data <- function(
 
   ## Make list of raw/final data frames for each station in same wide format as original text file.
   d <- sapply(fl,
-    function(x)
-    {
+    function(x)    {
       sapply(x,
-        function(y)
-        {
+        function(y)        {
           z <- read.fwf(y, c(11, 1, 4, rep(9, 12)), stringsAsFactors = FALSE); z <- z[, -2] # Some archives have an extra no. after the year!
           flit <- (gsub("\\s+\\d+", "", trimws(sapply(z[, -(1:2)], function(a) gsub("([A-Za-z]\\d*)", "", a)))))
           is.na(flit) <- flit == -9999
@@ -53,16 +51,18 @@ get_ushcn_data <- function(
           attr(r, "location") <- list(lat = flit$V2, long = flit$V3, place = paste(trimws(flit$V6), trimws(flit$V5), sep = ", "))
 
           r
-        }, simplify = FALSE)
-    }, simplify = FALSE)
+        },
+ simplify = FALSE
+)
+    },
+ simplify = FALSE
+)
 
   ## Make list of raw/final data tables for each station in long format (year, month, temperature).
   e <- sapply(d,
-    function(x)
-    {
+    function(x)    {
       sapply(x,
-        function(y)
-        {
+        function(y)        {
           siteId <- unique(y$V1)
           z <- reshape2::melt(y[, 2L:14L], id.vars = "V3", variable.name = "month", value.name = siteId)
           z$month <- as.numeric(z$month)
@@ -72,19 +72,26 @@ get_ushcn_data <- function(
           attr(z[[siteId]], "location") <- attr(y, "location")
 
           z
-        }, simplify = FALSE)
-    }, simplify = FALSE)
+        },
+ simplify = FALSE
+)
+    },
+ simplify = FALSE
+)
 
   ## Make list of raw/final wide data tables of all long individual stations by merging them on month & year.
   g <- sapply(names(e),
-  function(a)
-  {
+  function(a)  {
     r <- range(e[[a]][[1]]$year)
     flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
-    plyr::l_ply(e[[a]], function(b) { flit <<- dplyr::full_join(flit, b, by = c("year", "month")) })
+    plyr::l_ply(e[[a]], function(b) {
+ flit <<- dplyr::full_join(flit, b, by = c("year", "month"))
+ })
 
     dplyr::arrange(flit, year, month)
-  }, simplify = FALSE)
+  },
+ simplify = FALSE
+)
 
   ## Calculate anomalies from some baseline for all stations.
   baseline <- 1951:1980
@@ -93,16 +100,14 @@ get_ushcn_data <- function(
 
   ## Create raw/final list of regional/planetary grids of latitude-weighted cells & populate them with station data.
   o <- sapply(h,
-    function(x)
-    {
+    function(x)    {
       ## Create global grid of 2.5° × 3.5° squares and bin temp values in the correct square.
       p <- make_planetary_grid(grid_size = c(2.5, 3.5))
 
       y <- data.table::data.table(x)[, get_climate_series_names(x), with = FALSE]
 
       dev_null <- sapply(seq(NCOL(y)),
-      function(z)
-      {
+      function(z)      {
         #cat(z, fill = TRUE)
 
         elms <- y[, z, with = FALSE]
@@ -117,7 +122,9 @@ get_ushcn_data <- function(
           p[[rc["row"], rc["col"]]][[1]] <<- cbind(sq, elms)
 
         nop()
-      }, simplify = FALSE)
+      },
+ simplify = FALSE
+)
 
       ## Check grid-cell contents before averaging:
       ## p[sapply(p, function(x) is.data.frame(x[[1]]))] # Which grid cells are populated?
@@ -125,8 +132,7 @@ get_ushcn_data <- function(
 
       ## Create weighted average for each month for each grid cell.
       dev_null <- sapply(seq(length(p)),
-      function(z)
-      {
+      function(z)      {
         pDT <- data.table::copy(p[z][[1]][[1]])
         if (is.data.frame(pDT)) {
           ## https://stackoverflow.com/questions/31258547/data-table-row-wise-sum-mean-min-max-like-dplyr
@@ -134,24 +140,29 @@ get_ushcn_data <- function(
         }
 
         nop()
-      }, simplify = FALSE)
+      },
+ simplify = FALSE
+)
 
       weights <- NULL
       r <- data.matrix(Reduce(cbind, sapply(seq(length(p)),
-        function(z)
-        {
+        function(z)        {
           if (!is.data.frame(p[z][[1]][[1]])) return (NULL)
 
           weights <<- c(weights, attr(p[z][[1]], "weight"))
 
           p[z][[1]][[1]][[1]]
-        }, simplify = FALSE)))
+        },
+ simplify = FALSE
+)))
 
       rr <- plyr::aaply(r, 1, stats::weighted.mean, w = weights, na.rm = TRUE)
       is.na(rr) <- is.nan(rr)
 
       data.table::data.table(x)[, 1:2][, temp := rr]
-    }, simplify = FALSE)
+    },
+ simplify = FALSE
+)
 
   ## Create raw/final list of long data frames of average temps for the entire region.
   r <- sapply(o,
@@ -161,7 +172,9 @@ get_ushcn_data <- function(
       #r$yr_part <- r$year + (r$month - 0.5)/12; r$met_year <- NA
 
       as.data.frame(r)
-    }, simplify = FALSE)
+    },
+ simplify = FALSE
+)
 
   series <- c("USHCN " %_% temp_type %_% " Raw", "USHCN " %_% temp_type %_% " Final")
   for (i in seq(length(r))) {

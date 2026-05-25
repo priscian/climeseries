@@ -1,8 +1,9 @@
 ### Code modified from 'stats:::window.default()'.
 
-window_default <- function (x, start = NULL, end = NULL, frequency = NULL, deltat = NULL,
-    extend = FALSE, ...)
-{
+window_default <- function (
+x, start = NULL, end = NULL, frequency = NULL, deltat = NULL,
+    extend = FALSE, ...
+){
     x <- hasTsp(x)
     xtsp <- tsp(x)
     xfreq <- xtsp[3L]
@@ -20,24 +21,30 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
     thin <- round(xfreq/yfreq)
     if (yfreq > 0 && abs(xfreq/yfreq - thin) < ts.eps) {
         yfreq <- xfreq/thin
-    }
-    else {
+    } else {
         thin <- 1
         yfreq <- xfreq
         warning("'frequency' not changed")
     }
     start <- if (is.null(start))
         xtsp[1L]
-    else switch(length(start), start, start[1L] + (start[2L] -
-        1)/xfreq, stop("bad value for 'start'"))
+    else switch(length(start),
+ start,
+ start[1L] + (start[2L] -
+        1)/xfreq,
+ stop("bad value for 'start'")
+)
     if (start < xtsp[1L] - ts.eps/xfreq && !extend) {
         start <- xtsp[1L]
         warning("'start' value not changed")
     }
     end <- if (is.null(end))
         xtsp[2L]
-    else switch(length(end), end, end[1L] + (end[2L] - 1)/xfreq,
-        stop("bad value for 'end'"))
+    else switch(length(end),
+ end,
+ end[1L] + (end[2L] - 1)/xfreq,
+        stop("bad value for 'end'")
+)
     if (end > xtsp[2L] + ts.eps/xfreq && !extend) {
         end <- xtsp[2L]
         warning("'end' value not changed")
@@ -51,7 +58,9 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
         if (all(abs(end - xtime) > ts.eps/xfreq))
             end <- xtime[(xtime < end) & ((end - 1/xfreq) < xtime)]
         i <- seq.int(trunc((start - xtsp[1L]) * xfreq + 1.5),
-            trunc((end - xtsp[1L]) * xfreq + 1.5), by = thin)
+            trunc((end - xtsp[1L]) * xfreq + 1.5),
+ by = thin
+)
         y <- if (is.matrix(x))
             x[i, , drop = FALSE]
         else x[i]
@@ -59,8 +68,7 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
         yend <- xtime[i[length(i)]]
         #attr(y, "tsp") <- c(ystart, yend, yfreq)
         y <- make_time_series_from_anomalies(y, frequency = yfreq, conf_int = TRUE)
-    }
-    else {
+    } else {
         stoff <- ceiling((start - xtsp[1L]) * xfreq - ts.eps)
         ystart <- (round(xtsp[1L] * xfreq) + stoff)/xfreq
         enoff <- floor((end - xtsp[2L]) * xfreq + ts.eps)
@@ -72,8 +80,10 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
         else {
             i0 <- 1 + max(0, stoff)
             i1 <- nold + min(0, enoff)
-            c(rep.int(nold + 1, max(0, -stoff)), if (i0 <= i1) i0:i1,
-                rep.int(nold + 1, max(0, enoff)))
+            c(
+rep.int(nold + 1, max(0, -stoff)), if (i0 <= i1) i0:i1,
+                rep.int(nold + 1, max(0, enoff))
+)
         }
         y <- if (is.matrix(x))
             rbind(x, NA)[i, , drop = FALSE]
@@ -90,8 +100,7 @@ window_default <- function (x, start = NULL, end = NULL, frequency = NULL, delta
 
 
 ## For use in 'window_default()' to fix empty dates in padded time series.
-FillBlankDates <- function(y, frequency)
-{
+FillBlankDates <- function(y, frequency){
   nau <- na_unwrap(oss(y))
   if (all(nau))
     return (y)
@@ -99,18 +108,17 @@ FillBlankDates <- function(y, frequency)
   fill <- cumsumNotnau - unique(cumsumNotnau[nau]) - 1
   fill[fill >= 0] <- fill[fill >= 0] + 1; fill[nau] <- 0
 
-  z <- Reduce(rbind,
+  z <- Reduce(
+rbind,
     sapply(fill,
-      function(a)
-      {
+      function(a)      {
         r <- NULL
         if (a < 0) {
           if (frequency == 12L)
             r <- add_months(min(y[, "yr_part"], na.rm = TRUE), a)
           else
             r <- c(year = min(y[, "yr_part"], na.rm = TRUE) + a)
-        }
-        else if (a > 0) {
+        } else if (a > 0) {
           if (frequency == 12L)
             r <- add_months(max(y[, "yr_part"], na.rm = TRUE), a)
           else
@@ -118,10 +126,15 @@ FillBlankDates <- function(y, frequency)
         }
 
         r
-      }, simplify = FALSE))
+      },
+ simplify = FALSE
+)
+)
 
   if (frequency == 12L)
-    z <- z %>% make_yr_part %>% make_met_year
+    z <- z %>%
+ make_yr_part %>%
+ make_met_year
 
   ycols <- intersect(colnames(z), common_columns)
   if (!is.matrix(y))

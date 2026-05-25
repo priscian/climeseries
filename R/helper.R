@@ -1,6 +1,5 @@
 #' @export
-correlate_co2_temperature <- function(series, start_year=1880, end_year=current_year - 1, data, ylab, main_base="Temperature", text_x=380, text_y=-0.4, baseline=FALSE, download=FALSE)
-{
+correlate_co2_temperature <- function(series, start_year=1880, end_year=current_year - 1, data, ylab, main_base="Temperature", text_x=380, text_y=-0.4, baseline=FALSE, download=FALSE){
   if (missing(data))
     e <- get_climate_data(download=download, baseline=baseline)
   else
@@ -61,8 +60,7 @@ correlate_co2_temperature <- function(series, start_year=1880, end_year=current_
 
 #' @export
 #' @import data.table
-plot_horse_race <- function(series, top_n_years = NULL, baseline = TRUE, data, size = 1)
-{
+plot_horse_race <- function(series, top_n_years = NULL, baseline = TRUE, data, size = 1){
   if (missing(data))
     data <- get_climate_data(download = FALSE, baseline = baseline)
 
@@ -72,16 +70,24 @@ plot_horse_race <- function(series, top_n_years = NULL, baseline = TRUE, data, s
   d2 <- data.table::copy(d1)
   ## Calculate cumulative average by row.
   d2[, names(d2[, !1, with = FALSE]) :=
-    as.list((function(x) { cumsum(as.matrix(x)[1, ]) / seq_along(x) })(.SD)),
-      .SDcols = names(d2[, !1, with = FALSE]), by = 1:nrow(d2)]
+    as.list((function(x) {
+ cumsum(as.matrix(x)[1, ]) / seq_along(x)
+ })(.SD)),
+      .SDcols = names(d2[, !1, with = FALSE]), by = 1:nrow(d2)
+]
   ## Melt data set for plotting.
-  d3 <- dplyr::arrange(data.table::melt(d2, id.vars = c("year"),
-    variable.name = "month", value.name = "YTD mean temp."), year, month) %>%
+  d3 <- dplyr::arrange(data.table::melt(d2,
+ id.vars = c("year"),
+    variable.name = "month", value.name = "YTD mean temp."
+), year, month) %>%
     as.data.table()
   d4 <- data.table::copy(d2)
   d4[, `latest YTD mean temp.` :=
-    as.list((function(x) { y <- as.matrix(x)[1, ]; tail(y[!is.na(y)], 1) })(.SD)),
-      .SDcols = names(d4[, !1, with = FALSE]), by = 1:nrow(d4)]
+    as.list((function(x) {
+ y <- as.matrix(x)[1, ]; tail(y[!is.na(y)], 1)
+ })(.SD)),
+      .SDcols = names(d4[, !1, with = FALSE]), by = 1:nrow(d4)
+]
   d4 <- dplyr::arrange(d4[, .(year, `latest YTD mean temp.`)], desc(`latest YTD mean temp.`)) %>%
     as.data.table()
 
@@ -104,8 +110,10 @@ plot_horse_race <- function(series, top_n_years = NULL, baseline = TRUE, data, s
     baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
 
   subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep = "")
-  ylab <- eval(substitute(expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep = "")),
-    list(b = baselineText)))
+  ylab <- eval(substitute(
+expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep = "")),
+    list(b = baselineText)
+))
   g <- ggplot2::ggplot(d3, ggplot2::aes(x = month, y = `YTD mean temp.`, group = factor(year), color = factor(year))) +
     ggplot2::theme_bw() +
     ggplot2::geom_line(size = size) +
@@ -135,8 +143,7 @@ plot_horse_race <- function(series, top_n_years = NULL, baseline = TRUE, data, s
 
 
 #' @export
-get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="https://web.archive.org/web/20051029130103/http://data.giss.nasa.gov/gistemp/graphs/Fig_A.txt", skip=0L)
-{
+get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="https://web.archive.org/web/20051029130103/http://data.giss.nasa.gov/gistemp/graphs/Fig_A.txt", skip=0L){
   Error <- function(e) {
     cat(series %_% " series not available.", fill=TRUE)
   }
@@ -145,14 +152,18 @@ get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="ht
 
   gissGlobalMean <- 14.0 # GISS absolute global mean for 1951–1980.
 
-  tryCatch({
+  tryCatch(
+{
     #r <- httr::content(httr::GET(uri, httr::timeout(300)), "text", encoding="ISO-8859-1") # Gives timeout errors ≪ 300 s
     curl <- RCurl::getCurlHandle()
     RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation = TRUE, curl = curl)
     r <- RCurl::getURLContent(uri, curl = curl)
     tab <- gsub("^(?!\\s*\\d{4}\\s+).*$", "", strsplit(r, '\n')[[1L]], perl=TRUE)
     x <- read.table(text=tab, header=FALSE, as.is=TRUE, na.strings=c("*", "**", "***", "****"), skip=skip, check.names=FALSE)
-  }, error=Error, warning=Error)
+  },
+ error=Error,
+ warning=Error
+)
 
   d <- cbind(data.frame(year=x$V1, month=6, check.names=FALSE, stringsAsFactors=FALSE), temp=x$V2)
   d <- base::merge(expand.grid(month=1:12, year=d$year), d, by=c("year", "month"), all=TRUE)
@@ -181,8 +192,7 @@ get_yearly_gistemp <- function(series="GISTEMP Met. Stations Oct. 2005", uri="ht
 
 
 #' @export
-get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http://web.archive.org/web/20151218065405/http://data.giss.nasa.gov/gistemp/tabledata_v3/GLB.Ts+dSST.txt", skip=0L)
-{
+get_old_monthly_gistemp <- function(series="GISTEMP Global Nov. 2015", uri="http://web.archive.org/web/20151218065405/http://data.giss.nasa.gov/gistemp/tabledata_v3/GLB.Ts+dSST.txt", skip=0L){
   Error <- function(e) {
     cat(series %_% " series not available.", fill=TRUE)
   }
@@ -252,7 +262,8 @@ get_satellite_slr <- function(lat, lon) # +lat N of the equator, -lon W of the p
 
   uri <- sub("@@LAT@@", lat, sub("@@LON@@", lon, satelliteSlrBaseUrl))
 
-  tryCatch({
+  tryCatch(
+{
     ## Scrape Web page for data.
     webPage <- httr::content(httr::GET(uri), "text", encoding="ISO-8859-1")
     webPage <- readLines(tc <- textConnection(webPage)); close(tc)
@@ -263,7 +274,10 @@ get_satellite_slr <- function(lat, lon) # +lat N of the equator, -lon W of the p
     tab <- strsplit(pre, '\n')[[1L]]
     tab <- tab[tab != ""]
     x <- read.table(text=tab, header=FALSE, skip=skip, fill=FALSE, check.names=FALSE, stringsAsFactors=FALSE)
-  }, error=Error, warning=Error)
+  },
+ error=Error,
+ warning=Error
+)
 
   x$V2 <- as.numeric(x$V2) * 10 # Convert to mm.
 
@@ -281,8 +295,7 @@ tidegaugeSlrBaseUrl <- "http://www.psmsl.org/data/obtaining/rlr.monthly.data/@@S
 ## Other long records not in the PSMSL data set: https://psmsl.org/data/longrecords/
 
 #' @export
-get_tidegauge_slr <- function(station_id)
-{
+get_tidegauge_slr <- function(station_id){
   Error <- function(e) {
     cat(series %_% " series not available.", fill=TRUE)
   }
@@ -293,9 +306,13 @@ get_tidegauge_slr <- function(station_id)
 
   uri <- sub("@@STATION_ID@@", station_id, tidegaugeSlrBaseUrl)
 
-  tryCatch({
+  tryCatch(
+{
     x <- read.csv2(uri, header=FALSE, fill=FALSE, check.names=FALSE, stringsAsFactors=FALSE)
-  }, error=Error, warning=Error)
+  },
+ error=Error,
+ warning=Error
+)
 
   x <- x[, 1:2]
   x$V2 <- as.numeric(x$V2)
@@ -326,8 +343,7 @@ remove_periodic_cycle <- function(
   suffix = " (anomalies)",
   is_unc = FALSE, unc_suffix = "_uncertainty", fit_unc = FALSE,
   ...
-)
-{
+){
   uncertaintyDf <- NULL
 
   if (!is_unc && !is_invalid(inst[[series %_% unc_suffix]])) {
@@ -358,8 +374,10 @@ remove_periodic_cycle <- function(
 
   ## Get residuals from LOESS fit.
   loessArgs = list(
-    formula = eval(substitute(s ~ yr_part,
-      list(s = as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix))))),
+    formula = eval(substitute(
+s ~ yr_part,
+      list(s = as.name(series %_% " (interpolated)" %_% ifelse(!is_unc, "", unc_suffix)))
+)),
     data = d,
     span = 0.2,
     na.action = na.exclude
@@ -399,7 +417,8 @@ remove_periodic_cycle <- function(
 
   if (!is.null(uncertaintyDf))
     d <- merge(d, uncertaintyDf[c("yr_part", get_climate_series_names(uncertaintyDf,
-      conf_int = TRUE))], all.x = TRUE, by = "yr_part", sort = TRUE)
+      conf_int = TRUE
+))], all.x = TRUE, by = "yr_part", sort = TRUE)
 
   d %>% as.data.frame
 }
@@ -430,15 +449,16 @@ create_aggregate_variable <- function(
   baseline = NULL,
   add = TRUE,
   ...
-)
-{
+){
   get_climate_series_namesArgs <- list(
     x = x,
     invert = FALSE
   )
   get_climate_series_namesArgs <-
     utils::modifyList(get_climate_series_namesArgs,
-      get_climate_series_names..., keep.null = TRUE) %>%
+      get_climate_series_names...,
+ keep.null = TRUE
+) %>%
       `$<-`(name = "invert", value = FALSE)
 
   colNamesAll <- do.call(get_climate_series_names, get_climate_series_namesArgs)
@@ -450,16 +470,22 @@ create_aggregate_variable <- function(
     d <- recenter_anomalies(d, baseline = baseline)
 
   ## Remove non-monthly-series columns
-  colNamesSeries <- do.call(get_climate_series_names,
-    get_climate_series_namesArgs %>% `$<-`(name = "invert", value = TRUE))
+  colNamesSeries <- do.call(
+get_climate_series_names,
+    get_climate_series_namesArgs %>% `$<-`(name = "invert", value = TRUE)
+)
   d %<>% dplyr::select(any_of(colNamesSeries))
 
   if (interpolate)
     d %<>% interpNA(method = method, unwrap = TRUE)
 
-  r <- apply(d, 1, function(a) { r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm = TRUE); r })
+  r <- apply(d, 1, function(a) {
+ r <- NA; if (!all(is.na(a))) r <- mean(a, na.rm = TRUE); r
+ })
   if (interpolate)
-    r %<>% { drop(interpNA(., method = "linear", unwrap = TRUE, ...)) }
+    r %<>% {
+ drop(interpNA(., method = "linear", unwrap = TRUE, ...))
+ }
 
   if (!add) return (r)
 
@@ -474,8 +500,7 @@ create_aggregate_variable <- function(
 
 
 #' @export
-create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...)
-{
+create_aggregate_co2_variable <- function(x, co2_var_name, merge...=list(), ...){
   lawPath <- system.file("extdata/co2/law2006.txt", package="climeseries")
   l <- read.table(lawPath, header=TRUE, skip=182, nrow=2004)
   law <- data.frame(year=l$YearAD, month=6, `CO2 Law Dome`=l$CO2spl, check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
@@ -528,8 +553,7 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable = "CO2 
     x$`PMOD TSI VIRGO A+B (new adj.)` <- x$`PMOD TSI VIRGO A+B (new)` - mean(tsiDifference, na.rm = TRUE)
 
     x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI VIRGO A+B (new adj.)"), "TSI Aggregate Global", type = "head", ...)
-  }
-  else { # Otherwise, for less monthly detail and less interpolation, just use "Reconstructed" and SORCE.
+  } else { # Otherwise, for less monthly detail and less interpolation, just use "Reconstructed" and SORCE.
     x <- create_aggregate_variable(x, c("TSI Reconstructed", "PMOD TSI VIRGO A+B (new)"), "TSI Aggregate Global", type = "head", ...)
   }
 
@@ -555,15 +579,16 @@ add_default_aggregate_variables <- function(x, co2_instrumental_variable = "CO2 
 ## Create temperature series with the influence of some exogenous factors removed.
 ## Based on Foster & Rahmstorf 2011, dx.doi.org/10.1088/1748-9326/6/4/044022.
 #' @export
-remove_exogenous_influences <- function(x, series,
+remove_exogenous_influences <- function(
+x, series,
   start = NULL, end = NULL,
   lags = list(`MEI Aggregate Global` = NULL, `SAOD Aggregate Global` = NULL, `TSI Aggregate Global` = NULL),
   aggregate_vars_fun = add_default_aggregate_variables,
   period = 1, num_harmonics = 4,
   max_lag = 12, bs_df = NULL, bs_degree = 3,
   center_on_mean = TRUE,
-  suffix = " (adj.)")
-{
+  suffix = " (adj.)"
+){
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
@@ -604,8 +629,11 @@ remove_exogenous_influences <- function(x, series,
 
     y <- x[, c(i, "yr_part", names(lags))]
     x[[i]] <- flitSeries
-    l <- expand.grid(sapply(lags, function(a) { r <- seq(0, max_lag); if (!is.null(a)) r <- a; r }, simplify = FALSE))
-    aic <- apply(l, 1,
+    l <- expand.grid(sapply(lags, function(a) {
+ r <- seq(0, max_lag); if (!is.null(a)) r <- a; r
+ }, simplify = FALSE))
+    aic <- apply(
+l, 1,
       function(a) {
         lr <- as.list(unlist(a))
         z <- shift(y, lr, roll = FALSE)
@@ -675,8 +703,7 @@ remove_exogenous_influences <- function(x, series,
 
 
 #' @export
-easy_exogenous_plot <- function(series, start=NULL, end=NULL, bs_df=NULL, tamino_style=FALSE, ...)
-{
+easy_exogenous_plot <- function(series, start=NULL, end=NULL, bs_df=NULL, tamino_style=FALSE, ...){
   g <- remove_exogenous_influences(series=series, start=start, end=end, bs_df=bs_df)
   series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
   if (!tamino_style)
@@ -723,29 +750,25 @@ easy_exogenous_plot <- function(series, start=NULL, end=NULL, bs_df=NULL, tamino
 
 ## Convert Fahrenheit temperatures to Kelvin.
 #' @export
-fahr_to_kelvin <- function(temp)
-{
+fahr_to_kelvin <- function(temp){
   ((temp - 32) * (5/9)) + 273.15
 }
 
 ## Convert Kelvin temperatures to Celsius.
 #' @export
-kelvin_to_celsius <- function(temp)
-{
+kelvin_to_celsius <- function(temp){
   temp - 273.15
 }
 
 ## Convert Fahrenheit temperatures to Celsius.
 #' @export
-fahr_to_celsius <- function(temp)
-{
+fahr_to_celsius <- function(temp){
   kelvin_to_celsius(fahr_to_kelvin(temp))
 }
 
 ## Convert Celsius temperatures to Fahrenheit.
 #' @export
-celsius_to_fahr <- function(temp)
-{
+celsius_to_fahr <- function(temp){
   temp * (9/5) + 32
 }
 
@@ -759,8 +782,7 @@ convert_hdf4_to_h5 <- function(
   converter_path = "h4toh5convert.exe",
   overwrite = FALSE,
   verbose = TRUE
-)
-{
+){
   hdf4Path <- hdf4_path
   ## Is 'hdf4_path' a directory?
   if (utils::file_test("-d", hdf4_path[1])) { # Keep only 1st element; 'Vectorize()' if needed.
@@ -781,8 +803,7 @@ convert_hdf4_to_h5 <- function(
   }
 
   r <- sapply(seq_along(hdf4Path),
-    function (i)
-    {
+    function (i)    {
       if (verbose) {
         cat(sprintf("Converting file %s to HD5...", basename(hdf4Path[i]))); utils::flush.console()
       }
@@ -804,7 +825,9 @@ convert_hdf4_to_h5 <- function(
       }
 
       rv
-    }, simplify = TRUE)
+    },
+ simplify = TRUE
+)
 
   invisible(r)
 }
@@ -835,8 +858,7 @@ create_airs_monthly_data <- function(
   apply_lat_weights = TRUE,
   series = "AIRS Surface Skin Global",
   save_rdata = FALSE
-)
-{
+){
   list.filesArgs <- list(
     path = data_path,
     pattern = files_re,
@@ -848,8 +870,7 @@ create_airs_monthly_data <- function(
   files <- do.call(list.files, list.filesArgs)
 
   l <- sapply(files,
-    function(i)
-    {
+    function(i)    {
       latitude <- t(rhdf5::h5read(i, "/location/Data Fields/Latitude"))
       longitude <- t(rhdf5::h5read(i, "/location/Data Fields/Longitude"))
       m <- rhdf5::h5read(i, "/location/Grid Attributes/Month")[1, 1]
@@ -859,9 +880,13 @@ create_airs_monthly_data <- function(
       attr(value, "metadata") <- list(year = y, month = m, lat = latitude[, 1], lon = longitude[1, ])
 
       value
-    }, simplify = FALSE)
+    },
+ simplify = FALSE
+)
 
-  d <- Reduce(rbind, sapply(l, function(x) { m <- attr(x, "metadata"); dataframe(year = m$year, month = m$month) }, simplify = FALSE))
+  d <- Reduce(rbind, sapply(l, function(x) {
+ m <- attr(x, "metadata"); dataframe(year = m$year, month = m$month)
+ }, simplify = FALSE))
   g <- Reduce(function(x, y) abind::abind(x, y, along = 3), l) # lat × lon × month
 
   p <- make_planetary_grid(grid_size = c(1, 1))
@@ -870,13 +895,14 @@ create_airs_monthly_data <- function(
   ## Put full time series into each grid cell.
   utils::flush.console()
   plyr::a_ply(i, 1,
-    function(x)
-    {
+    function(x)    {
       d$temp <- g[x[1], x[2], ]
       is.na(d$temp) <- d$temp == -9999
 
       p[[x[1], x[2]]][[1]] <<- d
-    }, .progress = "text")
+    },
+ .progress = "text"
+)
 
   p0 <- rlang::duplicate(p, shallow = FALSE)
 
@@ -885,36 +911,43 @@ create_airs_monthly_data <- function(
 
   utils::flush.console()
   plyr::a_ply(i, 1,
-    function(x)
-    {
+    function(x)    {
       e <- p[[x[1], x[2]]][[1]]
       e <- merge(flit, e, by = c("year", "month"), all.x = TRUE)
 
       p[[x[1], x[2]]][[1]] <<- recenter_anomalies(e, baseline)
-    }, .progress = "text")
+    },
+ .progress = "text"
+)
 
   ## Now weight the means zonally (i.e. by latitude grid).
-  get_mean_series <- function(p)
-  {
+  get_mean_series <- function(p)  {
     l <- sapply(seq(NROW(p)),
-      function(x)
-      {
+      function(x)      {
         y <- p[x, ]
         w <- attr(y[[1]], "weight")
-        l <- sapply(names(y), function(i) { r <- y[[i]][[1]]; names(r)[names(r) == "temp"] <- i; r }, simplify = FALSE) # List of time series for this latitude
+        l <- sapply(names(y), function(i) {
+ r <- y[[i]][[1]]; names(r)[names(r) == "temp"] <- i; r
+ }, simplify = FALSE) # List of time series for this latitude
         ## Now merge all the series together.
         d <- dplyr::arrange(Reduce(function(i, j) merge(i, j, by = c("year", "month"), all = TRUE), l), year, month)
 
-        m <- apply(data.matrix(d[, -(1:2)]), 1, function(i) { r <- NA; if(!all(is.na(i))) r <- mean(i, na.rm = TRUE); r })
+        m <- apply(data.matrix(d[, -(1:2)]), 1, function(i) {
+ r <- NA; if(!all(is.na(i))) r <- mean(i, na.rm = TRUE); r
+ })
         attr(m, "weight") <- w
         attr(m, "time") <- d[, c("year", "month")]
 
         m
-      }, simplify = FALSE)
+      },
+ simplify = FALSE
+)
 
     w <- sapply(l, attr, which = "weight")
     ll <- Reduce(cbind, l)
-    m <- apply(ll, 1, function(i) { r <- NA; if(!all(is.na(i))) r <- weighted.mean(i, w, na.rm = TRUE); r })
+    m <- apply(ll, 1, function(i) {
+ r <- NA; if(!all(is.na(i))) r <- weighted.mean(i, w, na.rm = TRUE); r
+ })
 
     d <- dplyr::arrange(Reduce(function(i, j) merge(i, j, by = c("year", "month"), all = TRUE), sapply(l, attr, which = "time", simplify = FALSE)), year, month)
     d[[series]] <- m
@@ -953,8 +986,7 @@ create_combined_airs_series <- function(
   node_weights = 1,
   multiplier = 0.5,
   ...
-)
-{
+){
   if (is.null(data_path)) {
     if (!is.null(getOption("climeseries_airs_data_dir")))
       data_path <- getOption("climeseries_airs_data_dir")
@@ -981,8 +1013,7 @@ interpolate_baseline <- function(
   series, # A single column in 'x'
   x, # A 'climeseries' data set
   baseline = NULL
-)
-{
+){
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
@@ -1022,15 +1053,16 @@ interpolate_baselines <- function(
   series = NULL, # A vector of column names in 'x', NULL for all columns
   x, # A 'climeseries' data set
   baseline = NULL # Single baseline, but multiples might be allowed later
-)
-{
+){
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
   if (is.null(series))
     series <- get_climate_series_names(x)
 
-  plyr::l_ply(series, function(s) { x[, s] <<- interpolate_baseline(s, x, baseline)[, s] })
+  plyr::l_ply(series, function(s) {
+ x[, s] <<- interpolate_baseline(s, x, baseline)[, s]
+ })
 
   x
 }
@@ -1046,8 +1078,7 @@ create_cmip5_taz_data <- function(
   list.files... = list(),
   filter_expr = NULL,
   verbose = TRUE
-)
-{
+){
   list.filesArgs <- list(
     path = data_path,
     pattern = files_re,
@@ -1059,8 +1090,7 @@ create_cmip5_taz_data <- function(
   files <- do.call(list.files, list.filesArgs)
 
   cmip5_taz <- sapply(basename(files),
-    function(i)
-    {
+    function(i)    {
       f <- paste(data_path, i, sep = "/")
 
       if (verbose) {
@@ -1078,12 +1108,23 @@ create_cmip5_taz_data <- function(
 
       x0 <- tidync::tidync(f)
       if (!is.null(filter_expr))
-        x0 <- x0 %>% { eval(filter_expr) }
-      x <- x0 %>% tidync::hyper_array() %>% `[[`(1L, drop = FALSE)
+        x0 <- x0 %>%
+ {
+ eval(filter_expr)
+ }
+      x <- x0 %>%
+ tidync::hyper_array() %>%
+ `[[`(1L, drop = FALSE)
 
-      latitude <- x0$transforms$lat %>% dplyr::filter(selected) %>% dplyr::pull(lat)
-      air_pressure <- x0$transforms$plev %>% dplyr::filter(selected) %>% dplyr::pull(plev)
-      dates <- x0$transforms$time %>% dplyr::filter(selected) %>% dplyr::pull(time) %>%
+      latitude <- x0$transforms$lat %>%
+ dplyr::filter(selected) %>%
+ dplyr::pull(lat)
+      air_pressure <- x0$transforms$plev %>%
+ dplyr::filter(selected) %>%
+ dplyr::pull(plev)
+      dates <- x0$transforms$time %>%
+ dplyr::filter(selected) %>%
+ dplyr::pull(time) %>%
         as.Date(origin = origin)
 
       dimnames(x) <- list(latitude = latitude, air_pressure = air_pressure, dates = as.character(dates))
@@ -1101,7 +1142,9 @@ create_cmip5_taz_data <- function(
       }
 
       x
-    }, simplify = FALSE)
+    },
+ simplify = FALSE
+)
 
   if (!is.null(rdata_path))
     save(list = c("cmip5_taz"), file = rdata_path)
@@ -1125,8 +1168,7 @@ get_rss_msu_weights <- function(
   weights_path,
   air_pressure, # Vector of air pressures to base interpolations on
   skip = 7
-)
-{
+){
   ## These reads are very specific, but seem to work for all the RSS weighting functions:
   colNames <- unlist(read.table(weights_path, skip = skip - 2, header = FALSE, nrows = 1, check.names = FALSE, stringsAsFactors = FALSE))
   surface_weight <- read.table(weights_path, skip = skip - 4, header = FALSE, nrows = 1, check.names = FALSE, stringsAsFactors = FALSE)$V3
@@ -1136,8 +1178,10 @@ get_rss_msu_weights <- function(
   a <- air_pressure[air_pressure %nin% w$`P(pa)`]
   z <- merge(w, dataframe(`P(pa)` = a), by = "P(pa)", all = TRUE) %>%
     dplyr::arrange(desc(`P(pa)`))
-  zz <- z %>% dplyr::select(`P(pa)`, `h(m)`, Weight) %>%
-    interpNA(method = "linear", unwrap = FALSE) %>% dataframe()
+  zz <- z %>%
+ dplyr::select(`P(pa)`, `h(m)`, Weight) %>%
+    interpNA(method = "linear", unwrap = FALSE) %>%
+ dataframe()
 
   zzz <- zz %>% dplyr::filter(`P(pa)` %in% air_pressure)
   attr(zzz, "surface_weight") <- surface_weight
@@ -1161,14 +1205,12 @@ create_cmip5_atmosphere_temps <- function(
   weighting_domain = c("_land", "_ocean"), # These will be blanks for TLS & TTS.
   column_integrate = FALSE,
   ...
-)
-{
+){
   if (is.character(taz_archive)) {
     load(taz_archive)
     taz <- cmip5_taz
     cmip5_taz <- NULL
-  }
-  else
+  } else
     taz <- taz_archive
 
   data(etopo5, package = "esd")
@@ -1199,8 +1241,7 @@ create_cmip5_atmosphere_temps <- function(
 
 
   l <- sapply(names(taz),
-    function(i)
-    {
+    function(i)    {
       tazi <- taz[[i]]
       latitude <- attr(tazi, "latitude")
       d <- dim(tazi)
@@ -1218,7 +1259,9 @@ create_cmip5_atmosphere_temps <- function(
         land_ocean_weights$land * land_msu_weights$Weight
 
       if (!column_integrate)
-        tt <- apply(z, 2, function(x, w) { sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE) }, w = msu_weights)
+        tt <- apply(z, 2, function(x, w) {
+ sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE)
+ }, w = msu_weights)
 
       ## Also test out vertical integration of weighted temps.
       # ocean_msu_weight_surface <- attr(ocean_msu_weights, "original_data") %>% dplyr::slice(1) %>% dplyr::select(`P(pa)`, `h(m)`, Weight)
@@ -1232,11 +1275,12 @@ create_cmip5_atmosphere_temps <- function(
       # tth <- apply(z, 2, function(x, w) { sum(x * w, na.rm = TRUE) / sum(w, na.rm = TRUE) }, w = total_msu_weights$Weight) # ?
       if (column_integrate) {
         tt <- apply(z, 2,
-          function(x, w, h)
-          {
+          function(x, w, h)          {
             ## V. https://en.wikipedia.org/wiki/Weight_function#Weighted_average
             integratex(h, x * w)$value / integratex(h, w)$value
-          }, w = total_msu_weights$Weight, h = total_msu_weights$`h(m)`)
+          },
+ w = total_msu_weights$Weight, h = total_msu_weights$`h(m)`
+)
       }
 
       dates <- attr(tazi, "dates")
@@ -1253,16 +1297,19 @@ create_cmip5_atmosphere_temps <- function(
       attr(r, "scenario") <- attr(tazi, "scenario")
 
       r
-    }, simplify = FALSE)
+    },
+ simplify = FALSE
+)
 
   r <- range(c(sapply(l, function(x) range(x$year))))
   flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
 
   m <- sapply(l,
-    function(i)
-    {
+    function(i)    {
       merge(flit, i, by = c("year", "month"), all = TRUE)[[3]]
-    }, simplify = TRUE)
+    },
+ simplify = TRUE
+)
   colnames(m) <- sapply(l, function(x) names(x)[3])
   y <- flit %>%
     dplyr::mutate(yr_part = year + (2 * month - 1)/24, met_year = NA)
@@ -1289,14 +1336,12 @@ create_osiris_daily_saod_data_orig <- function(
   daily_filename = "OSIRIS-Odin_Stratospheric-Aerosol-Optical_550nm.RData",
   planetary_grid = NULL,
   extract = FALSE
-)
-{
+){
   if (extract) {
     fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_4-", full.names = TRUE)
     fileDates <- tools::file_path_sans_ext(basename(fileNames)) %>% stringr::str_extract("\\d{6}$")
     x <- sapply(fileNames,
-      function(i)
-      {
+      function(i)      {
         cat("    Processing file", basename(i), fill = TRUE); flush.console()
 
         nc0 <- RNetCDF::open.nc(i)
@@ -1308,30 +1353,36 @@ create_osiris_daily_saod_data_orig <- function(
         nc <- tidync::tidync(i)
         varNames <- c("extinction", "altitude", "latitude", "longitude")
         x <- sapply(varNames,
-          function(a)
-          {
+          function(a)          {
             substitute(tidync::hyper_tbl_cube(nc %>% tidync::activate(A))$mets[[B]], list(A = as.name(a), B = a)) %>% eval
-          }, simplify = FALSE)
+          },
+ simplify = FALSE
+)
 
         xx <- by(seq_along(datesC), datesC,
-          function(a)
-          {
+          function(a)          {
             list(
-              extinction = x$extinction[, a, drop = FALSE] %>% unclass %>% { `[<-`(., is.nan(.), NA) },
+              extinction = x$extinction[, a, drop = FALSE] %>% unclass %>%
+ {
+ `[<-`(., is.nan(.), NA)
+ },
               alt = x$altitude,
               lat = x$latitude[a],
               long = x$longitude[a]
             )
-          }, simplify = FALSE) %>% unclass
+          },
+ simplify = FALSE
+) %>% unclass
 
         xx
-      }, simplify = FALSE)
+      },
+ simplify = FALSE
+)
 
     names(x) <- fileDates
 
     save(x, file = paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
-  }
-  else
+  } else
     load(paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
 
   ### Process the extinction data to calculate monthly SAOD.
@@ -1372,8 +1423,7 @@ create_osiris_daily_saod_data_orig <- function(
       }
 
       gridSaod <- sapply(e,
-        function(y)
-        {
+        function(y)        {
           r <- NA
 
           ## Calculate vertical column integral of aerosol extinction.
@@ -1388,7 +1438,8 @@ create_osiris_daily_saod_data_orig <- function(
           attr(r, "coords") <- attr(y, "coords")
 
           r
-        }, simplify = FALSE
+        },
+ simplify = FALSE
       )
 
       ## Create global grid of 5° × 5° squares and bin each SAOD value in the correct square.
@@ -1396,9 +1447,9 @@ create_osiris_daily_saod_data_orig <- function(
         g <- make_planetary_grid()
       else
         g <- planetary_grid
-      dev_null <- sapply(gridSaod,
-        function(y)
-        {
+      dev_null <- sapply(
+gridSaod,
+        function(y)        {
           coords <- attr(y, "coords")
           lat <- coords["lat"]; long <- coords["long"]
           rc <- find_planetary_grid_square(g, lat, long)
@@ -1413,14 +1464,14 @@ create_osiris_daily_saod_data_orig <- function(
 
       ## From the global grid, create a data frame of mean values for every bin and their corresponding latitude weights.
       d <- sapply(g,
-        function(y)
-        {
+        function(y)        {
           r <- c(value = NA, weight = attr(y, "weight"))
           if (all(is.na(y[[1]]))) return (r)
           r["value"] <- mean(y[[1]], na.rm = TRUE)
 
           r
-        }, simplify = FALSE
+        },
+ simplify = FALSE
       )
 
       d <- data.matrix(Reduce(rbind, d))
@@ -1447,8 +1498,7 @@ create_osiris_daily_saod_data <- function(
   planetary_grid = NULL,
   extract = FALSE,
   parallel = TRUE
-)
-{
+){
   if (extract) {
     fileNames <- list.files(data_path, pattern = "^AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_4-", full.names = TRUE)
     fileDates <- tools::file_path_sans_ext(basename(fileNames)) %>% stringr::str_extract("\\d{6}$")
@@ -1466,21 +1516,26 @@ create_osiris_daily_saod_data <- function(
       nc <- tidync::tidync(i)
       varNames <- c("extinction", "altitude", "latitude", "longitude")
       x <- sapply(varNames,
-        function(a)
-        {
+        function(a)        {
           substitute(tidync::hyper_tbl_cube(nc %>% tidync::activate(A))$mets[[B]], list(A = as.name(a), B = a)) %>% eval
-        }, simplify = FALSE)
+        },
+ simplify = FALSE
+)
 
       xx <- by(seq_along(datesC), datesC,
-        function(a)
-        {
+        function(a)        {
           list(
-            extinction = x$extinction[, a, drop = FALSE] %>% unclass %>% { `[<-`(., is.nan(.), NA) },
+            extinction = x$extinction[, a, drop = FALSE] %>% unclass %>%
+ {
+ `[<-`(., is.nan(.), NA)
+ },
             alt = x$altitude,
             lat = x$latitude[a],
             long = x$longitude[a]
           )
-        }, simplify = FALSE) %>% unclass
+        },
+ simplify = FALSE
+) %>% unclass
 
       xx
     }
@@ -1489,7 +1544,8 @@ create_osiris_daily_saod_data <- function(
     if (parallel && requireNamespace("future.apply", quietly = TRUE)) {
       x <- future.apply::future_lapply(fileNames, process_file,
                                         future.packages = c("RNetCDF", "tidync", "magrittr"),
-                                        future.seed = TRUE)
+                                        future.seed = TRUE
+)
     } else {
       x <- lapply(fileNames, process_file)
     }
@@ -1497,8 +1553,7 @@ create_osiris_daily_saod_data <- function(
     names(x) <- fileDates
 
     save(x, file = paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
-  }
-  else
+  } else
     load(paste(rdata_path, "AEROSOL-L2-LP-OSIRIS_ODIN-SASK_v7_3.RData", sep = "/"))
 
   ### Process the extinction data to calculate daily SAOD.
@@ -1542,8 +1597,7 @@ create_osiris_daily_saod_data <- function(
       }
 
       gridSaod <- sapply(e,
-        function(y)
-        {
+        function(y)        {
           r <- NA
 
           ## Calculate vertical column integral of aerosol extinction.
@@ -1556,15 +1610,16 @@ create_osiris_daily_saod_data <- function(
           attr(r, "coords") <- attr(y, "coords")
 
           r
-        }, simplify = FALSE
+        },
+ simplify = FALSE
       )
 
       ## Create a fresh grid for this day
       g <- pg
 
-      dev_null <- sapply(gridSaod,
-        function(y)
-        {
+      dev_null <- sapply(
+gridSaod,
+        function(y)        {
           coords <- attr(y, "coords")
           lat <- coords["lat"]; long <- coords["long"]
           rc <- find_grid_fn(g, lat, long)
@@ -1579,14 +1634,14 @@ create_osiris_daily_saod_data <- function(
 
       ## From the global grid, create a data frame of mean values
       d <- sapply(g,
-        function(y)
-        {
+        function(y)        {
           r <- c(value = NA, weight = attr(y, "weight"))
           if (all(is.na(y[[1]]))) return (r)
           r["value"] <- mean(y[[1]], na.rm = TRUE)
 
           r
-        }, simplify = FALSE
+        },
+ simplify = FALSE
       )
 
       d <- data.matrix(Reduce(rbind, d))
@@ -1621,7 +1676,8 @@ create_osiris_daily_saod_data <- function(
                            x_data = x,
                            pg = planetary_grid,
                            integratex_fn = integratex,
-                           find_grid_fn = find_planetary_grid_square)
+                           find_grid_fn = find_planetary_grid_square
+)
   }
 
   saodDaily <- do.call(rbind, saodDailyList)
@@ -1638,8 +1694,7 @@ create_osiris_saod_data <- function(
   series_name = "OSIRIS Stratospheric Aerosol Optical Depth (550 nm) Global",
   create_daily = FALSE,
   ...
-)
-{
+){
   if (is.null(path)) {
     if (!is.null(getOption("climeseries_saod_data_dir")))
       path <- getOption("climeseries_saod_data_dir")
@@ -1651,11 +1706,16 @@ create_osiris_saod_data <- function(
 
   load(paste(path, filename, sep = "/"), envir = environment())
 
-  r <- plyr::arrange(Reduce(rbind,
+  r <- plyr::arrange(Reduce(
+rbind,
     by(saod_daily, list(saod_daily$year, saod_daily$month),
-      function(x) data.frame(year = x$year[1], month = x$month[1], flit = mean(x$saod, na.rm = TRUE),
-        check.names = FALSE, stringsAsFactors = FALSE),
-      simplify = FALSE)), year, month)
+      function(x) data.frame(
+year = x$year[1], month = x$month[1], flit = mean(x$saod, na.rm = TRUE),
+        check.names = FALSE, stringsAsFactors = FALSE
+),
+      simplify = FALSE
+)
+), year, month)
   r$yr_part <- r$year + (2 * r$month - 1)/24
 
   names(r)[names(r) %in% "flit"] <- series_name
@@ -1678,8 +1738,7 @@ create_osiris_saod_data <- function(
 
 
 #' @export
-make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, incomplete_years_to_na = FALSE)
-{
+make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, incomplete_years_to_na = FALSE){
   if (missing(x))
     x <- get_climate_data(download = FALSE)
 
@@ -1689,7 +1748,9 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
     incompleteYears <- as.numeric(names(yearTab)[yearTab != 12])
 
     ## For incomplete years, make all elements NA.
-    dev_null <- sapply(series, function(a) { is.na(x[, a]) <<- x[, "year"] %in% incompleteYears; nop() }); rm(dev_null)
+    dev_null <- sapply(series, function(a) {
+ is.na(x[, a]) <<- x[, "year"] %in% incompleteYears; nop()
+ }); rm(dev_null)
   }
 
   ## This doesn't account for the "_uncertainty" columns, though, whose squares should be averaged then 'sqrt()'ed.
@@ -1699,14 +1760,23 @@ make_yearly_data <- function(x, na_rm = TRUE, unwrap = TRUE, baseline = FALSE, i
   ## V. stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation/26647#26647
   cnames <- get_climate_series_names(x, conf_int = TRUE)
   l <- list(cnames[stringr::str_ends(cnames, "_uncertainty", negate = TRUE)], cnames[stringr::str_ends(cnames, "_uncertainty", negate = FALSE)])
-  r <- list(.vars = tibble::lst(!!l[[1]], !!l[[2]]),
+  r <- list(
+.vars = tibble::lst(!!l[[1]], !!l[[2]]),
       .funs = tibble::lst(
-        function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm = na_rm); r },
-        function(a) { r <- NA_real_; if (!all(is.na(a))) r <- sqrt(mean(a^2, na.rm = na_rm)); r }
-      )) %>%
+        function(a) {
+ r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm = na_rm); r
+ },
+        function(a) {
+ r <- NA_real_; if (!all(is.na(a))) r <- sqrt(mean(a^2, na.rm = na_rm)); r
+ }
+      )
+) %>%
     ## For applying multiple functions to different columns in 'summarize_at()', see:
     ## https://stackoverflow.com/questions/41109403/r-dplyr-summarise-multiple-functions-to-selected-variables/53981812#53981812
-    purrr::pmap(~ x %>% as.data.frame %>% dplyr::group_by(year) %>% dplyr::summarize_at(.x, .y)) %>%
+    purrr::pmap(~ x %>%
+ as.data.frame %>%
+ dplyr::group_by(year) %>%
+ dplyr::summarize_at(.x, .y)) %>%
     purrr::reduce(dplyr::inner_join, by = "year")
 
   if (unwrap)
@@ -1733,8 +1803,7 @@ show_warmest_years <- function(
   start_year = NULL, end_year = current_year - 1,
   baseline = FALSE,
   simplify = TRUE # TRUE to include the actual anomaly values
-)
-{
+){
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = baseline)
 
@@ -1744,12 +1813,13 @@ show_warmest_years <- function(
   y <- make_yearly_data(oss(x, series))
 
   l <- sapply(y[, -1, drop = FALSE],
-    function(x)
-    {
+    function(x)    {
       r <- dplyr::arrange(dataframe(year = y$year, temp = x), desc(temp))[seq(num_top_years), ]
 
       if (simplify) r$year else r
-    }, simplify = simplify)
+    },
+ simplify = simplify
+)
 
   l
 }
@@ -1770,8 +1840,7 @@ get_yearly_difference <- function(
   plot_baseline = TRUE,
   save_png = FALSE,
   ...
-)
-{
+){
   if (missing(data))
     data <- get_climate_data(download = FALSE, baseline = FALSE)
 
@@ -1782,8 +1851,10 @@ get_yearly_difference <- function(
   h <- g[c(which(g$year == start), which(g$year == end)), series %_% ifelse(loess, " (LOESS fit)", ""), drop = FALSE] %>%
     `rownames<-`(c(start, end))
 
-  plot_climate_data(g, series %>% unique, start, end, yearly = FALSE, baseline = plot_baseline, lwd = 2, conf_int = FALSE,
-    make_standardized_plot_filename... = list(suffix = ""), loess = loess, save_png = save_png, ...)
+  plot_climate_data(g, series %>% unique, start, end,
+ yearly = FALSE, baseline = plot_baseline, lwd = 2, conf_int = FALSE,
+    make_standardized_plot_filename... = list(suffix = ""), loess = loess, save_png = save_png, ...
+)
 
   ## N.B. Use e.g. stringi::stri_escape_unicode("°") to get Unicode value(s) easily.
   cat("Difference in ", unit ," from ", start, "\u2013", end, sep = "", fill = TRUE)
@@ -1809,8 +1880,7 @@ get_yearly_difference <- function(
 
 ## Make "cranberry plots" à la http://variable-variability.blogspot.com/2017/01/cherry-picking-short-term-trends.html.
 #' @export
-make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=NULL)
-{
+make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=NULL){
   if (missing(x)) g <- make_yearly_data()
   else g <- make_yearly_data(x)
 
@@ -1833,17 +1903,22 @@ make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=NULL)
     plot(h$year, h[[i]],
       lwd = 2, type = "l", col = "gray",
       main = series, xlab = "year", ylab = ylab,
-      panel.first=(function(){ grid(); abline(h=0.0) })(),
-      panel.last=points(g$year, g[[i]], pch=19, col="red"))
+      panel.first=(function(){
+ grid(); abline(h=0.0)
+ })(),
+      panel.last=points(g$year, g[[i]], pch=19, col="red")
+)
     #l <- loess(h[[i]] ~ h$year, span=span)
     l <- LOESS(h[[i]] ~ h$year, span=span)
     lines(l$x, l$fitted, lwd=3, col="blue", type="l")
 
     ## Plot the LOESS residuals.
-    plot(l$x, l$residuals, lwd=2,
+    plot(l$x, l$residuals,
+ lwd=2,
       type="l", col="gray",
       main = "Standard Deviation = " %_% sprintf(sd(l$residuals, na.rm=TRUE), fmt="%.3f"), xlab = "year", ylab = ylab,
-      panel.last=points(l$x, l$residuals, pch=19, col="red"))
+      panel.last=points(l$x, l$residuals, pch=19, col="red")
+)
   }
 
   return (nop())
@@ -1870,22 +1945,23 @@ show_single_value <- function
   format = "%.3f",
   this_year = current_year,
   ...
-)
-{
+){
   if (missing(data))
     data <- get_climate_data(download = FALSE, baseline = baseline)
 
   ## N.B. Data must have complete year-month pairs for this to be accurate!
   ## This doesn't work correctly, so check:
-  complete <- data %>% dplyr::select(!!series) %>%
+  complete <- data %>%
+ dplyr::select(!!series) %>%
     dplyr::group_by(data$year) %>%
     dplyr::group_map(
-      function(x, y)
-      {
-        x %>% dplyr::mutate_all(function(m) !is.na(m)) %>%
+      function(x, y)      {
+        x %>%
+ dplyr::mutate_all(function(m) !is.na(m)) %>%
           dplyr::summarize_all(all) %>%
           dplyr::bind_cols(y, .)
-      }) %>%
+      }
+) %>%
     purrr::reduce(dplyr::bind_rows) %>%
     dplyr::rename(year = 1)
 
@@ -1893,33 +1969,39 @@ show_single_value <- function
   g <- make_yearly_data(data)[, c("year", series)]
 
   single <- sapply(series,
-    function(a)
-    {
+    function(a)    {
       m <- fun(g[[a]], ...)
       r <- data.frame(year = g$year[m], check.names = FALSE)
       r[[value_name]] <- g[[a]][m]
       r[["complete?"]] <- c("no", "yes")[complete[[a]][m] + 1]
 
       r
-    }, simplify = FALSE) %>%
+    },
+ simplify = FALSE
+) %>%
     purrr::reduce(dplyr::bind_rows)
   rownames(single) <- series
-  single[["last complete"]] <- sapply(complete[, -1], function(a) { complete$year[a %>% which %>% max] })
+  single[["last complete"]] <- sapply(complete[, -1], function(a) {
+ complete$year[a %>%
+ which %>%
+ max]
+ })
 
-  this_year_rank <- sapply(g[, -1],
+  this_year_rank <- sapply(
+g[, -1],
     function(a) {
       o <- order(a, decreasing = TRUE)
       rank_map <- structure(seq(NROW(g)) %>% `is.na<-`(is.na(a[o])), .Names = g$year[o])
 
       rank_map[this_year %>% as.character] %>% as.vector
-    })
+    }
+)
   single[[paste(this_year, "rank")]] <- this_year_rank
 
   print(single %>%
     tibble::rownames_to_column() %>%
     dplyr::mutate(!!value_name := sprintf(format, .[[value_name]])) %>%
-    tibble::column_to_rownames()
-  )
+    tibble::column_to_rownames()  )
   if (!is.null(baseline))
     cat("\nBaseline: ", min(baseline), "\u2014", max(baseline), fill = TRUE, sep = "")
 
@@ -1935,8 +2017,7 @@ show_single_value <- function
 
 ## Crudely based on Cowtan et al. 2015, dx.doi.org/10.1002/2015GL064888.
 #' @export
-create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=FALSE)
-{
+create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=FALSE){
   data_dir <- system.file("extdata", package="climeseries")
   ensemble <- "cmip5"
   subdir <- "tas + tos"
@@ -1953,19 +2034,22 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
       modelLine <- grep(re, l, value=TRUE)
       model <- stringr::str_match(modelLine, re)[2L]
 
-      r <- data.frame(model=model, type=tolower(modelType), variable=tolower(modelVariable), RCP=as.numeric(pathway)/10, path=a,
-        check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE)
+      r <- data.frame(
+model=model, type=tolower(modelType), variable=tolower(modelVariable), RCP=as.numeric(pathway)/10, path=a,
+        check.rows=FALSE, check.names=FALSE, fix.empty.names=FALSE, stringsAsFactors=FALSE
+)
 
       r
-    }, simplify = FALSE
+    },
+ simplify = FALSE
   )
   modelSummary <- Reduce(rbind, modelSummary)
   modelSummary <- subset(modelSummary, modelSummary$variable %in% c("tas land", "tos")) # Not necessary here, but for genericness.
   #xtabs(~ model + variable + type + RCP, modelSummary)
 
-  l <- dlply(modelSummary, ~ model + type + RCP,
-    function(a)
-    {
+  l <- dlply(
+modelSummary, ~ model + type + RCP,
+    function(a)    {
       if (is.null(a) || length(unique(a$variable)) < 2)
         return (NULL)
 
@@ -1976,8 +2060,7 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
 
       ## Now read in the files to be averaged together. Returns a list of the separate time series.
       weightedValues <- mapply(a$model, w, a$path, seq(nrow(a)),
-        FUN = function (model, weight, path, n)
-        {
+        FUN = function (model, weight, path, n)        {
           tab <- read.table(path)
           flit <- melt(tab[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
           for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -1991,7 +2074,9 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
             flit <- subset(x, x$year %in% baseline)
             bma <- tapply(flit$temp, flit$month, mean, na.rm=TRUE)
             x$base <- NA
-            l_ply(names(bma), function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; x$base[x$month == s] <<- v })
+            l_ply(names(bma), function(s) {
+ v <- bma[s]; if (is.nan(v)) v <- 0.0; x$base[x$month == s] <<- v
+ })
 
             ## Center anomalies on average baseline-period temperatures.
             x[[modelDesignation]] <- round(x$temp - x$base, 3L)
@@ -2055,8 +2140,7 @@ create_cmip5_tas_tos_data <- function(baseline=defaultBaseline, save_to_package=
 
 
 #' @export
-create_loess_variables <- function(inst, series, loess... = list(), unwrap = TRUE, keep_interpolated = FALSE, ...)
-{
+create_loess_variables <- function(inst, series, loess... = list(), unwrap = TRUE, keep_interpolated = FALSE, ...){
   yearVar <- ifelse(is.null(inst$month), "year", "yr_part")
 
   baselineAttribute <- attr(inst, "baseline")
@@ -2091,8 +2175,7 @@ create_loess_variables <- function(inst, series, loess... = list(), unwrap = TRU
 
 
 #' @export
-add_loess_variables <- function(inst, series, ...)
-{
+add_loess_variables <- function(inst, series, ...){
   d <- create_loess_variables(inst, series, ...)
   baselineAttribute <- attr(inst, "baseline")
   r <- base::merge(inst, d[, setdiff(names(d), series)], by = names(d)[names(d) %in% common_columns], all.x = TRUE)
@@ -2120,8 +2203,7 @@ fit_segmented_model <- function(
   segmented... = list(), seg.control... = list(seed = 100),
   make_yearly_data... = list(),
   ...
-)
-{
+){
   r <- list(data = x, series = series)
   r$range <- list(start = start, end = end)
   r$col <- col
@@ -2129,8 +2211,7 @@ fit_segmented_model <- function(
 
   if (!yearly) {
     g <- r$data
-  }
-  else {
+  } else {
     make_yearly_dataArgs <- list(
       x = r$data
     )
@@ -2183,12 +2264,12 @@ fit_segmented_model <- function(
     segmentedArgs <- utils::modifyList(segmentedArgs, segmented..., keep.null = TRUE)
     #r$piecewise[[i]]$sm <- do.call("segmented", segmentedArgs)
 
-    run_segmented <- function()
-    {
+    run_segmented <- function()    {
       mf <- model.frame(r$piecewise[[i]]$lm)
 
       while (TRUE) {
-        withRestarts({
+        withRestarts(
+{
           sm <- do.call(segmented::segmented, segmentedArgs)
           break
         },
@@ -2196,14 +2277,17 @@ fit_segmented_model <- function(
             ## Which breakpoint is closest to the start or end of the time series?
             if (length(segmentedArgs$psi) > 1L)
               segmentedArgs$psi <<- segmentedArgs$psi[-which.min(pmin(segmentedArgs$psi, NROW(mf) - segmentedArgs$psi + 1))]
-          })
+          }
+)
       }
 
       sm
     }
 
-    tryCatch({
-      withCallingHandlers({
+    tryCatch(
+{
+      withCallingHandlers(
+{
           sm <- run_segmented()
         },
           error = function(e) {
@@ -2214,7 +2298,11 @@ fit_segmented_model <- function(
       )
 
       r$piecewise[[i]]$sm <- sm
-    }, error = function(e) { message("Warning: No breakpoint(s) found") })
+    },
+ error = function(e) {
+ message("Warning: No breakpoint(s) found")
+ }
+)
   }
 
   r
@@ -2222,15 +2310,13 @@ fit_segmented_model <- function(
 
 
 #' @export
-nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("nearest", "above", "below"), as_data_frame = FALSE)
-{
+nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("nearest", "above", "below"), as_data_frame = FALSE){
   nearest_type <- match.arg(nearest_type)
 
   if (missing(yr_part)) {
     flit <- rev(expand.grid(month = 1:12, year = trunc(x), by = 1))
     flit$yr_part <- flit$year + (2 * flit$month - 1)/24
-  }
-  else {
+  } else {
     r <- range(yr_part)
     x <- x[1]
     flit <- rev(expand.grid(month = 1:12, year = seq(floor(r[1]), floor(r[2]), by = 1)))
@@ -2245,9 +2331,7 @@ nearest_year_month_from_numeric <- function(yr_part, x, nearest_type = c("neares
   isEqual <- is_equal(flit$yr_part, x)
   egrid <- switch(nearest_type,
     `above` = flit[isEqual | flit$yr_part > x, ],
-
     `below` = flit[flit$yr_part < x | isEqual, ],
-
     flit
   )
 
@@ -2265,8 +2349,7 @@ create_timeseries_from_gridded <- function(
   sub_lat = c(-90, 90), sub_long = c(-180, 180),
   data_dir = getOption("climeseries_data_dir"),
   series_suffix = NULL
-)
-{
+){
   if (missing(x))
     x <- get_climate_data(download = FALSE, baseline = FALSE)
 
@@ -2338,8 +2421,7 @@ create_zonal_data <- function(
   ),
   series_suffix = NULL,
   use_local = FALSE
-)
-{
+){
   what <- match.arg(what)
 
   if (missing(x))
@@ -2398,7 +2480,8 @@ create_zonal_data <- function(
     flit <- data.table::data.table(flit)
     ## This data set should have the same NROW as the "time" dimension of 'a':
     h <- flit[data.table::data.table(yr_part = times), roll = "nearest", on = "yr_part"] %>%
-      as.data.frame %>% dplyr::select(year, month)
+      as.data.frame %>%
+ dplyr::select(year, month)
   } else {
     tunits
     # $value
@@ -2408,9 +2491,9 @@ create_zonal_data <- function(
     h <- dataframe(year = year(dtimes), month = month(dtimes))
   }
 
-  flit <- apply(a, 3,
-    function(y)
-    {
+  flit <- apply(
+a, 3,
+    function(y)    {
       x <- t(y)
       w <- cos(matrix(rep(lat, NCOL(x)), ncol = NCOL(x), byrow = FALSE) * (pi / 180)) # Latitude weights.
 
@@ -2432,10 +2515,13 @@ create_zonal_data <- function(
       }
 
       temp
-    })
+    }
+)
   is.na(flit) <- is.nan(flit)
 
-  lat_long_to_text <- function(x, sufs) { suf <- sufs[2]; r <- abs(x); if (x < 0) suf <- sufs[1]; r %_% suf }
+  lat_long_to_text <- function(x, sufs) {
+ suf <- sufs[2]; r <- abs(x); if (x < 0) suf <- sufs[1]; r %_% suf
+ }
   subLatText <- sapply(sub_lat, lat_long_to_text, sufs = c("S", "N"), simplify = TRUE)
   subLongText <- sapply(sub_long, lat_long_to_text, sufs = c("W", "E"), simplify = TRUE)
 
@@ -2470,8 +2556,7 @@ create_zonal_data <- function(
 
 
 ## https://crudata.uea.ac.uk/cru/data/temperature/read_cru_hemi.r
-read_cru_hemi <- function(filename)
-{
+read_cru_hemi <- function(filename){
   # read in whole file as table
   tab <- read.table(filename, fill = TRUE)
   nrows <- nrow(tab)
@@ -2512,11 +2597,9 @@ correct_monthly_autocorrelation <- function(
   slope_coef = "yr_part",
   remove_missings = TRUE,
   santer = FALSE
-)
-{
+){
   ## Covariance with lag
-  autocovariance <- function(data, j, remove_missings)
-  {
+  autocovariance <- function(data, j, remove_missings)  {
     if (remove_missings)
       data <- data[!is.na(data)]
 
@@ -2531,8 +2614,7 @@ correct_monthly_autocorrelation <- function(
   }
 
   ## Degrees of freedom correction
-  data_per_degree_of_freedom <- function(xdata, ydata, autocorrel_period)
-  {
+  data_per_degree_of_freedom <- function(xdata, ydata, autocorrel_period)  {
     xy <- dataframe(xdata = xdata, ydata = ydata)
     xyac <- xy %>%
       dplyr::filter(xdata >= min(autocorrel_period) & xdata <= max(autocorrel_period))
@@ -2552,24 +2634,40 @@ correct_monthly_autocorrelation <- function(
   }
 
   ## Santer &al 2000 correction dx.doi.org/10.1029/1999JD901105
-  santer_correct <- function(xdata, ydata, model, slope_coef)
-  {
+  santer_correct <- function(xdata, ydata, model, slope_coef)  {
     if (missing(xdata)) {
       # xdata = model$x[, slope_coef]
       # ydata = model$y
 
-      index_df <- residuals(model) %>% { dataframe(index = as.numeric(names(.))) }
+      index_df <- residuals(model) %>%
+ {
+ dataframe(index = as.numeric(names(.)))
+ }
       flit <- model$x[, slope_coef]
       if (is_invalid(names(flit))) {
         flit <- model$x[, slope_coef, drop = FALSE] %>%
-          { structure(.[, 1], .Names = dimnames(.)[1]) }
+          {
+ structure(.[, 1], .Names = dimnames(.)[1])
+ }
       }
       xdata <- dplyr::full_join(flit %>%
-        { dataframe(index = as.numeric(names(.)), x = .) }, index_df) %>% dplyr::arrange(index) %>%
-        { structure(dplyr::pull(., x), .Names = .$index) } %>% interpNA() %>% `[`(, 1)
+        {
+ dataframe(index = as.numeric(names(.)), x = .)
+ }, index_df) %>%
+ dplyr::arrange(index) %>%
+        {
+ structure(dplyr::pull(., x), .Names = .$index)
+ } %>%
+ interpNA() %>%
+ `[`(, 1)
       ydata <- dplyr::full_join(model$y %>%
-        { dataframe(index = as.numeric(names(.)), y = .) }, index_df) %>% dplyr::arrange(index) %>%
-        { structure(dplyr::pull(., y), .Names = .$index) }
+        {
+ dataframe(index = as.numeric(names(.)), y = .)
+ }, index_df) %>%
+ dplyr::arrange(index) %>%
+        {
+ structure(dplyr::pull(., y), .Names = .$index)
+ }
     }
     temp_corr_matrix <- structure(cbind(
       ydata,
@@ -2597,8 +2695,7 @@ correct_monthly_autocorrelation <- function(
   }
 
   ## Correct t-stat & p-value
-  correct_stats <- function(model, nu, slope_coef)
-  {
+  correct_stats <- function(model, nu, slope_coef)  {
     Qr <- stats:::qr.lm(model)
     p <- model$rank
     p1 <- 1L:p
@@ -2678,13 +2775,13 @@ simulate_temp_series <- function(
   noise_sd = 0.3, # Try to match global land+SSTs
   var_name = "simulated temperature",
   seed = 666 # If NULL, not reproducible
-)
-{
+){
   total_months <- (total_years + 1) * months_per_year
 
   ## Generate time values
   yr_part <- sapply(start_year:(start_year + total_years), `+`,
-    e1 = (1:months_per_year - 0.5) / months_per_year) %>% as.vector
+    e1 = (1:months_per_year - 0.5) / months_per_year
+) %>% as.vector
   times <- seq(total_months)
 
   ## Generate seasonal pattern

@@ -1,5 +1,4 @@
-ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
-{
+ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE){
   Error <- function(e) {
     cat(series %_% " " %_% type %_% " series not available.", fill=TRUE)
 
@@ -47,11 +46,15 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
       curl <- RCurl::getCurlHandle()
       RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
-      tryCatch({
+      tryCatch(
+{
         #r <- RCurl::getURL(p, curl=curl)
         #x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
         x <- read.csv(p, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- reshape2::melt(x[, 1L:13L], id.vars="Year", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -61,7 +64,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `GISTEMP v3 Zonal` =,
     `GISTEMP v3 Zonal Land` =,
     `GISTEMP v4 Zonal` =,
@@ -74,11 +76,15 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## http://wattsupwiththat.com/2014/07/05/giss-is-unique-now-includes-may-data/
       curl <- RCurl::getCurlHandle()
       RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
-      tryCatch({
+      tryCatch(
+{
         #r <- RCurl::getURL(p, curl=curl)
         #x <- read.csv(text=r, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
         x <- read.csv(p, header=TRUE, as.is=TRUE, na.strings=c("***", "****", "*****"), skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- x[, -1]
       colnames(flit) <- paste(series, colnames(flit))
@@ -88,7 +94,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `NCEI US Avg. Temp.` =,
     `NCEI US Max. Temp.` =,
     `NCEI US Min. Temp.` =,
@@ -108,12 +113,16 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `NCEI Global` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         flit <- strsplit(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"), "\r*\n")[[1L]]
         flit <- flit[trimws(flit) != ""]
         flit <- flit[grep("^\\d", flit, perl=TRUE)]
         x <- read.csv(header=FALSE, skip=0L, text=flit, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       re <- "(\\d{4})(\\d{2})"
       yearMatches <- stringr::str_match(x[[1]], re) # Column name "Year" or "Date".
@@ -130,8 +139,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
-
     `ClimDiv Min` =,
     `USCRN Min` =,
     `ClimDiv Max` =,
@@ -142,9 +149,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 1L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.csv(p, header = TRUE, skip = skip, fill = TRUE, check.names = FALSE)
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       re <- "(\\d{4})(\\d{2})"
       yearMatches <- stringr::str_match(x$Date, re)
@@ -154,8 +165,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## Get correct column name
       temp_name <- trimws(strsplit(series, " ")[[1]][1])
 
-      d <- data.frame(year = yearValue, yr_part = yearValue + (2 * monthValue - 1)/24,
-        month = monthValue, temp = x[[temp_name]], check.names = FALSE, stringsAsFactors = FALSE)
+      d <- data.frame(
+year = yearValue, yr_part = yearValue + (2 * monthValue - 1)/24,
+        month = monthValue, temp = x[[temp_name]], check.names = FALSE, stringsAsFactors = FALSE
+)
 
       is.na(d$temp) <- d$temp == -99.99
       ## Convert °F anomalies to °C
@@ -163,34 +176,46 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `STAR v5.0` = (function(p) {
       skip <- 0L
 
       httr::set_config(httr::config(ssl_verifypeer = 0L))
-      tryCatch({
+      tryCatch(
+{
         #fileNames <- strsplit(RCurl::getURL(p, dirlistonly = TRUE), "\r*\n")[[1L]]# %>% stringr::str_subset("_Merged")
         fileNames <- httr::content(httr::GET(p), as = "text") %>%
-          stringr::str_extract_all("NESDIS-STAR.*?\\.txt", simplify = FALSE) %>% `[[`(1) %>% unique
+          stringr::str_extract_all("NESDIS-STAR.*?\\.txt", simplify = FALSE) %>%
+ `[[`(1) %>%
+ unique
         dd <- sapply(fileNames,
-          function(a)
-          {
+          function(a)          {
             level <- stringr::str_match(a, "_(TLS|TLT|TMT|TUT)_")[, 2]
             x <- read.table(p %_% a, header = TRUE, skip = skip, fill = TRUE, check.names = FALSE)
-            d <- x %>% dplyr::select(year = Year, month = Month, ends_with("_Anomaly")) %>%
-              dplyr::rename_with(function(b) { stringr::str_replace_all(b, "(_|Anomaly)", " ") %>% stringr::str_trim() %>%
-                sprintf("STAR v5.0 %s %s", level, .) }, .cols = ends_with("_Anomaly"))
+            d <- x %>%
+ dplyr::select(year = Year, month = Month, ends_with("_Anomaly")) %>%
+              dplyr::rename_with(function(b) {
+ stringr::str_replace_all(b, "(_|Anomaly)", " ") %>%
+ stringr::str_trim() %>%
+                sprintf("STAR v5.0 %s %s", level, .)
+ }, .cols = ends_with("_Anomaly"))
 
             d
-          }, simplify = FALSE) %>%
-          purrr::reduce(dplyr::full_join, by = c("year", "month")) %>% dplyr::arrange(year, month) -> d
-      }, error = Error, warning = Error)
+          },
+ simplify = FALSE
+) %>%
+          purrr::reduce(dplyr::full_join, by = c("year", "month")) %>%
+ dplyr::arrange(year, month) -> d
+      },
+ error = Error,
+ warning = Error
+)
 
       ## Make TTT series
       a24 <- 1.15 # TTT calculations given in Zou &al 2023 dx.doi.org/10.1029/2022JD037472
       TMT <- dd[, stringr::str_detect(colnames(dd), " TMT ")] %>% data.matrix
       TLS <- dd[, stringr::str_detect(colnames(dd), " TLS ")] %>% data.matrix
-      TTT <- (a24 * TMT + (1 - a24) * TLS) %>% as.data.frame %>%
+      TTT <- (a24 * TMT + (1 - a24) * TLS) %>%
+ as.data.frame %>%
         `names<-`(stringr::str_replace(names(.), " (TMT|TLS) ", " TTT "))
 
       d %<>% dplyr::bind_cols(TTT) %>%
@@ -203,10 +228,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `NCEI v4` = (function(p) {
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         #fileNames <- strsplit(RCurl::getURL(p, dirlistonly=TRUE), "\r*\n")[[1L]]
         fileNames <- httr::content(httr::GET(p), as = "text") %>%
-          stringr::str_extract_all("aravg.*?\\.asc", simplify = FALSE) %>% `[[`(1) %>% unique
+          stringr::str_extract_all("aravg.*?\\.asc", simplify = FALSE) %>%
+ `[[`(1) %>%
+ unique
         ## Keep only monthly data files.
         re <- "^.*?aravg\\.mon\\.(?<type>.+?)\\.(?<lat1>.+?)\\.(?<lat2>.+?)\\..*?\\.asc$"
         fileNames <- grep(re, fileNames, value=TRUE, perl=TRUE)
@@ -214,9 +242,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         namedMatches <- cbind(file=fileNames, parse_one(fileNames, m))
         namedMatches[, "type"] <- capwords(sub("_", " + ", namedMatches[, "type"]))
         cat(fill=TRUE)
-        l <- apply(namedMatches, 1,
-          function(y)
-          {
+        l <- apply(
+namedMatches, 1,
+          function(y)          {
             seriesName <- paste("NCEI v4", y["type"], y["lat1"] %_% "-" %_% y["lat2"])
             cat("    Processing file", y["file"], fill=TRUE); flush.console()
             x <- read.table(p %_% y["file"], header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
@@ -229,11 +257,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             d
           }
         )
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       return (l)
     })(path),
-
     `CRUTEM3 Global` =,
     `CRUTEM3 NH` =,
     `CRUTEM3 SH` =,
@@ -257,9 +287,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `CRUTEM4v SH` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read_cru_hemi(p)
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       flit <- x %>% dplyr::select(tidyselect::matches("^(year|month)"))
       flit <- reshape2::melt(flit[, 1L:13L], id.vars = "year", variable.name = "month", value.name = "temp")
@@ -269,7 +303,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       d
     })(path),
-
     `HadSST3 SH` =,
     `HadSST3 NH` =,
     `HadSST3 Tropics` =,
@@ -282,9 +315,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       re <- "(\\d{4})/(\\d{2})"
       yearMatches <- stringr::str_match(x$V1, re)
@@ -302,7 +339,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `CRUTEM5 Global` =,
     `CRUTEM5 NH` =,
     `CRUTEM5 SH` =,
@@ -314,7 +350,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     `HadCRUT5 NH (not infilled)` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         flit <- tempfile()
         download.file(p, flit, mode = "wb", quiet = TRUE)
         n <- ncdf4::nc_open(flit) # 'print(n)' or just 'n' for details.
@@ -327,7 +364,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         times <- ncdf4::ncvar_get(n, "time")
         tunits <- ncdf4::ncatt_get(n,"time", "units")
         ncdf4::nc_close(n)
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       # [1] "days since 1850-1-1 00:00:00"
       dtimes <- as.Date(times, origin = "1850-01-01")
@@ -339,8 +379,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
-
     `HadSST4 SH` =,
     `HadSST4 NH` =,
     `HadSST4 Tropics` =,
@@ -349,9 +387,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         x <- rio::import(p, fread = FALSE, header = TRUE, as.is = TRUE, na.strings = c("-99.9", "-99.99"), skip = skip, check.names = FALSE, stringsAsFactors = FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- data.frame(year = x$year, yr_part = x$year + (2 * x$month - 1)/24, month = x$month, temp = x$anomaly, check.names = FALSE, stringsAsFactors = FALSE)
 
@@ -361,16 +403,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `HadCET` = (function(p) {
       x <- NULL
 
       #skip <- 7L
       skip <- 5L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, header=FALSE, as.is=TRUE, na.strings=c("-99.9", "-99.99"), skip=skip, check.names=FALSE, stringsAsFactors=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -380,16 +425,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `Cowtan & Way Krig. Global` =,
     `Cowtan & Way Krig. Global Land` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       re <- "(\\d{4})\\.(\\d{3})"
       yearMatches <- stringr::str_match(x$V1, re)
@@ -404,7 +452,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `BEST Gridded` = (function(p) {
       nh <- create_zonal_data(x = NULL, what = "be", sub_lat = c(0, 90), use_local = TRUE) %>%
         dplyr::select(-yr_part)
@@ -417,7 +464,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       d
     })(path),
-
     `BEST Global Land` =,
     `BEST SH Land` =,
     `BEST NH Land` =,
@@ -429,12 +475,16 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         httr::set_config(httr::config(ssl_verifypeer = 0L)) # This is necessary for the BE data on port 4443
         flit <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
         x <- read.table(text = flit, header=FALSE, skip=skip, check.names=FALSE, comment.char="%")
         dev_null <- sapply(names(x), function(y) is.na(x[[y]]) <<- is.nan(x[[y]]))
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       dupIndex <- duplicated(x[, c("V1", "V2")])
       if (any(dupIndex)) {
@@ -452,11 +502,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           d2[[d2Series %_% "_uncertainty"]] <- 2 * y$V4
 
           d <- list(d1, d2); names(d) <- c(d1Series, d2Series)
-        }
-        else
+        } else
           stop("Unknown data set.")
-      }
-      else {
+      } else {
         d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
         ## "Uncertainties represent the 95% confidence interval for statistical and spatial undersampling effects as well as ocean biases." From http://berkeleyearth.lbl.gov/auto/Global/Land_and_Ocean_complete.txt.
         d[[series %_% "_uncertainty"]] <- 2 * x$V4
@@ -464,16 +512,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `JMA Global` = (function(p) {
       x <- NULL
 
       skip <- 1L
 
-      tryCatch({
+      tryCatch(
+{
         flit <- gsub("\\*", "", readLines(p), fixed=FALSE)
         x <- read.csv(text=flit, header=FALSE, skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -483,13 +534,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `JMA Global (gridded)` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         flit <- tempfile()
         download.file(p, flit, quiet=TRUE)
         con <- file(flit) # R does transparent decompression of certain compressed files, e.g. ".gz".
@@ -498,7 +549,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         m <- read.table(text=comments, comment.char="") # 'm' for "meta".
         x <- read.table(con, skip=skip, comment.char="#")
         unlink(flit)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       ## 'x' is gridded data from which we need to calculate monthly global average temperatures, hopefully like the Japan Meteorological Agency does here: http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/ann_wld.html.
 
@@ -528,7 +582,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       surl <- paste("http://ds.data.jma.go.jp/tcc/tcc/products/gwp/temp/", mos, "_wld.html", sep="")
 
       e <- data.frame()
-      tryCatch({
+      tryCatch(
+{
         for (i in seq_along(surl)) {
           y <- readLines(tc <- textConnection(httr::content(httr::GET(surl[i]), "text", encoding="Shift_JIS"))); close(tc)
           if (any(grepl("\\s*in " %_% MONTHS[i] %_% " " %_% syear, y))) {
@@ -547,11 +602,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         base <- base[d$year == syear - 1]; length(base) <- nrow(e)
         e$temp <- round(e$temp - base, digits=Inf)
         d <- rbind(d, e)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       return (d)
     })(path),
-
     `RSS TLS 3.3 Land` =,
     `RSS TLS 3.3 Ocean` =,
     `RSS TLS 3.3` =,
@@ -586,14 +643,18 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 3L
 
-      tryCatch({
+      tryCatch(
+{
         temp <- trimws(readLines(p, n=2L)) # I.e. 'skip - 1'.
         temp[1] <- trimws(substring(temp[1], abs(diff(nchar(temp))) - 1))
         flitNames <- paste(series, apply(read.table(text=temp, stringsAsFactors=FALSE), 2, paste, collapse=""))
         flitNames <- gsub("\\.([A-Za-z])", ". \\1", flitNames) # Add spaces after periods preceding letters in column names.
         flitNames <- gsub("/$", "", flitNames) # Remove any trailing '/' slashes from column names.
         x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
       flit <- data.matrix(x[, -(1:2)])
@@ -604,7 +665,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `UAH TLS 5.6` =,
     `UAH TMT 5.6` =,
     `UAH TLT 5.6` =,
@@ -616,13 +676,17 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 1L
 
-      tryCatch({
+      tryCatch(
+{
         flit <- readLines(p)
         flit <- flit[trimws(flit) != ""]
         flit <- split_at(flit, which(duplicated(flit)))[[1]]
         flit <- gsub("(\\d)(-\\d)", "\\1 \\2", flit)
         x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE, comment.char = "*")
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
       flit <- data.matrix(x[, -(1:2)])
@@ -636,13 +700,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `RATPAC-A Seasonal Layers` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         tempFile <- tempfile()
         httr::GET(p, httr::write_disk(tempFile, overwrite = TRUE))
         #download.file(p, tempFile, quiet=TRUE)
@@ -655,9 +719,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         flit <- gsub("\t", " ", flit) # Remove some curious tabs in the headers.
         #flit <- sub("^\\s+", "", flit)
         flit <- split_at(flit, grep("^#", flit, perl=TRUE))
-        y <- lapply(flit,
-          function(x)
-          {
+        y <- lapply(
+flit,
+          function(x)          {
             r <- read.fortran(tc <- textConnection(x), format=c("2I4", "7F7.0"), header=TRUE, skip=skip, check.names=FALSE, comment.char="#"); close(tc)
 
             ## Since the headers are read in badly, replace them outright.
@@ -665,11 +729,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             r
           }
         )
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- mapply(pressureLayers, y,
-        FUN = function(l, y)
-        {
+        FUN = function(l, y)        {
           y$month <- (y$season * 3) - 2 # V. http://www1.ncdc.noaa.gov/pub/data/ratpac/readme.txt
           flit <- expand.grid(month=1:12, year=unique(y$year))
           flit <- merge(flit, y, by=c("year", "month"), all.x=TRUE)
@@ -685,13 +751,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `RATPAC-A Annual Levels` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         tempFile <- tempfile()
         #download.file(p, tempFile, quiet=TRUE)
         httr::GET(p, httr::write_disk(tempFile, overwrite = TRUE))
@@ -702,19 +768,21 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         regions <- sub("\\s*(-)\\s*", "\\1", trimws(grep(re, flit, value=TRUE, perl=TRUE)), perl=TRUE)
         flit <- sub(re, "#\\1", flit)
         flit <- split_at(flit, grep("^#", flit, perl=TRUE))
-        y <- lapply(flit,
-          function(x)
-          {
+        y <- lapply(
+flit,
+          function(x)          {
             r <- read.table(text=x, header=TRUE, skip=skip, check.names=FALSE, comment.char="#")
 
             r
           }
         )
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- mapply(regions, y,
-        FUN = function(l, y)
-        {
+        FUN = function(l, y)        {
           y$month <- 6
           flit <- expand.grid(month=1:12, year=unique(y$year))
           flit <- merge(flit, y, by=c("year", "month"), all.x=TRUE)
@@ -731,7 +799,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `NCEP/NCAR Surface Air SH` =,
     `NCEP/NCAR Surface Air SH Polar` =,
     `NCEP/NCAR Surface Air NH` =,
@@ -743,7 +810,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         ## Scrape Web page for data.
         webPage <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
         pageTree <- htmlTreeParse(webPage, useInternalNodes=TRUE)
@@ -752,7 +820,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         ## Clean up the table by removing descriptive text.
         tab <- gsub("^(?!\\d{4}\\s+).*$", "", strsplit(pre, '\n')[[1L]], perl=TRUE)
         x <- read.table(text=tab, header=FALSE, skip=skip, fill=TRUE, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -764,13 +835,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `AIRS Surface Skin Global` = (function(p) {
       d <- create_combined_airs_series(baseline = 2003:2018, series = series)
 
       return (d)
     })(path),
-
     `AIRS SH` =,
     `AIRS NH` =,
     `AIRS Global` = (function(p) {
@@ -778,28 +847,36 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 1L
 
-      tryCatch({
+      tryCatch(
+{
         r <- httr::GET(p) %>% httr::content(as = "text")
-        coverage <- (r %>% stringr::str_split("\\n"))[[1]][1] %>% stringr::str_match("^(.*?)\\s+.*$") %>% `[`(, 2)
+        coverage <- (r %>% stringr::str_split("\\n"))[[1]][1] %>%
+ stringr::str_match("^(.*?)\\s+.*$") %>%
+ `[`(, 2)
         r <- r %>%
           stringr::str_split(stringr::regex(sprintf("^%s\\s+.*$", rex::escape(coverage)), multiline = TRUE)) %>%
           unlist %>%
           `[`(. != "") %>%
           structure(.Names = paste(c("AIRS v6", "AIRS v7", "GISTEMP v4"), coverage))
         x <- r %>% sapply(
-          function(a)
-          {
+          function(a)          {
             read.csv(text = a, skip = 1L, as.is = TRUE, na.strings = c("*******"), check.names = FALSE)
-          }, simplify = FALSE)
-      }, error = Error, warning = Error)
+          },
+ simplify = FALSE
+)
+      },
+ error = Error,
+ warning = Error
+)
 
       flit <- sapply(seq_along(x),
-        function(a)
-        {
+        function(a)        {
           flit <- reshape2::melt(x[[a]][, 1L:13L], id.vars = "Year", variable.name = "month", value.name = names(x)[a])
           for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
           flit <- dplyr::arrange(flit, Year, month)
-        }, simplify = FALSE)
+        },
+ simplify = FALSE
+)
 
       d <- flit %>%
         purrr::reduce(dplyr::full_join, by = c("Year", "month")) %>%
@@ -810,30 +887,35 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `AIRS Zonal` = (function(p) {
       x <- NULL
 
       skip <- 1L
 
-      tryCatch({
+      tryCatch(
+{
         r <- httr::GET(p) %>% httr::content(as = "text")
-        coverage <- (r %>% stringr::str_split("\\n"))[[1]][1] %>% stringr::str_match("^(.*?)\\s+.*$") %>% `[`(, 2)
+        coverage <- (r %>% stringr::str_split("\\n"))[[1]][1] %>%
+ stringr::str_match("^(.*?)\\s+.*$") %>%
+ `[`(, 2)
         r <- r %>%
           stringr::str_split(stringr::regex(sprintf("^%s\\s+.*$", rex::escape(coverage)), multiline = TRUE)) %>%
           unlist %>%
           `[`(. != "") %>%
           structure(.Names = paste(c("AIRS v6", "AIRS v7", "GISTEMP v4"), "Zonal"))
         x <- r %>% sapply(
-          function(a)
-          {
+          function(a)          {
             read.csv(text = a, skip = 1L, as.is = TRUE, na.strings = c("*******"), check.names = FALSE)
-          }, simplify = FALSE)
-      }, error = Error, warning = Error)
+          },
+ simplify = FALSE
+)
+      },
+ error = Error,
+ warning = Error
+)
 
       flit <- sapply(seq_along(x),
-        function(a)
-        {
+        function(a)        {
           flit <- x[[a]][, -1]
           colnames(flit) <- paste(names(x)[a], colnames(flit))
           d <- cbind(dataframe(year = x[[a]]$Year, month = 6), flit)
@@ -841,7 +923,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
           #d$yr_part <- d$year + (2 * d$month - 1)/24
 
           d
-        }, simplify = FALSE)
+        },
+ simplify = FALSE
+)
 
       d <- flit %>%
         purrr::reduce(dplyr::full_join, by = c("year", "month")) %>%
@@ -851,15 +935,18 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `CO2 Mauna Loa` = (function(p) {
       x <- NULL
 
       skip <- 64L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.csv(p, header=FALSE, skip=skip, check.names=FALSE, comment.char="\"")
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V5, check.names=FALSE, stringsAsFactors=FALSE)
       ## Missing values are given as "-99.99".
@@ -867,13 +954,16 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `CO2 NOAA ESRL` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- data.frame(year=x$V1, yr_part=x$V1 + (2 * x$V2 - 1)/24, month=x$V2, temp=x$V4, check.names=FALSE, stringsAsFactors=FALSE)
       ## Missing values are given as "-99.99".
@@ -881,14 +971,14 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `CO2 Cape Grim` = (function(p) {
       x <- NULL
 
       op <- options()
       ## -k means don't verify cert, -L means follow redirects (important for some servers):
       options(download.file.method = "curl", download.file.extra = "-k -L")
-      tryCatch({
+      tryCatch(
+{
         temp <- tempfile()
         download.file(p, temp)
         flit <- readLines(temp)
@@ -897,22 +987,31 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         flit <- flit[stringr::str_trim(lapply(flit, iconv, to = "UTF-8") %>% unlist(use.names = FALSE)) != ""] %>% `[`(!is.na(.))
         flit <- flit[stringr::str_detect(flit, "^\\d{4}")]
         x <- read.csv(header = FALSE, skip = 0L, text = flit, fill = TRUE, check.names = FALSE, na.strings = "NaN")
-      }, error = Error, warning = Error, finally = options(op))
+      },
+ error = Error,
+ warning = Error,
+ finally = options(op)
+)
 
-      d <- data.frame(year = x$V1, yr_part = x$V1 + (2 * x$V2 - 1)/24, month = x$V2, temp = x$V5,
-        check.names = FALSE, stringsAsFactors = FALSE)
+      d <- data.frame(
+year = x$V1, yr_part = x$V1 + (2 * x$V2 - 1)/24, month = x$V2, temp = x$V5,
+        check.names = FALSE, stringsAsFactors = FALSE
+)
       ## 'x$V6' is 1 × sigma, so 1.96 × sigma is a 95% CI, I think.
       d[[series %_% "_uncertainty"]] <- 2 * 1.96 * x$V6
 
       return (d)
     })(path),
-
     `PIOMAS Arctic Sea Ice Volume` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -923,21 +1022,21 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `OSI Sea Ice` = (function(p) {
       areas <- strsplit(RCurl::getURL(p %_% "/", dirlistonly = TRUE), "\r*\n")[[1L]]
       uris <- sapply(areas,
-        function(a)
-        {
+        function(a)        {
           paste(
             paste(p, a, sep = "/"),
             c(sprintf("osisaf_%s_sia_monthly.txt", a), sprintf("osisaf_%s_sie_monthly.txt", a)),
-            sep = "/")
-        }, simplify = FALSE, USE.NAMES = FALSE) %>% unlist
+            sep = "/"
+)
+        },
+ simplify = FALSE, USE.NAMES = FALSE
+) %>% unlist
 
       flit <- sapply(uris,
-        function(a)
-        {
+        function(a)        {
           flit <- readLines(a)
           flitHeader <- stringr::str_subset(flit, "^#")
           area <-
@@ -952,7 +1051,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
           d <- dataframe(year = x$V2, month = x$V3, temp = x$V5/1e6) %>%
             dplyr::rename(!!colName := temp)
-        }, simplify = FALSE)
+        },
+ simplify = FALSE
+)
 
       d <- purrr::reduce(flit, dplyr::full_join, by = c("year", "month")) %>%
         dplyr::arrange(year, month) %>%
@@ -960,14 +1061,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `NSIDC Sea Ice` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- mapply(climeseries:::MOS, sprintf("%02d", seq_along(climeseries:::MOS)),
-          FUN = function(x, y)
-          {
+          FUN = function(x, y)          {
             r <- data.frame()
             for (i in c("north", "south")) {
               flit <- readLines(paste(p, i, "monthly", "data", paste(toupper(substr(i, 1, 1)), y, "extent_v4.0.csv", sep="_"), sep="/"))
@@ -978,7 +1078,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             r
           }, SIMPLIFY = FALSE
         )
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- dplyr::arrange(Reduce(rbind, x), region, year, mo)
       y <- data.frame(year=flit$year, month=flit$mo, region=flit$region %_% "H", check.names=FALSE, stringsAsFactors=FALSE)
@@ -1001,13 +1104,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `PMOD TSI` = (function(p) {
       x <- NULL
 
       #f <- tempfile(fileext = ".zip")
       f <- tempfile(fileext = ".zip")
-      tryCatch({
+      tryCatch(
+{
         utils::download.file(url = p, destfile = f, mode = "wb", quiet = TRUE)
         x0 <- readr::read_table(f, comment = ";", skip = 1L, na = "nan", col_names = FALSE)
         x <- x0 %>%
@@ -1020,40 +1123,56 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             `PMOD TSI VIRGO A (new)` = X6,
             `PMOD TSI VIRGO A+B (new)` = X7
           )
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
-      d <- x %>% dplyr::group_by(year, month) %>%
+      d <- x %>%
+ dplyr::group_by(year, month) %>%
         dplyr::group_map(
-          function(a, b)
-          {
+          function(a, b)          {
             ## Use a better mean estimate for the "_uncertainty" columns.
             ## V. stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation/26647#26647
             cnames <- get_climate_series_names(a, conf_int = TRUE)
             l <- list(cnames[stringr::str_ends(cnames, "_uncertainty", negate = TRUE)], cnames[stringr::str_ends(cnames, "_uncertainty", negate = FALSE)])
-            r <- list(.vars = tibble::lst(!!l[[1]], !!l[[2]]),
+            r <- list(
+.vars = tibble::lst(!!l[[1]], !!l[[2]]),
                 .funs = tibble::lst(
-                  function(a) { r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm = TRUE); r },
-                  function(a) { r <- NA_real_; if (!all(is.na(a))) r <- sqrt(mean(a^2, na.rm = TRUE)); r }
-                )) %>%
+                  function(a) {
+ r <- NA_real_; if (!all(is.na(a))) r <- mean(a, na.rm = TRUE); r
+ },
+                  function(a) {
+ r <- NA_real_; if (!all(is.na(a))) r <- sqrt(mean(a^2, na.rm = TRUE)); r
+ }
+                )
+) %>%
               ## For applying multiple functions to different columns in 'summarize_at()', see:
               ## https://stackoverflow.com/questions/41109403/r-dplyr-summarise-multiple-functions-to-selected-variables/53981812#53981812
               purrr::pmap(~ a %>% dplyr::summarize_at(.x, .y)) %>%
-              { purrr::reduce(c(list(b), .), cbind) }
+              {
+ purrr::reduce(c(list(b), .), cbind)
+ }
 
             r
-          }) %>% purrr::reduce(dplyr::bind_rows) %>%
+          }
+) %>%
+ purrr::reduce(dplyr::bind_rows) %>%
           dplyr::arrange(year, month) %>%
           dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = month)
 
       return (d)
     })(path),
-
     `PMOD TSI (old)` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, skip = 1L, comment.char = ";", check.names = FALSE, colClasses = c(V1 = "character"))
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       dates <- as.POSIXct(x$V2 * 86400, origin = "1980-01-01")
       d <- data.frame(year(dates), month(dates), check.names = FALSE, stringsAsFactors = FALSE)
@@ -1069,13 +1188,16 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `SORCE TSI` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, skip=0L, comment.char=";", check.names=FALSE, stringsAsFactors=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       re <- "(\\d{4})(\\d{2})(\\d{2})"
       yearMatches <- stringr::str_match(trunc(x$V1), re)
@@ -1097,14 +1219,17 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `TSI Reconstructed` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, comment.char=";", check.names=FALSE) # N.B. This is currently (19 Aug 2019) offline; use local copy instead.
         #x <- read.table(system.file("extdata/tsi/TIM_TSI_Reconstruction.txt", package = "climeseries"), comment.char = ";", check.names = FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       yrs <- as.numeric(sub("(.+?)\\..+?", "\\1", x$V1, perl=TRUE))
       d <- data.frame(year=yrs, month=6, temp=x$V2, check.names=FALSE, stringsAsFactors=FALSE)
@@ -1116,46 +1241,55 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `Rutgers NH Snow Cover` =,
     `Rutgers Eurasia Snow Cover` =,
     `Rutgers N. America Snow Cover` =,
     `Rutgers N. America (No Greenland) Snow Cover` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- data.frame(year=x$V1, month=x$V2, yr_part=x$V1 + (2 * x$V2 - 1)/24, temp=x$V3, check.names=FALSE, stringsAsFactors=FALSE)
 
       return (d)
     })(path),
-
     `NOAA Sunspot No.` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, comment.char="*")
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       d <- data.frame(year=x$V1, month=x$V2, yr_part=x$V1 + (2 * x$V2 - 1)/24, temp=x$V4, check.names=FALSE, stringsAsFactors=FALSE)
 
       return (d)
     })(path),
-
     `CSIRO Global Mean Sea Level` = (function(p) {
       x <- NULL
 
       skip <- 1L # Ignore header
 
-      tryCatch({
+      tryCatch(
+{
         CSIRO_down <- FALSE # Set to TRUE if the CSIRO FTP site fails.
         alt_p <- system.file("extdata/latest/CSIRO_Alt.csv", package="climeseries")
         if (!CSIRO_down)
           download.file(p, alt_p, mode = "wb", quiet = TRUE)
         x <- read.csv(ifelse(CSIRO_down, alt_p, p), header = FALSE, skip = skip, check.names = FALSE, na.strings = "#N/A")
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       re <- "(\\d{4})\\.(\\d{3})"
       yearMatches <- stringr::str_match(x$V1, re)
@@ -1166,7 +1300,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `NOAA Global Mean Sea Level` = (function(p) {
       x <- NULL
 
@@ -1175,9 +1308,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       ## NOAA STAR data temporarily offline. Comment this out after using once:
       #return (get_climate_data(download = FALSE, baseline = FALSE)[, c("year", "month", "yr_part", series)])
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.csv(p, header=TRUE, skip=skip, check.names=FALSE, comment.char="#")
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       l <- na.omit(data.table::data.table(melt(x, id="year")), cols="value")
       setnames(l, c("yr_part", "source", "temp"))
@@ -1202,19 +1339,22 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (as.data.frame(d))
     })(path),
-
     `CSIRO Reconstructed Global Mean Sea Level` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         flit <- tempfile()
         download.file(p, flit, quiet=TRUE)
         con <- unz(flit, "church_white_gmsl_2011_up/CSIRO_Recons_gmsl_mo_2015.csv")
         x <- read.csv(con, header=TRUE, as.is=TRUE, skip=skip, check.names=FALSE)
         unlink(flit)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       colnames(x) <- c("yr_part", series, "_uncertainty")
 
@@ -1234,16 +1374,19 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `AVISO Global Mean Sea Level (nonseasonal)` =,
     `AVISO Global Mean Sea Level` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, header = FALSE, as.is = TRUE, skip = skip, check.names = FALSE)
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       colnames(x) <- c("yr_part", series)
 
@@ -1263,7 +1406,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `Antarctica Land Ice Mass Variation` =,
     `Greenland Land Ice Mass Variation` =,
     `Ocean Mass Variation` = (function(p) {
@@ -1271,14 +1413,20 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         ## Workaround for new PO.DAAC drive.
         creds <- options("climeseries_podaac_creds")[[1]]
         x0 <- httr::GET(p, httr::authenticate(user = creds$user, password = creds$password))
 
-        x <- read.table(text = rawToChar(as.raw(httr::content(x0))),
-          header = FALSE, skip = skip, check.names = FALSE, comment.char = "H")
-      }, error = Error, warning = Error)
+        x <- read.table(
+text = rawToChar(as.raw(httr::content(x0))),
+          header = FALSE, skip = skip, check.names = FALSE, comment.char = "H"
+)
+      },
+ error = Error,
+ warning = Error
+)
 
       x <- x[, 1:3] # Ocean mass has more than 3 columns.
       colnames(x) <- c("yr_part", series, "_uncertainty")
@@ -1301,18 +1449,21 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `Multivariate ENSO Index` =,
     `Extended Multivariate ENSO Index` = (function(p) {
       x <- NULL
 
-      tryCatch({
+      tryCatch(
+{
         flit <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
         flit <- flit[trimws(flit) != ""]
         flit <- flit[grep("^\\d{4}\\s+", flit, perl=TRUE)]
         flit <- gsub("\t", " ", flit)
         x <- read.table(header=FALSE, skip=1L, text=flit, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -1323,11 +1474,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `MODIS Aerosol Optical Thickness (550 nm)` = (function(p) {
       curl <- RCurl::getCurlHandle()
       RCurl::curlSetOpt(useragent="Mozilla/5.0", followlocation=TRUE, curl=curl)
-      tryCatch({
+      tryCatch(
+{
         ## Get new session ID.
         r <- RCurl::getURLContent("http://giovanni.gsfc.nasa.gov/giovanni/daac-bin/service_manager.pl", curl=curl)
         xml_ <- XML::xmlParse(r, useInternalNodes=TRUE)
@@ -1358,7 +1509,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         dataUrl <- "http://giovanni.gsfc.nasa.gov/giovanni/" %_% progressJson$session$result$result[[1]]$data[[1]]$fileGroup[[1]]$dataFile[[1]]$dataUrl[[1]]$value
         skip <- 7L
         x <- read.csv(dataUrl, header=TRUE, as.is=TRUE, skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       re <- "(\\d{4})-(\\d{2})"
       dateMatches <- stringr::str_match(x[[1]], re)
@@ -1370,15 +1524,18 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       #browser()
       return (d)
     })(path),
-
     `GISS Stratospheric Aerosol Optical Depth (550 nm)` = (function(p) {
       x <- NULL
 
       skip <- 4L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, header=FALSE, skip=skip, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       re <- "(\\d{4})\\.(\\d{3})"
       yearMatches <- stringr::str_match(x$V1, re)
@@ -1432,7 +1589,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       browser()
       return (d)
     })(path),
-
     `OSIRIS Stratospheric Aerosol Optical Depth (550 nm)` = (function(p) {
       ## Global
       saod_daily_gl <- create_osiris_saod_data()
@@ -1453,17 +1609,20 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `ESRL AMO` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         flit <- readLines(tc <- textConnection(httr::content(httr::GET(p), "text", encoding="ISO-8859-1"))); close(tc)
         flit <- trimws(flit[grep("^\\s\\d{4}\\s", flit, perl=TRUE)])
         x <- read.table(header=FALSE, skip=skip, text=flit, check.names=FALSE)
-      }, error=Error, warning=Error)
+      },
+ error=Error,
+ warning=Error
+)
 
       flit <- reshape2::melt(x, id.vars="V1", variable.name="month", value.name="temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -1474,23 +1633,27 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `ERA5 Sea Ice Extent` =,
     `ERA5 2m Europe` =,
     `ERA5 2m Global` = (function(p) {
       currentMonth <- current_month; currentYear <- current_year
-      if (currentMonth == 1) { currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12 }
-      else { currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear }
+      if (currentMonth == 1) {
+ currentYearLastMonth <- currentYear - 1; currentMonthLastMonth <- 12
+ } else {
+ currentMonthLastMonth <- currentMonth - 1; currentYearLastMonth <- currentYear
+ }
 
       uri <- gsub("@@MONTHNUM@@", sprintf("%02d", currentMonth), gsub("@@YEARNUM@@", currentYear, p))
       #uri <- gsub("@@MONTHNUM@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM@@", currentYear, p))
       uri <- gsub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
       if (httr::http_error(uri)) { ## Does the previous month's data exist?
-        if (currentMonth == 1) { currentYear <- currentYear - 1; currentMonth <- 12 }
-        else currentMonth <- currentMonth - 1
+        if (currentMonth == 1) {
+ currentYear <- currentYear - 1; currentMonth <- 12
+ } else currentMonth <- currentMonth - 1
 
-        if (currentMonthLastMonth == 1) { currentYearLastMonth <- currentYearLastMonth - 1; currentMonthLastMonth <- 12 }
-        else currentMonthLastMonth <- currentMonthLastMonth - 1
+        if (currentMonthLastMonth == 1) {
+ currentYearLastMonth <- currentYearLastMonth - 1; currentMonthLastMonth <- 12
+ } else currentMonthLastMonth <- currentMonthLastMonth - 1
 
         uri <-gsub("@@MONTHNUM@@", sprintf("%02d", currentMonth), gsub("@@YEARNUM@@", currentYear, p))
         uri <- gsub("@@MONTHNUM_LASTMONTH@@", sprintf("%02d", currentMonthLastMonth), gsub("@@YEARNUM_LASTMONTH@@", currentYearLastMonth, uri))
@@ -1505,9 +1668,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.csv(uri, header = TRUE, skip = skip, check.names = FALSE, comment.char = "#")
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       #re <- "(\\d{4})(\\d{2})"
       re <- "(\\d{4})-(\\d{2})-(\\d{2})"
@@ -1527,9 +1694,13 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         x <- read.table(p, header = FALSE, as.is = TRUE, skip = skip, check.names = FALSE)
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       flit <- reshape2::melt(x, id.vars = "V1", variable.name = "month", value.name = "temp")
       for (i in names(flit)) flit[[i]] <- as.numeric(flit[[i]])
@@ -1541,7 +1712,6 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `JRA-55 Surface Air SH` =,
     `JRA-55 Surface Air SH Land` =,
     `JRA-55 Surface Air SH Ocean` =,
@@ -1765,7 +1935,8 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         flit <- httr::GET(p)
         localPath <- drop(stringr::str_match(httr::content(flit, "text"), stringr::regex("tmp/.*?\\.txt", ignore_case = TRUE)))
         if (length(localPath) > 1)
@@ -1774,7 +1945,10 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
         dataPath <- paste(purl$scheme %_% "://" %_% purl$hostname, localPath, sep = "/")
         flit1 <- stringr::str_extract(readLines(dataPath), "^\\d{4}\\s+.*$") %>% stringi::stri_remove_na()
         x <- read.table(text = flit1, header = FALSE, skip = skip, check.names = FALSE)
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       flit2 <- reshape2::melt(x[, 1L:13L], id.vars="V1", variable.name="month", value.name="temp")
       for (i in names(flit2)) flit2[[i]] <- as.numeric(flit2[[i]])
@@ -1786,18 +1960,21 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 
       return (d)
     })(path),
-
     `GRACE-FO Greenland Ice Mass` =,
     `GRACE-FO Antarctic Ice Mass` = (function(p) {
       x <- NULL
 
       skip <- 0L
 
-      tryCatch({
+      tryCatch(
+{
         flit <- tempfile(fileext = ".zip")
         download.file(p, flit, mode = "wb", quiet = TRUE)
         x <- rio::import(flit, format = "csv", skip = skip)
-      }, error = Error, warning = Error)
+      },
+ error = Error,
+ warning = Error
+)
 
       matches <- stringr::str_match(x$`time [yyyy_doy]`, "^(\\d{4})_(\\d+)$")
       yearTemp <- lubridate::date_decimal(as.numeric(matches[, 2]))
@@ -1818,12 +1995,14 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       m <- data.table::as.data.table(m) # This needs optimization for the future "climeseries" update.
 
       ## Uncertainties are 1 × sigma, so 1.96 × sigma is a 95% CI.
-      d <- d0 %>% dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_uncertainty")), function(a) { a * 2 * 1.96 }) %>%
+      d <- d0 %>%
+ dplyr::mutate_at(dplyr::vars(dplyr::ends_with("_uncertainty")), function(a) {
+ a * 2 * 1.96
+ }) %>%
         dplyr::mutate(yr_part = year + (2 * month - 1)/24)
 
       return (d)
     })(path),
-
     `NCEI Ocean Heat Content` = (function(p) {
       ma <- c("3month", "pentad")
       basins <- c(a="Atlantic", i="Indian", p="Pacific", w="Global")
@@ -1843,14 +2022,20 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       skip <- 0
 
       ## Quarterly OHC
-      l1 <- plyr::dlply(threeMonthFiles, .(basin, depth),
+      l1 <- plyr::dlply(
+threeMonthFiles, .(basin, depth),
         function(a) {
-          l <- alply(a, 1,
+          l <- alply(
+a, 1,
             function(aa) {
-              tryCatch({
+              tryCatch(
+{
                 #x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
                 x <- read.table(text = httr::content(httr::GET(aa$url), "text"), header=TRUE, skip=skip, check.names=FALSE)
-              }, error=Error, warning=Error)
+              },
+ error=Error,
+ warning=Error
+)
 
               x
             }
@@ -1875,14 +2060,20 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
       )
 
       ## Pentadal OHC
-      l2 <- plyr::dlply(pentadFiles, .(basin, depth),
+      l2 <- plyr::dlply(
+pentadFiles, .(basin, depth),
         function(a) {
-          l <- alply(a, 1,
+          l <- alply(
+a, 1,
             function(aa) {
-              tryCatch({
+              tryCatch(
+{
                 #x <- read.table(aa$url, header=TRUE, skip=skip, check.names=FALSE)
                 x <- read.table(text = httr::content(httr::GET(aa$url), "text"), header=TRUE, skip=skip, check.names=FALSE)
-              }, error=Error, warning=Error)
+              },
+ error=Error,
+ warning=Error
+)
 
               x
             }
@@ -1917,7 +2108,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
   )
 
   if (is.null(d) && verbose) tryCatch(message(""), message=Error)
-  else if (verbose) { cat("Done.", fill=TRUE); flush.console() }
+  else if (verbose) {
+ cat("Done.", fill=TRUE); flush.console()
+ }
 
   if (!is.null(d)) {
     if (!is.data.frame(d)) {
@@ -1927,9 +2120,9 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
     if (any(duplicated(d[, c("year", "month"), drop=FALSE]))) stop("Data set has duplicated year/month rows.")
 
     climeNames <- !grepl("^yr_|^met_|^year|^month|_uncertainty$", names(d), d)
-    d[, climeNames] <- as.data.frame(apply(d[, climeNames, drop=FALSE], 2, # Weird results without 'as.data.frame()' here.
-      function(x)
-      {
+    d[, climeNames] <- as.data.frame(apply(
+d[, climeNames, drop=FALSE], 2, # Weird results without 'as.data.frame()' here.
+      function(x)      {
         if (!is.null(baseline)) {
           useBaseline <- TRUE
           if (is.logical(baseline)) {
@@ -1947,10 +2140,11 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
             flit <- x[d$year %in% baseline]
             bma <- tapply(flit, d$month[d$year %in% baseline], mean, na.rm=TRUE)
             base <- NA
-            null <- sapply(names(bma), function(x) { base[d$month == x] <<- bma[x] }); null <- NULL
+            null <- sapply(names(bma), function(x) {
+ base[d$month == x] <<- bma[x]
+ }); null <- NULL
           }
-        }
-        else
+        } else
           base <- rep(0.0, length(x))
 
         ## Center anomalies on average baseline-period temperatures.
@@ -1972,8 +2166,7 @@ ReadAndMungeInstrumentalData <- function(series, path, baseline, verbose=TRUE)
 }
 
 
-DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, filenameBase)
-{
+DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, filenameBase){
   env <- new.env()
 
   for (series in names(paths)) {
@@ -1989,8 +2182,7 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
     cat(sprintf("Merging series %s...", i))
     if (is.null(d)) {
       d <- env[[i]][, c(common_columns, climeNames, uncertainty)]
-    }
-    else {
+    } else {
       d <- merge(d, env[[i]][, c(common_columns, climeNames, uncertainty)], by=common_columns, all=TRUE)
     }
     cat(". Done.", fill = TRUE); utils::flush.console()
@@ -2004,7 +2196,8 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
   if (FALSE) { # Add series from an earlier data set (e.g. in case of current failure)
     env <- new.env()
     load("C:/common/data/climate/climeseries/climate-series_raw_20241117.RData", envir = env)
-    flit <- env$d %>% dplyr::select(c(month, year, starts_with(c("JRA-55", "NCEP/CFSR")))) %>%
+    flit <- env$d %>%
+ dplyr::select(c(month, year, starts_with(c("JRA-55", "NCEP/CFSR")))) %>%
       dplyr::left_join(d, ., by = c("month", "year"))
     d <- flit
   }
@@ -2031,8 +2224,7 @@ DownloadInstrumentalData <- function(paths, baseline=TRUE, verbose, dataDir, fil
 
 
 #' @export
-make_met_year <- function(x, add = TRUE)
-{
+make_met_year <- function(x, add = TRUE){
   met_year <- shift(x[, "year"], -1L, roll = FALSE)
   metRow <- which(is.na(met_year))
   met_year[metRow] <- max(x[, "year"], na.rm = TRUE)
@@ -2044,15 +2236,13 @@ make_met_year <- function(x, add = TRUE)
     x$met_year <- met_year
 
     return (x)
-  }
-  else
+  } else
     return (met_year)
 }
 
 
 #' @export
-make_yr_part <- function(x, add = TRUE)
-{
+make_yr_part <- function(x, add = TRUE){
   #yr_part <- x[, "year"] + (x[, "month"] - 0.5) / 12
   yr_part <- x[, "year"] + (2 * x[, "month"] - 1) / 24
 
@@ -2063,12 +2253,10 @@ make_yr_part <- function(x, add = TRUE)
 }
 
 
-LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
-{
+LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL){
   d <- NULL
 
-  getDataFilenames <- function(dataDir, fileExtension)
-  {
+  getDataFilenames <- function(dataDir, fileExtension)  {
     sort(grep("^.*?" %_% filenameBase %_% ifelse(is.null(baseline) || (is.logical(baseline) && !baseline), "raw_", "") %_% "\\d{8}" %_% "\\." %_% fileExtension %_% "$", list.files(dataDir, full.names=TRUE), value=TRUE), decreasing=TRUE)
   }
 
@@ -2083,8 +2271,7 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
     #d <- read.csv(filenames[1L]) # File extension "csv".
 
     fileFound <- TRUE
-  }
-  else {
+  } else {
     testDirs <- "."
     if (!is.null(getOption("climeseries_data_dir")))
       testDirs <- c(testDirs, getOption("climeseries_data_dir"))
@@ -2168,22 +2355,29 @@ LoadInstrumentalData <- function(dataDir, filenameBase, baseline=NULL)
 #' inst <- get_climate_data(download=FALSE, baseline=TRUE)
 #' series <- setdiff(names(inst), c(climeseries::common_columns, c("CO2 Mauna Loa")))
 #' yearType <- "year" # "year" or "met_year" = meteorological year.
-#' annual <- sapply(series, function(s) { rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv })
+#' annual <- sapply(series, function(s) {
+#'  rv <- tapply(inst[[s]], inst[[yearType]], mean, na.rm=TRUE); rv <- rv[!is.nan(rv)]; rv
+#'  })
 #'
 #' ## How many months for last year have data?
 #' lastYear <- as.integer(format(Sys.Date(), "%Y")) - 1
 #' sapply(inst[inst[[yearType]] %in% lastYear, series], function(s) sum(!is.na(s)))
-#' mapply(function(x, y) x[y][1L], annual, sapply(annual, function(s) { order(s, decreasing=TRUE) }))
+#' mapply(function(x, y) x[y][1L], annual, sapply(annual, function(s) {
+#'  order(s, decreasing=TRUE)
+#'  }))
 #'
 #' ## Calculate max. anomaly for years not in 'excludeDate'. (Allows exclusion of e.g. partial current year.)
 #' excludeDate <- as.integer(format(Sys.Date(), "%Y")) # Or excludeDate <- c(2016)
-#' annualLt <- sapply(annual, function(s) { s[!(as.numeric(names(s)) %in% excludeDate)] })
-#' mapply(function(x, y) x[y][1L], annualLt, sapply(annualLt, function(s) { order(s, decreasing=TRUE) }))
+#' annualLt <- sapply(annual, function(s) {
+#'  s[!(as.numeric(names(s)) %in% excludeDate)]
+#'  })
+#' mapply(function(x, y) x[y][1L], annualLt, sapply(annualLt, function(s) {
+#'  order(s, decreasing=TRUE)
+#'  }))
 #' }
 #'
 #' @export
-get_climate_data <- function(download = FALSE, data_dir, filename_base, urls=climeseries::data_urls, omit=omitUrlNames, only=NULL, baseline=TRUE, annual_mean=FALSE, verbose=TRUE)
-{
+get_climate_data <- function(download = FALSE, data_dir, filename_base, urls=climeseries::data_urls, omit=omitUrlNames, only=NULL, baseline=TRUE, annual_mean=FALSE, verbose=TRUE){
   if (missing(data_dir)) {
     if (!is.null(getOption("climeseries_data_dir")))
       data_dir <- getOption("climeseries_data_dir")
@@ -2206,8 +2400,7 @@ get_climate_data <- function(download = FALSE, data_dir, filename_base, urls=cli
     if (!is.null(omit))
       urls <- urls[!names(urls) %in% omit]
     d <- DownloadInstrumentalData(urls, baseline, verbose, data_dir, filename_base)
-  }
-  else
+  } else
     d <- LoadInstrumentalData(data_dir, filename_base, baseline)
 
   if (annual_mean) {
@@ -2237,8 +2430,7 @@ get_climate_data <- function(download = FALSE, data_dir, filename_base, urls=cli
 #' @return A character vector of column names.
 #'
 #' @export
-get_climate_series_names <- function(x, conf_int = FALSE, invert = TRUE, keep = NULL, skip = NULL)
-{
+get_climate_series_names <- function(x, conf_int = FALSE, invert = TRUE, keep = NULL, skip = NULL){
   colNames <- colnames(x)
 
   if (!invert) conf_int <- !conf_int
@@ -2277,8 +2469,7 @@ recenter_anomalies <- function(
   by_month = TRUE,
   return_baselines_only = FALSE,
   ...
-)
-{
+){
   if (is.null(baseline))
     return (x)
   else if (is.logical(baseline)) {
@@ -2301,11 +2492,14 @@ recenter_anomalies <- function(
       bma <- tapply(flit[, i, drop = TRUE], flit[, "month", drop = TRUE], mean, na.rm = TRUE)
       base <- rep(NA_real_, nrow(x))
       ## N.B. This next step is both a time & memory sink, the latter being more problematic; optimize it!
-      dev_null <- sapply(names(bma),
-        function(s) { v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x[, "month", drop = TRUE] == s] <<- v })
+      dev_null <- sapply(
+names(bma),
+        function(s) {
+ v <- bma[s]; if (is.nan(v)) v <- 0.0; base[x[, "month", drop = TRUE] == s] <<- v
+ }
+)
       dev_null <- NULL
-    }
-    else { # By year.
+    } else { # By year.
       bma <- tapply(flit[, i, drop = TRUE], flit[, "year", drop = TRUE], mean, na.rm = TRUE)
       base <- mean(bma)
     }
@@ -2332,8 +2526,7 @@ recenter_anomalies_test <- function(
   by_month = TRUE,
   return_baselines_only = FALSE,
   ...
-)
-{
+){
   if (is.null(baseline))
     return (x)
   else if (is.logical(baseline)) {
@@ -2350,47 +2543,60 @@ recenter_anomalies_test <- function(
   base <- NULL
   if (by_month) {
     l <- keystone::psapply(get_climate_series_names(x, ...),
-      function(series)
-      {
-        r <- x %>% dplyr::select(year, month, !!series) %>% dplyr::group_by(month) %>%
+      function(series)      {
+        r <- x %>%
+ dplyr::select(year, month, !!series) %>%
+ dplyr::group_by(month) %>%
           dplyr::group_modify(
-            function(f, g)
-            {
-              b <- f %>% dplyr::filter(year %in% baseline) %>% dplyr::pull(series)
+            function(f, g)            {
+              b <- f %>%
+ dplyr::filter(year %in% baseline) %>%
+ dplyr::pull(series)
               bavg <- b %>% mean(na.rm = TRUE)
               base <<- c(base, bavg)
               if (keystone::is_invalid(bavg))
                 bavg <- 0
 
-              r <- f %>% dplyr::mutate(!!series := round(.data[[series]] - bavg, digits)) %>%
+              r <- f %>%
+ dplyr::mutate(!!series := round(.data[[series]] - bavg, digits)) %>%
                 dplyr::select(-month)
 
               r
-            }, .keep = TRUE) %>%
-          dplyr::arrange(year, month) %>% dplyr::pull(series)
+            },
+ .keep = TRUE
+) %>%
+          dplyr::arrange(year, month) %>%
+ dplyr::pull(series)
 
         r
-      }, simplify = FALSE, .parallel = FALSE)
+      },
+ simplify = FALSE, .parallel = FALSE
+)
   } else {
     l <- keystone::psapply(get_climate_series_names(x, ...),
-      function(series)
-      {
+      function(series)      {
         f <- x %>% dplyr::select(year, !!series)
-        b <- f %>% dplyr::filter(year %in% baseline) %>% dplyr::pull(series)
+        b <- f %>%
+ dplyr::filter(year %in% baseline) %>%
+ dplyr::pull(series)
         bavg <- b %>% mean(na.rm = TRUE)
         base <<- bavg
         if (keystone::is_invalid(bavg))
           bavg <- 0
 
-        r <- f %>% dplyr::mutate(!!series := round(.data[[series]] - bavg, digits)) %>%
+        r <- f %>%
+ dplyr::mutate(!!series := round(.data[[series]] - bavg, digits)) %>%
           dplyr::pull(series)
 
         r
-      }, simplify = FALSE, .parallel = FALSE)
+      },
+ simplify = FALSE, .parallel = FALSE
+)
   }
 
   d <- x %>%
-    dplyr::select(get_climate_series_names(x, invert = FALSE, ...)) %>% tibble::as_tibble() %>%
+    dplyr::select(get_climate_series_names(x, invert = FALSE, ...)) %>%
+ tibble::as_tibble() %>%
     dplyr::bind_cols(tibble::as_tibble(l))
   attr(d, "baseline") <- baseline
 
@@ -2418,8 +2624,7 @@ make_time_series_from_anomalies <- function(
   offset = 0.5,
   add_missing_dates = TRUE,
   ...
-)
-{
+){
   if (is.ts(x))
     return (x)
 
@@ -2429,7 +2634,6 @@ make_time_series_from_anomalies <- function(
 
       structure(r, complete_dates = dataframe(year = seq(r,  max(x[, "year"], na.rm = TRUE))))
     })(),
-
     `12` = (function() {
       r <- unlist(x[1L, c("year", "month")])
       r[2] <- r[2] + offset
@@ -2463,8 +2667,7 @@ make_time_series_from_anomalies <- function(
 
 ## Correctly 'window()' time series on standard 'yr_part' values.
 #' @export
-window_ts <- function(x, start = NULL, end = NULL, ...)
-{
+window_ts <- function(x, start = NULL, end = NULL, ...){
   z <- window_default(x, start, end, ...)
   z[, "yr_part"] <- time(z)
 

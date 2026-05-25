@@ -74,8 +74,7 @@
 #' }
 #'
 #' @export
-plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=1.0, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, conf_int_series = NULL, ci_alpha=0.2, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), print_trend_ci = TRUE, trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...)
-{
+plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline=NULL, yearly=FALSE, make_yearly_data...=list(), ma_sides=1L, interpolate = FALSE, plot_type=c("single", "multiple"), as_zoo = TRUE, type="l", bg = scales::alpha("gray", 0.1), xlab="Year", ylab=NULL, unit=NULL, main=NULL, col=NULL, col_fun=colorspace::rainbow_hcl, col_fun...=list(l = 65), alpha=1.0, lwd=2, legend... = list(), add = FALSE, conf_int=FALSE, conf_int_series = NULL, ci_alpha=0.2, polygon... = list(), trend=FALSE, trend_lwd = lwd, trend_legend_inset=c(0.2, 0.2), print_trend_ci = TRUE, trend_format = ifelse(print_trend_ci, "1.3f", "1.2f"), trend... = list(), extra_trends = list(), loess=FALSE, loess...=list(), loess_series = NULL, lines.loess... = list(), xaxt = "n", get_x_axis_ticks...=list(), segmented=FALSE, segmented...=list(), plot.segmented...=list(), mark_segments=c("none", "lines", "points"), vline...=list(), points.segmented... = list(), make_standardized_plot_filename...=list(), start_callback=NULL, end_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), save_png=FALSE, save_png_dir, png...=list(), ...){
   plot_type <- match.arg(plot_type)
   mark_segments <- match.arg(mark_segments)
 
@@ -139,12 +138,10 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       if (all(interpolate)) {
         w <<- interpNA(w, "linear", unwrap = TRUE)
         if (!is.null(ma)) warning("'interpolate = TRUE' with a non-null moving average may lead to inaccurate MAs.")
-      }
-      else if (any(interpolate)) {
+      } else if (any(interpolate)) {
         interpCols <- series[interpolate]
       }
-    }
-    else {
+    } else {
       interpCols <- interpolate
     }
 
@@ -201,8 +198,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   col <- scales::alpha(col, alpha)
   names(col) <- series
 
-  get_x_axis_ticks <- function(min, max, by)
-  {
+  get_x_axis_ticks <- function(min, max, by)  {
     yearGroups <- seq(min, max, by = by)
     plotStart <- startTS[1]
     plotEnd <- endTS[1]
@@ -247,8 +243,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       imageDir <- getOption("climeseries_image_dir")
     else
       imageDir <- "."
-  }
-  else
+  } else
     imageDir <- save_png_dir
 
   if (save_png) {
@@ -338,12 +333,15 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
   if (add) {
     plotSeries <- get_climate_series_names(w, conf_int = FALSE)
     for (i in seq_along(plotSeries))
-      lines(wz[, plotSeries[i]], type = type, col = col[i], lwd = lwd, bty = "n",
-        xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
-  }
-  else
-    plot(wz[, get_climate_series_names(w, conf_int = FALSE)], screens = 1L, plot.type = plot_type, type = type,
-      col = col, lwd = lwd, bty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...) # I.e. 'plot.zoo()'.
+      lines(wz[, plotSeries[i]],
+ type = type, col = col[i], lwd = lwd, bty = "n",
+        xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...
+) # I.e. 'plot.zoo()'.
+  } else
+    plot(wz[, get_climate_series_names(w, conf_int = FALSE)],
+ screens = 1L, plot.type = plot_type, type = type,
+      col = col, lwd = lwd, bty = "n", xaxt = "n", yaxt = "n", xlab = "", ylab = "", ...
+) # I.e. 'plot.zoo()'.
 
   #legend(x = "topleft", legend = series %_% ifelse(loess, " (+ LOESS)", ""), col = col, lwd = lwd, bty = "n", cex = 0.8)
   legendArgs <- list(
@@ -387,8 +385,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
       lines.loessArgs <- utils::modifyList(lines.loessArgs, lines.loess..., keep.null = TRUE)
       if (is_invalid(lines.loessArgs$col)) {
         lines.loessArgs$col <- scales::alpha(col[s], lines.loessArgs$alpha)
-      }
-      else {
+      } else {
         if (!is_invalid(names(lines.loessArgs$col)))
           lines.loessArgs$col <- scales::alpha(lines.loessArgs$col[s], lines.loessArgs$alpha)
       }
@@ -473,7 +470,8 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
         dplyr::select(c(intersect(common_columns, colnames(trendArgs$data)), names(trendArgs$m)[i])) %>%
         dplyr::filter(yr_part >= trendArgs$m[[i]]$range[1] & yr_part <= trendArgs$m[[i]]$range[2])
       trendArgs$m[[i]]$lm <- lm(eval(substitute(b ~ yr_part, list(b = as.symbol(names(trendArgs$m)[i])))),
-        data = trendArgs$m[[i]]$sdata, x = TRUE, y = TRUE, na.action = na.exclude)
+        data = trendArgs$m[[i]]$sdata, x = TRUE, y = TRUE, na.action = na.exclude
+)
       trendArgs$m[[i]]$change <- coef(trendArgs$m[[i]]$lm)[2] * diff(range(trendArgs$m[[i]]$lm$model[, 2]))
       trendArgs$m[[i]]$rate <- coef(trendArgs$m[[i]]$lm)[2] * trendArgs$trend_multiplier
       yfb <- rlang::duplicate(y_full_baselined, shallow = FALSE)
@@ -514,8 +512,10 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
     }
 
     if (!is.null(trendArgs$legend_inset))
-      legend("bottomright", inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col),
-        lwd = sapply(trendArgs$m, function(a) a$lwd), lty = sapply(trendArgs$m, function(a) a$lty), bty = "n", cex = 0.8)
+      legend("bottomright",
+ inset = trendArgs$legend_inset, legend = legendText, col = sapply(trendArgs$m, function(a) a$col),
+        lwd = sapply(trendArgs$m, function(a) a$lwd), lty = sapply(trendArgs$m, function(a) a$lty), bty = "n", cex = 0.8
+)
 
     r$trend <<- trendArgs$m
   })
@@ -589,8 +589,10 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
           clip(xRange[1], xRange[2], yRange[1], yRange[2])
         }
       } else {
-        abline(sm$piecewise[[i]]$lm, col = scales::alpha(plot.segmentedArgs$col, plot.segmentedArgs$alpha),
-          lwd = plot.segmentedArgs$lwd, lty = plot.segmentedArgs$lty)
+        abline(sm$piecewise[[i]]$lm,
+ col = scales::alpha(plot.segmentedArgs$col, plot.segmentedArgs$alpha),
+          lwd = plot.segmentedArgs$lwd, lty = plot.segmentedArgs$lty
+)
       }
 
       ## Reset clipping to plot region.
@@ -622,8 +624,7 @@ plot_climate_data <- function(x, series, start=NULL, end=NULL, ma=NULL, baseline
 
 
 ## Make a standardized file name. Primarily for internal use in 'plot_climate_data()' and 'plot_models_and_climate_data()'.
-make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_int, ma, ma_i, yearly, range, baseline, loess, trend, segmented, series_max_length=Inf, series_override, series_sep="+", sep="_", conf_int_id=".ci", loess_id="loess", trend_id="trend", segmented_id="seg", ext="png", model_details, illegal_replacement = "%%")
-{
+make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_int, ma, ma_i, yearly, range, baseline, loess, trend, segmented, series_max_length=Inf, series_override, series_sep="+", sep="_", conf_int_id=".ci", loess_id="loess", trend_id="trend", segmented_id="seg", ext="png", model_details, illegal_replacement = "%%"){
   modelString <- NULL
   if (!missing(model_details))
     modelString <- paste(model_details, collapse="-")
@@ -783,8 +784,7 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
     ciArgs <- utils::modifyList(ciArgs, ci..., keep.null = TRUE)
 
     do.call("polygon", ciArgs)
-  }
-  else { # Use error bars to show confidence intervals.
+  } else { # Use error bars to show confidence intervals.
     ciArgs <- list(
       x0 = ccYears,
       y0 = ccRates[, "lwr"],
@@ -857,19 +857,25 @@ plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALS
 #' cmip5 <- get_models_data(ensemble="cmip5", baseline=1981:2010, save=FALSE) # Load CMIP5 data from combined R data set.
 #'
 #' ## Plot all CMIP5 scenario realizations, no instrumental temperature series.
-#' plot_models_and_climate_data(inst, cmip5, series=NA, scenario=NULL, start=1950, end=2100, ma=12, baseline=NULL,
-#'   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5))
+#' plot_models_and_climate_data(inst, cmip5,
+#'  series=NA, scenario=NULL, start=1950, end=2100, ma=12, baseline=NULL,
+#'   center_fun="mean", smooth_envelope=TRUE, col_m_mean="red", ylim=c(-1, 5)
+#' )
 #'
 #' ## CMIP5 RCP 4.5 scenario realizations compared to the GISTEMP land+SST series.
 #' series <- c("GISTEMP Global")
-#' plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12, ma_i=12,
+#' plot_models_and_climate_data(inst, cmip5,
+#'  series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12, ma_i=12,
 #'   baseline=1951:1980, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles", envelope_text="quantiles",
-#'   ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list())
+#'   ylim=c(-1.0, 1.5), conf_int_i=FALSE, col_i_fun="topo.colors", col_i_fun...=list()
+#' )
 #'
 #' ## Same plot, different baseline:
-#' plot_models_and_climate_data(inst, cmip5, series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12, ma_i=12,
+#' plot_models_and_climate_data(inst, cmip5,
+#'  series=series, scenario="RCP 4.5", start=1880, end=2020, ma=12, ma_i=12,
 #'   baseline=1981:2010, center_fun="mean", smooth_envelope=TRUE, envelope_type="quantiles", envelope_text="quantiles",
-#'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red")
+#'   ylim=c(-1.5, 1.0), conf_int_i=TRUE, col_i_fun=function(...) "red"
+#' )
 #' }
 #' @export
 plot_models_and_climate_data <- function(instrumental, models, series=NULL, scenario=NULL, start=1880, end=NULL, ma=NULL, ma_i=ma, baseline=NULL, yearly=FALSE, yearly_i = yearly, ma_sides=1L, ylim=c(-1.0, 1.0), bg = scales::alpha("gray", 0.1), scenario_text="Scenario Realizations", center_fun="mean", smooth_center=FALSE, envelope_coverage=0.95, envelope_type=c("quantiles", "range", "normal"), plot_envelope=TRUE, smooth_envelope=TRUE, smooth_span = NULL, unit=NULL, col_m=NULL, col_m_mean=NULL, alpha_envelope=0.1, envelope_text="model coverage", legend...=list(), plot_i...=list(), col_i_fun=colorspace::rainbow_hcl, col_i_fun...=list(l = 65), alpha_i=0.9, conf_int_i=FALSE, ci_alpha_i=0.3, make_standardized_plot_filename...=list(), start_callback=NULL, sign = TRUE, sign_callback = rlang::expr(text(graphics::par("usr")[2], graphics::par("usr")[3], labels = "@priscian", adj = c(1.0, -0.5))), end_callback=NULL, save_png=FALSE, save_png_dir, png...=list(), ...) # Was 'smooth_span = 0.4'
@@ -917,8 +923,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     attr(models, "model_type") <- model_type
     attr(models, "scenario") <- factor(originalScenario[originalScenario %in% scenario], levels=scenario[scenario %in% originalScenario])
     attr(models, "baseline") <- baseline
-  }
-  else
+  } else
     scenario <- levels(attr(models, "scenario"))
 
   m <- make_time_series_from_anomalies(models)
@@ -965,8 +970,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
   if (!is.null(ma_i)) {
     if (ma_i != ma)
       ma_iText <- " (" %_% ma_i %_% "-mo. m.a.)"
-  }
-  else {
+  } else {
     if (!is.null(ma))
       # ma_iText <- " (no m.a.)"
       ma_iText <- ""
@@ -990,8 +994,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     main <- paste(main, " (", MOS[startTS[2L]], ". ", sprintf("%04d", startTS[1L]), "\u2013", MOS[endTS[2L]], ". ", sprintf("%04d", endTS[1L]), ")", sep="")
 
 
-  GetXAxisTicks <- function(min=1800, max=3000, by=10)
-  {
+  GetXAxisTicks <- function(min=1800, max=3000, by=10)  {
     yearGroups <- seq(min, max, by=by)
     plotStart <- startTS[1]
     plotEnd <- endTS[1]
@@ -1022,7 +1025,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
       realizations = paste("realizations", envelope_type, sep=".")
     )
   )
-  if (!plotInstrumental) { make_standardized_plot_filenameArgs$x <- NULL; make_standardized_plot_filenameArgs$ma_i <- NULL }
+  if (!plotInstrumental) {
+ make_standardized_plot_filenameArgs$x <- NULL; make_standardized_plot_filenameArgs$ma_i <- NULL
+ }
   ## N.B. These aren't actually plot args (so they'll fail), but I'll leave them in case of further expansion of inst. plots here:
   if(!is.null(plot_i...$loess)) make_standardized_plot_filenameArgs$loess <- plot_i...$loess
   if(!is.null(plot_i...$trend)) make_standardized_plot_filenameArgs$trend <- plot_i...$trend
@@ -1034,8 +1039,7 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
       imageDir <- getOption("climeseries_image_dir")
     else
       imageDir <- "."
-  }
-  else
+  } else
     imageDir <- save_png_dir
 
   if (save_png) {
@@ -1084,7 +1088,9 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
     modelColors <- rep(modelColors, length.out=length(scenario))
   eachModelColor <- as.vector(unlist(tapply(as.numeric(attr(models, "scenario")), attr(models, "scenario"), function (a) modelColors[a])))
   #par(new = TRUE); plot(wmz[, get_climate_series_names(wmz), drop=FALSE], screens=1, bty="n", xaxt="n", yaxt="n", xlab="", ylab="", col=eachModelColor, ...) # I.e. 'plot.zoo()'.
-  a_ply(wmz[, get_climate_series_names(wmz), drop = FALSE], 2, function(a) { lines(a, col = eachModelColor) }) # I.e. 'lines.zoo()'.
+  a_ply(wmz[, get_climate_series_names(wmz), drop = FALSE], 2, function(a) {
+ lines(a, col = eachModelColor)
+ }) # I.e. 'lines.zoo()'.
 
   grd_lty <- "solid" # Was "dotted"
   grid(nx=NA, ny=NULL, col="lightgray", lty=grd_lty, lwd=par("lwd"))
@@ -1095,7 +1101,11 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   ## Plot model averages.
   year <- as.numeric(attr(wmz, "index"))
-  modelsMiddle <- by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv) }) })
+  modelsMiddle <- by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) {
+ apply(t(m), 1L, function(x) {
+ rv <- NA; if (!all(is.na(x))) rv <- do.call(center_fun, list(x=x, na.rm=TRUE)); return (rv)
+ })
+ })
   if (smooth_center)
     modelsMiddle <- sapply(modelsMiddle, function(m) predict(LOESS(m ~ year, span = NULL), data.frame(year=year)), simplify=FALSE)
   meanColor <- col_m_mean
@@ -1112,11 +1122,23 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   ecd <- (1.0 - envelope_coverage) / 2
   modelsRange <- switch(envelope_type,
-    range = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) { rv <- range(x, na.rm=TRUE); margin <- diff(rv) * ecd; rv <- rv + c(margin, -margin) }; return (rv) }) }),
-
-    quantiles = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- quantile(x, c(ecd, 1.0 - ecd), na.rm=TRUE); return (rv) }) }),
-
-    normal = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) { apply(t(m), 1L, function(x) { rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf.int; return (rv) }) })
+    range = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) {
+ apply(t(m), 1L, function(x) {
+ rv <- rep(NA, 2); if (!all(is.na(x))) {
+ rv <- range(x, na.rm=TRUE); margin <- diff(rv) * ecd; rv <- rv + c(margin, -margin)
+ }; return (rv)
+ })
+ }),
+    quantiles = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) {
+ apply(t(m), 1L, function(x) {
+ rv <- rep(NA, 2); if (!all(is.na(x))) rv <- quantile(x, c(ecd, 1.0 - ecd), na.rm=TRUE); return (rv)
+ })
+ }),
+    normal = by(t(wmz[, get_climate_series_names(wmz), drop=FALSE]), attr(models, "scenario"), function(m) {
+ apply(t(m), 1L, function(x) {
+ rv <- rep(NA, 2); if (!all(is.na(x))) rv <- t.test(x, conf.level=envelope_coverage)$conf.int; return (rv)
+ })
+ })
   )
 
   lowerEnvelope <- sapply(modelsRange, function(x) x[1L, ], simplify=FALSE); upperEnvelope <- sapply(modelsRange, function(x) x[2L, ], simplify=FALSE)
