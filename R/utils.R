@@ -794,3 +794,28 @@ poly_eval <- function(expr, envir = parent.frame(), env = rlang::caller_env(), .
     expr
   }
 }
+
+#' @export
+fahr_to_kelvin <- function(temp){
+  ((temp - 32) * (5/9)) + 273.15
+}
+
+## Convert Kelvin temperatures to Celsius.
+#' @export
+kelvin_to_celsius <- function(temp){
+  temp - 273.15
+}
+
+## Convert Fahrenheit temperatures to Celsius.
+#' @export
+fahr_to_celsius <- function(temp){
+  kelvin_to_celsius(fahr_to_kelvin(temp))
+}
+
+## Convert Celsius temperatures to Fahrenheit.
+#' @export
+celsius_to_fahr <- function(temp){
+  temp * (9/5) + 32
+}
+
+

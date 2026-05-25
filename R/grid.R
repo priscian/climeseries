@@ -384,3 +384,216 @@ plot_stations_map <- function(
 
   return (invisible(station_map))
 }
+
+#' @export
+create_timeseries_from_gridded <- function(
+  x,
+  sub_lat = c(-90, 90), sub_long = c(-180, 180),
+  data_dir = getOption("climeseries_data_dir"),
+  series_suffix = NULL
+){
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
+
+  if (is.null(data_dir)) data_dir <- getwd()
+
+  ## To be continued!
+}
+
+
+## Can I add these?
+## UAH gridded: https://www.ncei.noaa.gov/access/metadata/landing-page/bin/iso?id=gov.noaa.ncdc:C00961
+## RSS gridded: https://www.remss.com/measurements/upper-air-temperature/
+#' @export
+create_zonal_data <- function(
+  x, # series from call to 'get_climate_data()'
+  sub_lat = c(-90, 90), sub_long = c(-180, 180),
+  what = c("hadcrut", "hadcrut4", "hadsst", "crutem", "cw", "be"),
+  data_dir = getOption("climeseries_data_dir"),
+  metadata = list( # Names should be same as 'what' options
+    ## HadCRUT4 url: https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc
+    hadcrut = list(
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.5.0.2.0.analysis.anomalies.ensemble_mean.nc",
+      tempvar = "tas_mean",
+      series = "HadCRUT5"
+    ),
+    hadcrut4 = list(
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/HadCRUT.4.6.0.0.median.nc",
+      tempvar = "temperature_anomaly",
+      series = "HadCRUT4"
+    ),
+    hadsst = list(
+      url = "https://www.metoffice.gov.uk/hadobs/hadsst4/data/netcdf/HadSST.4.1.0.0_median.nc",
+      tempvar = "tos",
+      series = "HadSST4"
+    ),
+    crutem = list(
+      url = "https://crudata.uea.ac.uk/cru/data/temperature/CRUTEM.5.0.2.0.anomalies.nc",
+      tempvar = "tas",
+      series = "CRUTEM5"
+    ),
+    cw = list(
+      url = "http://www-users.york.ac.uk/~kdc3/papers/coverage2013/had4_krig_v2_0_0.nc.gz",
+      tempvar = "temperature_anomaly",
+      series = "Cowtan & Way Krig. Land+SST"
+    ),
+    be = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Land_and_Ocean_LatLong1.nc",
+      tempvar = "temperature",
+      series = "Berkeley Earth Land+SST (Air Ice Temp.)"
+    ),
+    be_land = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Complete_TAVG_LatLong1.nc",
+      tempvar = "temperature",
+      series = "Berkeley Earth Land"
+    ),
+    be_land_tmax = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Complete_TMAX_LatLong1.nc",
+      tempvar = "temperature",
+      series = "Berkeley Earth Land TMAX"
+    ),
+    be_land_tmin = list(
+      url = "https://berkeley-earth-temperature.s3.us-west-1.amazonaws.com/Global/Gridded/Complete_TMIN_LatLong1.nc",
+      tempvar = "temperature",
+      series = "Berkeley Earth Land TMIN"
+    )
+    ## TODO:
+    # https://www.ncei.noaa.gov/data/noaa-global-surface-temperature/v6/access/gridded/
+    # https://data.giss.nasa.gov/gistemp/
+  ),
+  series_suffix = NULL,
+  use_local = FALSE
+){
+  what <- match.arg(what)
+
+  if (missing(x))
+    x <- get_climate_data(download = FALSE, baseline = FALSE)
+  mergeWithOtherData <- TRUE
+  if (is.null(x))
+    mergeWithOtherData <- FALSE
+
+  if (is.null(data_dir)) data_dir <- getwd()
+
+  gurl <- metadata[[what]]$url
+  tempVar <- metadata[[what]]$tempvar
+  series <- metadata[[what]]$series
+
+  filePathTemplate <- sprintf("%s/%%s", data_dir)
+  filePath <- sprintf(filePathTemplate, basename(gurl))
+
+  filePath <- switch(what,
+    cw = {
+      if (!use_local || !file.exists(filePath))
+        download.file(gurl, filePath, mode = "wb", quiet = TRUE)
+      R.utils::gunzip(filePath, overwrite = TRUE, remove = FALSE)
+      flit <- basename(tools::file_path_sans_ext(gurl))
+      filePath <- sprintf(filePathTemplate, flit)
+
+      filePath
+    },
+    hadcrut =,
+    hadcrut4 =,
+    hadsst =,
+    crutem =,
+    be = {
+      if (!use_local || !file.exists(filePath))
+        download.file(gurl, filePath, mode = "wb", quiet = FALSE)
+
+      filePath
+    }
+  )
+
+  n <- ncdf4::nc_open(filePath) # 'print(n)' or just 'n' for details.
+  a <- ncdf4::ncvar_get(n, tempVar)
+  ## Structure of 'a' is temperature_anomaly[longitude, latitude, time], 72 × 36 × Inf (monthly since Jan. 1850)
+  lat <- ncdf4::ncvar_get(n, "latitude")
+  long <- ncdf4::ncvar_get(n, "longitude")
+  times <- ncdf4::ncvar_get(n, "time")
+  tunits <- ncdf4::ncatt_get(n,"time", "units")
+  ncdf4::nc_close(n)
+
+  if (what == "be") {
+    tunits
+    # $value
+    # [1] "year A.D."
+    r <- range(trunc(times))
+    flit <- expand.grid(month = 1:12, year = seq(r[1], r[2], by = 1))
+    flit$yr_part <- flit$year + (2 * flit$month - 1)/24
+    flit <- data.table::data.table(flit)
+    ## This data set should have the same NROW as the "time" dimension of 'a':
+    h <- flit[data.table::data.table(yr_part = times), roll = "nearest", on = "yr_part"] %>%
+      as.data.frame %>%
+ dplyr::select(year, month)
+  } else {
+    tunits
+    # $value
+    # [1] "days since 1850-1-1 00:00:00"
+    dtimes <- as.Date(times, origin = "1850-01-01")
+    ## This data set should have the same NROW as the "time" dimension of 'a':
+    h <- dataframe(year = year(dtimes), month = month(dtimes))
+  }
+
+  flit <- apply(
+a, 3,
+    function(y)    {
+      x <- t(y)
+      w <- cos(matrix(rep(lat, NCOL(x)), ncol = NCOL(x), byrow = FALSE) * (pi / 180)) # Latitude weights.
+
+      ## Use only subgrid for calculations.
+      keepSubGrid <- list(
+        lat = lat >= sub_lat[1] & lat <= sub_lat[2],
+        long = long >= sub_long[1] & long <= sub_long[2]
+      )
+      x1 <- x[keepSubGrid$lat, keepSubGrid$long, drop = FALSE]
+      w1 <- w[keepSubGrid$lat, keepSubGrid$long, drop = FALSE]
+
+      nlat <- length(lat[keepSubGrid$lat])
+      temp <- NULL
+      for (i in seq(1L, nrow(x1), by = nlat)) {
+        xi <- data.matrix(x1[i:(i + nlat - 1L), ])
+        tempi <- stats::weighted.mean(xi, w1, na.rm = TRUE)
+
+        temp <- c(temp, tempi)
+      }
+
+      temp
+    }
+)
+  is.na(flit) <- is.nan(flit)
+
+  lat_long_to_text <- function(x, sufs) {
+ suf <- sufs[2]; r <- abs(x); if (x < 0) suf <- sufs[1]; r %_% suf
+ }
+  subLatText <- sapply(sub_lat, lat_long_to_text, sufs = c("S", "N"), simplify = TRUE)
+  subLongText <- sapply(sub_long, lat_long_to_text, sufs = c("W", "E"), simplify = TRUE)
+
+  if (is.null(series_suffix))
+    seriesOut <- paste0(series, " (", paste(subLatText, collapse = "-"), ", ", paste(subLongText, collapse = "-"), ")")
+  else
+    seriesOut <- paste0(series, series_suffix)
+
+  h[[seriesOut]] <- flit
+  if (mergeWithOtherData)
+    x <- merge(x, h, by = c("year", "month"), all = TRUE)
+  else
+    x <- h %>% dplyr::mutate(yr_part = year + (2 * month - 1)/24, .after = "month")
+
+  x
+}
+
+## usage:
+# g <- create_zonal_data(what = "cw", use_local = FALSE)
+# series <- c("HadCRUT5 Global", "HadCRUT5 (90S-90N, 180W-180E)")
+# series <- c("BEST Global (Air Ice Temp.)", "BEST Global (Water Ice Temp.)", "BE Land+SST (Air Ice Temp.) (90S-90N, 180W-180E)")
+# series <- c("Cowtan & Way Krig. Global", "Cowtan & Way Krig. Land+SST (90S-90N, 180W-180E)")
+# plot_climate_data(g, series, yearly = TRUE) # These should mostly overlap.
+#
+# g <- create_zonal_data(what = "be", sub_lat = c(0, 90), use_local = TRUE)
+# series <- c("BEST Global (Air Ice Temp.)", "BEST Global (Water Ice Temp.)", "BE Land+SST (Air Ice Temp.) (0N-90N, 180W-180E)")
+# plot_climate_data(g, series, yearly = TRUE) # These should mostly overlap.
+#
+# g <- create_zonal_data(what = "be", sub_lat = c(-90, 0), use_local = TRUE)
+# series <- c("BEST Global (Air Ice Temp.)", "BEST Global (Water Ice Temp.)", "BE Land+SST (Air Ice Temp.) (90S-0N, 180W-180E)")
+# plot_climate_data(g, series, yearly = TRUE) # These should mostly overlap.
+
+

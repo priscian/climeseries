@@ -1262,3 +1262,190 @@ plot_models_and_climate_data <- function(instrumental, models, series=NULL, scen
 
   return (nop())
 }
+
+#' @export
+#' @import data.table
+plot_horse_race <- function(series, top_n_years = NULL, baseline = TRUE, data, size = 1){
+  if (missing(data))
+    data <- get_climate_data(download = FALSE, baseline = baseline)
+
+  d <- data[, c("year", "month", series)]
+  d <- subset(d, na_unwrap(d[, series]))
+  d1 <- data.table::data.table(dcast(d, year ~ month, value.var = series))
+  d2 <- data.table::copy(d1)
+  ## Calculate cumulative average by row.
+  d2[, names(d2[, !1, with = FALSE]) :=
+    as.list((function(x) {
+ cumsum(as.matrix(x)[1, ]) / seq_along(x)
+ })(.SD)),
+      .SDcols = names(d2[, !1, with = FALSE]), by = 1:nrow(d2)
+]
+  ## Melt data set for plotting.
+  d3 <- dplyr::arrange(data.table::melt(d2,
+ id.vars = c("year"),
+    variable.name = "month", value.name = "YTD mean temp."
+), year, month) %>%
+    as.data.table()
+  d4 <- data.table::copy(d2)
+  d4[, `latest YTD mean temp.` :=
+    as.list((function(x) {
+ y <- as.matrix(x)[1, ]; tail(y[!is.na(y)], 1)
+ })(.SD)),
+      .SDcols = names(d4[, !1, with = FALSE]), by = 1:nrow(d4)
+]
+  d4 <- dplyr::arrange(d4[, .(year, `latest YTD mean temp.`)], desc(`latest YTD mean temp.`)) %>%
+    as.data.table()
+
+  ## Top n warmest years:
+  if (!is.null(top_n_years)) {
+    if (top_n_years < 0)
+      d4 <- tail(d4, -top_n_years)
+    else
+      d4 <- head(d4, top_n_years)
+
+    d3 <- d3[year %in% d4$year, ]
+  }
+
+  baselineText <- ""
+  if (is.logical(baseline)) {
+    if (baseline) baseline <- defaultBaseline
+    else baseline <- NULL
+  }
+  if (!is.null(baseline))
+    baselineText <- " w.r.t. " %_% min(baseline) %_% "\u2013" %_% max(baseline)
+
+  subtitle <- paste(series, " ", min(d$year), "\u2013", max(d$year), sep = "")
+  ylab <- eval(substitute(
+expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", b, sep = "")),
+    list(b = baselineText)
+))
+  g <- ggplot2::ggplot(d3, ggplot2::aes(x = month, y = `YTD mean temp.`, group = factor(year), color = factor(year))) +
+    ggplot2::theme_bw() +
+    ggplot2::geom_line(size = size) +
+    #ggplot2::scale_colour_discrete(guide = "none") +
+    ggplot2::labs(color = "Year") +
+    ggplot2::scale_x_discrete(expand = c(0, 1)) +
+    directlabels::geom_dl(ggplot2::aes(label = year), method = list(directlabels::dl.trans(x = x + 0.2), "last.points", cex = 0.8)) +
+    ggplot2::labs(title = "Year-to-Date Temperature Anomalies", subtitle = subtitle, y = ylab)
+
+  print(g)
+
+  return (list(data = d4, grob = g))
+}
+
+## usage:
+# ytd <- plot_horse_race("GISTEMP Global")
+# ytd <- plot_horse_race("UAH TLT 6.0 Global", 10)
+# ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+# print(as.data.frame(ytd$data), digits = 3, row.names = FALSE, right = FALSE)
+## Zoom in w/out clipping data:
+# ytd <- plot_horse_race("NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+## Or, if the current year is incomplete:
+# ytd <- plot_horse_race(data = get_climate_data() %>% dplyr::filter(year < climeseries::current_year), "NCEI US Avg. Temp.", 10) # Use -10 for bottom 10 years.
+# ytd$grob + ggplot2::coord_cartesian(ylim = c(-0.5, 2.5))
+## Check:
+# show_warmest_years(inst0, "NCEI US Avg. Temp.")
+
+
+#' @export
+easy_exogenous_plot <- function(series, start=NULL, end=NULL, bs_df=NULL, tamino_style=FALSE, ...){
+  g <- remove_exogenous_influences(series=series, start=start, end=end, bs_df=bs_df)
+  series_all <- as.vector(rbind(series, paste(series, "(adj.)")))
+  if (!tamino_style)
+    plot_climate_data(g, paste(series, "(adj.)"), start, end, ...)
+  else {
+    h <- make_yearly_data(g[, c(common_columns, series_all)])
+    if (!is.null(start)) h <- h[year >= start]
+    if (!is.null(end)) h <- h[year < end]
+    ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
+    main <- "Adjusted for ENSO, Volcanic, and Solar Influences"
+    if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
+      dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
+    for (i in series) {
+      keepRows <- na_unwrap(h[[i %_% " (adj.)"]])
+      year_range <- paste0(min(h$year[keepRows]), "\u2013", max(h$year[keepRows]))
+      plot(h$year[keepRows], h[[i]][keepRows], lwd=2, pch=19, type="o", main=paste(i, year_range), xlab="year", ylab=ylab)
+      plot(h$year[keepRows], h[[i %_% " (adj.)"]][keepRows], lwd=2, pch=19, type="o", main=paste(i, year_range, main), xlab="year", ylab=ylab)
+    }
+
+    return (h) # Return the data set for reuse.
+  }
+
+  return (g) # Return the data set for reuse.
+}
+
+## usage:
+# series <- c("GISTEMP Global", "NCEI Global", "HadCRUT4 Global", "Cowtan & Way Krig. Global", "BEST Global (Water Ice Temp.)", "JMA Global", "RSS TLT 3.3 -70.0/82.5", "UAH TLT 6.0 Global")
+## N.B. Each of these will likely take a minute or two to run.
+# g <- easy_exogenous_plot(series[c(1:3, 7:8)], 1979, 2011, ma=12, lwd=2, show_trend=TRUE, baseline=TRUE)
+# g <- easy_exogenous_plot(series, ma=12, lwd=2, baseline=TRUE)
+## Similar to Foster & Rahmstorf 2011:
+# h <- easy_exogenous_plot(series[c(1:3, 7:8)], 1979, 2011, tamino=TRUE)
+# ## Make and save some plots:
+# setwd(".") # Set to desired storage location.
+# png(filename="tamino-style_%03d.png", width=12.5, height=7.3, units="in", res=600)
+# h <- easy_exogenous_plot(series, tamino=TRUE)
+# dev.off()
+## Similar to plots here: https://tamino.wordpress.com/2017/01/18/global-temperature-the-big-3/.
+# setwd(".") # Set to desired storage location.
+# png(filename="tamino-big-3/tamino-big-3_%03d.png", width=12.5, height=7.3, units="in", res=600)
+# h <- easy_exogenous_plot(series, 1950, tamino=TRUE)
+# dev.off()
+
+
+## Convert Fahrenheit temperatures to Kelvin.
+## Make "cranberry plots" à la http://variable-variability.blogspot.com/2017/01/cherry-picking-short-term-trends.html.
+#' @export
+make_vv_cranberry_plot <- function(x, series, start, end, ylab, span=NULL){
+  if (missing(x)) g <- make_yearly_data()
+  else g <- make_yearly_data(x)
+
+  if (!missing(start)) g <- g[year >= start]
+  if (!missing(end)) g <- g[year <= end]
+
+  if (missing(ylab))
+    ylab <- expression(paste("Temperature Anomaly (", phantom(l) * degree, "C)", sep=""))
+
+  if (dev.cur() == 1L) # If a graphics device is active, plot there instead of opening a new device.
+    dev.new(width=9, height=8) # New default device.
+
+  for (i in series) {
+    h <- g[, c("year", i), with=FALSE]
+    h <- h[na_unwrap(h[[i]])]
+
+    layout(matrix(c(1, 2)))
+
+    ## Plot the time series.
+    plot(h$year, h[[i]],
+      lwd = 2, type = "l", col = "gray",
+      main = series, xlab = "year", ylab = ylab,
+      panel.first=(function(){
+ grid(); abline(h=0.0)
+ })(),
+      panel.last=points(g$year, g[[i]], pch=19, col="red")
+)
+    #l <- loess(h[[i]] ~ h$year, span=span)
+    l <- LOESS(h[[i]] ~ h$year, span=span)
+    lines(l$x, l$fitted, lwd=3, col="blue", type="l")
+
+    ## Plot the LOESS residuals.
+    plot(l$x, l$residuals,
+ lwd=2,
+      type="l", col="gray",
+      main = "Standard Deviation = " %_% sprintf(sd(l$residuals, na.rm=TRUE), fmt="%.3f"), xlab = "year", ylab = ylab,
+      panel.last=points(l$x, l$residuals, pch=19, col="red")
+)
+  }
+
+  return (nop())
+}
+
+## usage:
+# series <- c("BEST Global (Water Ice Temp.)", "UAH TLT 6.0 Global")
+# g <- remove_exogenous_influences(series=series)
+# make_vv_cranberry_plot(g, series[1], start=1880, span=0.3)
+# make_vv_cranberry_plot(g, series[1] %_% " (adj.)", start=1880, span=0.3)
+# make_vv_cranberry_plot(g, series[2], span=0.9)
+# make_vv_cranberry_plot(g, series[2] %_% " (adj.)", span=0.9)
+
+
