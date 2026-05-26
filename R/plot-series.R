@@ -715,103 +715,38 @@ make_standardized_plot_filename <- function(x, prefix=NULL, suffix=NULL, conf_in
 #' @export
 plot_sequential_trend <- function(series, start=NULL, end=NULL, use_polygon=FALSE, mark_years=NULL, baseline=FALSE, plot...=list(), ci...=list(), abline...=list(), m_text=NULL, use_current_year=FALSE) # Style suggested by https://tamino.wordpress.com/2014/12/04/a-pause-or-not-a-pause-that-is-the-question/
 {
-  d <- get_climate_data(download=FALSE, baseline=baseline)
-  if (!is.null(start)) d <- d[d$year >= start, ]
-  if (!use_current_year) d <- d[d$year < current_year, ] # If 'use_current_year=FALSE', the current, possibly incomplete year is excluded.
-  series <- series[1L]
-  means <- unclass(by(d[[series]], d$year, mean, na.rm=TRUE))
-  yearNames <- names(means)
-  means <- as.vector(means); names(means) <- yearNames
-  means <- means[na_unwrap(means)]
-  rates <- rep(NA, length(means))
-  rates <- data.frame(rate=rates, lwr=rates, upr=rates)
-  rownames(rates) <- names(means)
-  years <- as.numeric(rownames(rates))
+  d <- get_climate_data(download = FALSE, baseline = baseline)
+  if (!use_current_year)
+    d <- d[d$year < current_year, ]
 
-  for (i in seq_along(means)) {
-    y <- means[i:length(means)]
-    x <- as.numeric(names(y))
+  if (is.null(end))
+    end <- current_year - 5L
 
-    m <- lm(y ~ x)
-    r <- coef(m)[2L] * 10 # Decadal rate.
-    ci <- suppressWarnings(t(confint(m, "x"))) * 10
-    rates[i, ] <- c(r, ci)
-  }
-
-  if (is.null(start)) start <- head(years, 1L)
-  if (is.null(end)) end <- current_year - 5
-
-  attr(rates, "series") <- series
-  attr(rates, "trend_start") <- start
-  attr(rates, "trend_end") <- tail(years, 1L)
-
-  ccRates <- rates[years <= end & complete.cases(rates), ]
-  ccYears <- as.numeric(rownames(ccRates))[years <= end]
-
-  plotArgs <- list(
-    x = ccYears,
-    y = ccRates[, "rate"],
-    type = "o",
-    pch = 16,
+  plot... <- utils::modifyList(list(
     ylim = c(-1.0, 1.0),
-    lwd = 2,
-    col = "black",
-    panel.first = quote(abline(h=0.0, col='darkgray', lty="dashed")),
     xlab = "Start year of trend",
-    ylab = expression(paste("Trend (", phantom(l) * degree, "C/dec.)", sep="")),
-    main = "Linear Temperature Trend (" %_% series %_% ") + 95% CIs"
-  )
-  plotArgs <- utils::modifyList(plotArgs, plot..., keep.null = TRUE)
-
-  if (is.language(plotArgs$main))
-    plotArgs$main <- eval(plotArgs$main)
+    ylab = expression(paste("Trend (", phantom(l) * degree, "C/dec.)", sep = ""))
+  ), plot..., keep.null = TRUE)
 
   if (is.null(m_text))
     m_text <- quote("Global annual mean surface-temp. trend from start year to " %_% tail(names(means), 1))
 
-  if (dev.cur() == 1) # If a graphics device is active, plot there instead of opening a new device.
-    dev.new(width=12.5, height=7.3) # New default device of 1200 × 700 px at 96 DPI.
-  do.call("plot.default", plotArgs)
-  mtext(eval(m_text))
-
-  if (use_polygon) {
-    ciArgs <- list(
-      x = c(ccYears, rev(ccYears)),
-      y = c(ccRates[, "lwr"], rev(ccRates[, "upr"])),
-      col = scales::alpha("gray", 0.6),
-      border = NA # Border color; NULL means use par("fg"), NA omits borders.
-    )
-    ciArgs <- utils::modifyList(ciArgs, ci..., keep.null = TRUE)
-
-    do.call("polygon", ciArgs)
-  } else { # Use error bars to show confidence intervals.
-    ciArgs <- list(
-      x0 = ccYears,
-      y0 = ccRates[, "lwr"],
-      x1 = ccYears,
-      y1 = ccRates[, "upr"],
-      length = 0.03,
-      angle = 90,
-      code = 3
-    )
-    #ciArgs <- merge.list(ci..., ciArgs)
-    ciArgs <- utils::modifyList(ciArgs, ci..., keep.null = TRUE)
-
-    do.call("arrows", ciArgs)
-  }
-
-  if (!is.null(mark_years)) {
-    ablineArgs <- list(
-      v = mark_years,
-      col = scales::alpha("red", 0.4)
-    )
-    ablineArgs <- utils::modifyList(ablineArgs, abline..., keep.null = TRUE)
-
-    do.call("abline", ablineArgs)
-    text(mark_years, par("yaxp")[2L], mark_years, cex=0.8, srt=270, adj=c(NA, -0.25)) # 'par("usr")' for the whole plotting region.
-  }
-
-  return (rates)
+  keystone::plot_sequential_trend(
+    x = d,
+    series = series,
+    x_var = "year",
+    trend_multiplier = 10,
+    start = start,
+    end = end,
+    main = "Linear Temperature Trend (" %_% series[1L] %_% ") + 95% CIs",
+    use_polygon = use_polygon,
+    mark_xs = mark_years,
+    plot... = plot...,
+    ci... = ci...,
+    vline... = list(abline... = utils::modifyList(
+      list(col = scales::alpha("red", 0.4)), abline...)),
+    m_text = m_text
+  )
 }
 ## usage:
 # rates <- plot_sequential_trend("RSS TLT 4.0 -70.0/82.5")
