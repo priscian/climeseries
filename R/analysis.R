@@ -296,6 +296,11 @@ l, 1,
 
 
 ## Fit segmented linear models to selected climate data.
+## NOTE: Kept local rather than routed through keystone::fit_segmented_model.
+## keystone's generic renames the segmented terms to x/y internally (to avoid a
+## segmented::segmented() quirk), which collides with the name-based $year access
+## downstream here. Abstracting this needs keystone-side work (return terms named
+## by the real x_var) — deferred to the keystone cleanup project.
 #' @export
 fit_segmented_model <- function(
   x,
