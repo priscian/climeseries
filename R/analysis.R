@@ -314,11 +314,9 @@ fit_segmented_model <- function(
   length(r$col) <- length(r$series); names(r$col) <- r$series
 
   if (!yearly) {
-    g <- r$data
+    g <- as.data.frame(r$data)
   } else {
-    make_yearly_dataArgs <- list(
-      x = r$data
-    )
+    make_yearly_dataArgs <- list(x = r$data)
     make_yearly_dataArgs <- utils::modifyList(make_yearly_dataArgs, make_yearly_data..., keep.null = TRUE)
     g <- as.data.frame(do.call("make_yearly_data", make_yearly_dataArgs))
     if (!is.null(start)) start <- trunc(start)
@@ -332,9 +330,9 @@ fit_segmented_model <- function(
     r$piecewise[[i]] <- list()
     r$piecewise[[i]]$col <- r$piecewise$col[i]
 
-    #h <- oss(g, i)[na_unwrap(g[[i]]), , drop = FALSE]
     h <- oss(g, i)[na_unwrap(g[, i]), , drop = FALSE] %>% as.data.frame
-    h <- h[h[[yearVar]] >= ifelse(!is.null(start), start, -Inf) & h[[yearVar]] <= ifelse(!is.null(end), end, Inf), ]
+    h <- h[h[[yearVar]] >= ifelse(!is.null(start), start, -Inf) &
+             h[[yearVar]] <= ifelse(!is.null(end), end, Inf), ]
 
     breakpointsArgs <- list(
       formula = eval(substitute(Y ~ X, list(X = as.name(yearVar), Y = as.name(i)))),
@@ -347,7 +345,6 @@ fit_segmented_model <- function(
     r$piecewise[[i]]$breaks <- r$piecewise[[i]]$bp$X[, yearVar][r$piecewise[[i]]$bp$breakpoint]
 
     seg.controlArgs <- list(
-      #stop.if.error = TRUE,
       fix.npsi = TRUE,
       K = length(r$piecewise[[i]]$breaks),
       n.boot = 250,
@@ -366,47 +363,35 @@ fit_segmented_model <- function(
       control = segControl
     )
     segmentedArgs <- utils::modifyList(segmentedArgs, segmented..., keep.null = TRUE)
-    #r$piecewise[[i]]$sm <- do.call("segmented", segmentedArgs)
 
-    run_segmented <- function()    {
+    run_segmented <- function() {
       mf <- model.frame(r$piecewise[[i]]$lm)
-
       while (TRUE) {
-        withRestarts(
-{
+        withRestarts({
           sm <- do.call(segmented::segmented, segmentedArgs)
           break
-        },
-          restart = function() {
-            ## Which breakpoint is closest to the start or end of the time series?
-            if (length(segmentedArgs$psi) > 1L)
-              segmentedArgs$psi <<- segmentedArgs$psi[-which.min(pmin(segmentedArgs$psi, NROW(mf) - segmentedArgs$psi + 1))]
-          }
-)
+        }, restart = function() {
+          if (length(segmentedArgs$psi) > 1L)
+            segmentedArgs$psi <<- segmentedArgs$psi[-which.min(pmin(segmentedArgs$psi, NROW(mf) - segmentedArgs$psi + 1))]
+        })
       }
-
       sm
     }
 
-    tryCatch(
-{
-      withCallingHandlers(
-{
-          sm <- run_segmented()
-        },
-          error = function(e) {
-            message("Error: ", e$message)
-            if (any(grepl("one coef is NA: breakpoint(s) at the boundary", e$message, fixed = TRUE)))
-              invokeRestart("restart")
-          }
-      )
-
+    tryCatch({
+      withCallingHandlers({
+        sm <- run_segmented()
+      }, error = function(e) {
+        message("Error: ", e$message)
+        flush.console()
+        if (any(grepl("one coef is NA: breakpoint(s) at the boundary", e$message, fixed = TRUE)))
+          invokeRestart("restart")
+      })
       r$piecewise[[i]]$sm <- sm
-    },
- error = function(e) {
- message("Warning: No breakpoint(s) found")
- }
-)
+    }, error = function(e) {
+      message("Warning: No breakpoint(s) found")
+      flush.console()
+    })
   }
 
   r
